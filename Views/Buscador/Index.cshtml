@@ -1,0 +1,394 @@
+﻿@model Farmacol.Models.BuscadorViewModel
+@{
+    ViewData["Title"] = "Búsqueda General";
+}
+
+<h2>🔍 Búsqueda General</h2>
+<hr />
+
+<form asp-controller="Buscador" asp-action="Index" method="get" class="mb-4">
+    <div class="input-group input-group-lg" style="max-width:640px;">
+        <input type="text" name="termino" class="form-control"
+               placeholder="Buscar por nombre, CC, dispositivo, tipo..."
+               value="@Model.Termino" autofocus />
+        <button type="submit" class="btn btn-primary">Buscar</button>
+        @if (!string.IsNullOrEmpty(Model.Termino))
+        {
+            <a asp-controller="Buscador" asp-action="Index"
+               class="btn btn-outline-secondary">✕</a>
+        }
+    </div>
+</form>
+
+@if (string.IsNullOrEmpty(Model.Termino))
+{
+    <div class="alert alert-info" style="max-width:640px;">
+        Ingresa un término para buscar en todas las tablas disponibles según tu rol.
+    </div>
+}
+else
+{
+    <p class="text-muted mb-4">
+        Resultados para: <strong>@Model.Termino</strong>
+    </p>
+
+    @if (!Model.Inventario.Any() && !Model.Personal.Any() &&
+             !Model.Responsivas.Any() && !Model.Solicitudes.Any() &&
+             !Model.SolicitudesRechazadas.Any())
+    {
+        <div class="alert alert-warning">
+            No se encontraron resultados para
+            "<strong>@Model.Termino</strong>".
+        </div>
+    }
+
+    @* ── PERSONAL ─────────────────────────────────────────────────── *@
+    @if (Model.Personal.Any())
+    {
+        <div class="card border-0 shadow-sm mb-4">
+            <div class="card-header text-white fw-semibold"
+                 style="background:#343a40">
+                👤 Personal
+                <span class="badge bg-secondary ms-2">@Model.Personal.Count</span>
+            </div>
+            <div class="card-body p-0">
+                <div class="accordion" id="accPersonal">
+                    @foreach (var item in Model.Personal)
+                    {
+                        var pid = $"bp{item.CC}";
+                        <div class="accordion-item border-0 border-bottom">
+                            <h2 class="accordion-header">
+                                <button class="accordion-button collapsed py-2 small"
+                                        type="button"
+                                        data-bs-toggle="collapse"
+                                        data-bs-target="#@pid">
+                                    <div class="d-flex flex-wrap gap-3 align-items-center w-100">
+                                        <span class="fw-bold" style="min-width:180px">
+                                            @item.NombreColaborador
+                                        </span>
+                                        <span class="badge bg-secondary">@item.CC</span>
+                                        <span class="text-muted">@item.Cargo</span>
+                                        <span class="badge bg-primary">@item.Area</span>
+                                    </div>
+                                </button>
+                            </h2>
+                            <div id="@pid" class="accordion-collapse collapse">
+                                <div class="accordion-body pt-2 pb-3">
+                                    <div class="row g-2 small">
+                                        <div class="col-md-3">
+                                            <span class="text-muted">Ciudad:</span>
+                                            @item.CiudadTrabajo
+                                        </div>
+                                        <div class="col-md-3">
+                                            <span class="text-muted">Contrato:</span>
+                                            @item.TipoContrato
+                                        </div>
+                                        <div class="col-md-3">
+                                            <span class="text-muted">EPS:</span>
+                                            @item.Eps
+                                        </div>
+                                        <div class="col-md-3">
+                                            <span class="text-muted">Celular:</span>
+                                            @item.Contacto
+                                        </div>
+                                        <div class="col-md-3">
+                                            <span class="text-muted">Correo corp.:</span>
+                                            @item.CorreoCorporativo
+                                        </div>
+                                        <div class="col-md-3">
+                                            <span class="text-muted">Ingreso:</span>
+                                            @item.FechaIngreso
+                                        </div>
+                                    </div>
+                                    <div class="mt-2">
+                                        <a asp-controller="Tbpersonals"
+                                           asp-action="Details"
+                                           asp-route-id="@item.CC"
+                                           class="btn btn-sm btn-outline-secondary">
+                                            Ver completo
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    }
+
+    @* ── INVENTARIO ───────────────────────────────────────────────── *@
+    @if (Model.Inventario.Any())
+    {
+        <div class="card border-0 shadow-sm mb-4">
+            <div class="card-header text-white fw-semibold"
+                 style="background:#0d6efd">
+                💻 Inventario
+                <span class="badge bg-light text-dark ms-2">@Model.Inventario.Count</span>
+            </div>
+            <div class="card-body p-0">
+                <div class="accordion" id="accInventario">
+                    @foreach (var item in Model.Inventario)
+                    {
+                        var iid = $"bi{item.IdEquipo}";
+                        <div class="accordion-item border-0 border-bottom">
+                            <h2 class="accordion-header">
+                                <button class="accordion-button collapsed py-2 small"
+                                        type="button"
+                                        data-bs-toggle="collapse"
+                                        data-bs-target="#@iid">
+                                    <div class="d-flex flex-wrap gap-3 align-items-center w-100">
+                                        <span class="fw-bold" style="min-width:160px">
+                                            @item.Dispositivo
+                                        </span>
+                                        <span class="badge bg-secondary">@item.Marca</span>
+                                        <span class="text-muted">@item.Modelo</span>
+                                        <span class="badge" style="background:#0d6efd">
+                                            @item.Planta
+                                        </span>
+                                        <span class="text-muted">@item.Ubicación</span>
+                                    </div>
+                                </button>
+                            </h2>
+                            <div id="@iid" class="accordion-collapse collapse">
+                                <div class="accordion-body pt-2 pb-3">
+                                    <div class="row g-2 small">
+                                        <div class="col-md-3">
+                                            <span class="text-muted">Serie:</span>
+                                            @item.Serie
+                                        </div>
+                                        <div class="col-md-3">
+                                            <span class="text-muted">IMEI:</span>
+                                            @item.Imei
+                                        </div>
+                                        <div class="col-md-3">
+                                            <span class="text-muted">Ubicación 2:</span>
+                                            @item.Ubicación2
+                                        </div>
+                                        <div class="col-md-3">
+                                            <span class="text-muted">CC asignado:</span>
+                                            @item.CC
+                                        </div>
+                                        <div class="col-md-6">
+                                            <span class="text-muted">Observación:</span>
+                                            @item.Observación
+                                        </div>
+                                    </div>
+                                    <div class="mt-2">
+                                        <a asp-controller="Tbinventarios"
+                                           asp-action="Details"
+                                           asp-route-id="@item.IdEquipo"
+                                           class="btn btn-sm btn-outline-secondary">
+                                            Ver completo
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    }
+
+    @* ── RESPONSIVAS ──────────────────────────────────────────────── *@
+    @if (Model.Responsivas.Any())
+    {
+        <div class="card border-0 shadow-sm mb-4">
+            <div class="card-header text-white fw-semibold"
+                 style="background:#198754">
+                📋 Responsivas
+                <span class="badge bg-light text-dark ms-2">@Model.Responsivas.Count</span>
+            </div>
+            <div class="card-body p-0">
+                <div class="accordion" id="accResponsivas">
+                    @foreach (var item in Model.Responsivas)
+                    {
+                        var rid = $"br{item.CC}";
+                        <div class="accordion-item border-0 border-bottom">
+                            <h2 class="accordion-header">
+                                <button class="accordion-button collapsed py-2 small"
+                                        type="button"
+                                        data-bs-toggle="collapse"
+                                        data-bs-target="#@rid">
+                                    <div class="d-flex flex-wrap gap-3 align-items-center w-100">
+                                        <span class="fw-bold" style="min-width:160px">
+                                            @item.Equipo
+                                        </span>
+                                        <span class="badge bg-secondary">CC: @item.CC</span>
+                                        <span class="text-muted">@item.Marca</span>
+                                        <span class="badge @(item.Estado == "Activo"
+                                                                                          ? "bg-success" : "bg-secondary")">
+                                            @item.Estado
+                                        </span>
+                                    </div>
+                                </button>
+                            </h2>
+                            <div id="@rid" class="accordion-collapse collapse">
+                                <div class="accordion-body pt-2 pb-3">
+                                    <div class="row g-2 small">
+                                        <div class="col-md-4">
+                                            <span class="text-muted">Serie:</span>
+                                            @item.Serie
+                                        </div>
+                                        <div class="col-md-8">
+                                            <span class="text-muted">Observación:</span>
+                                            @item.Observación
+                                        </div>
+                                    </div>
+                                    <div class="mt-2">
+                                        <a asp-controller="Tbresponsivas"
+                                           asp-action="Details"
+                                           asp-route-id="@item.CC"
+                                           class="btn btn-sm btn-outline-secondary">
+                                            Ver completo
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    }
+
+    @* ── SOLICITUDES ──────────────────────────────────────────────── *@
+    @if (Model.Solicitudes.Any())
+    {
+        <div class="card border-0 shadow-sm mb-4">
+            <div class="card-header text-white fw-semibold"
+                 style="background:#6f42c1">
+                📝 Solicitudes
+                <span class="badge bg-light text-dark ms-2">@Model.Solicitudes.Count</span>
+            </div>
+            <div class="card-body p-0">
+                <div class="accordion" id="accSolicitudes">
+                    @foreach (var item in Model.Solicitudes)
+                    {
+                        var sid = $"bs{item.IdSolicitud}";
+                        var badge = item.Estado switch
+                        {
+                                            "Aprobada" => "bg-success",
+                                            "Rechazada" => "bg-danger",
+                                            "Devuelta" => "bg-warning text-dark",
+                                            "Finalizada" => "bg-secondary",
+                            _ => "bg-warning text-dark"
+                        };
+                        <div class="accordion-item border-0 border-bottom">
+                            <h2 class="accordion-header">
+                                <button class="accordion-button collapsed py-2 small"
+                                        type="button"
+                                        data-bs-toggle="collapse"
+                                        data-bs-target="#@sid">
+                                    <div class="d-flex flex-wrap gap-3 align-items-center w-100">
+                                        <span class="fw-bold" style="min-width:180px">
+                                            @item.Nombre
+                                        </span>
+                                        <span class="badge bg-secondary">CC: @item.CC</span>
+                                        <span class="text-muted">@item.TipoSolicitud</span>
+                                        <span class="badge @badge">@item.Estado</span>
+                                    </div>
+                                </button>
+                            </h2>
+                            <div id="@sid" class="accordion-collapse collapse">
+                                <div class="accordion-body pt-2 pb-3">
+                                    <div class="row g-2 small">
+                                        <div class="col-md-3">
+                                            <span class="text-muted">Subtipo:</span>
+                                            @item.SubtipoPermiso
+                                        </div>
+                                        <div class="col-md-3">
+                                            <span class="text-muted">Fecha:</span>
+                                            @item.FechaSolicitud
+                                        </div>
+                                        <div class="col-md-3">
+                                            <span class="text-muted">Etapa:</span>
+                                            @item.EtapaAprobacion
+                                        </div>
+                                        <div class="col-md-6">
+                                            <span class="text-muted">Motivo:</span>
+                                            @item.Motivo
+                                        </div>
+                                    </div>
+                                    <div class="mt-2">
+                                        <a asp-controller="Tbsolicitudes"
+                                           asp-action="Revisar"
+                                           asp-route-id="@item.IdSolicitud"
+                                           class="btn btn-sm btn-outline-secondary">
+                                            Ver completo
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    }
+
+    @* ── SOLICITUDES RECHAZADAS ───────────────────────────────────── *@
+    @if (Model.SolicitudesRechazadas.Any())
+    {
+        <div class="card border-0 shadow-sm mb-4">
+            <div class="card-header text-white fw-semibold"
+                 style="background:#dc3545">
+                ❌ Solicitudes Rechazadas
+                <span class="badge bg-light text-dark ms-2">
+                    @Model.SolicitudesRechazadas.Count
+                </span>
+            </div>
+            <div class="card-body p-0">
+                <div class="accordion" id="accRechazadas">
+                    @foreach (var item in Model.SolicitudesRechazadas)
+                    {
+                        var xid = $"bx{item.IdSolicitud}";
+                        <div class="accordion-item border-0 border-bottom">
+                            <h2 class="accordion-header">
+                                <button class="accordion-button collapsed py-2 small"
+                                        type="button"
+                                        data-bs-toggle="collapse"
+                                        data-bs-target="#@xid">
+                                    <div class="d-flex flex-wrap gap-3 align-items-center w-100">
+                                        <span class="fw-bold" style="min-width:180px">
+                                            @item.Nombre
+                                        </span>
+                                        <span class="badge bg-secondary">CC: @item.CC</span>
+                                        <span class="text-muted">@item.TipoSolicitud</span>
+                                    </div>
+                                </button>
+                            </h2>
+                            <div id="@xid" class="accordion-collapse collapse">
+                                <div class="accordion-body pt-2 pb-3">
+                                    <div class="row g-2 small">
+                                        <div class="col-md-3">
+                                            <span class="text-muted">Fecha:</span>
+                                            @item.FechaSolicitud
+                                        </div>
+                                        <div class="col-md-9">
+                                            <span class="text-muted">Motivo:</span>
+                                            @item.Motivo
+                                        </div>
+                                        <div class="col-12">
+                                            <span class="text-muted">Observaciones:</span>
+                                            @item.Observaciones
+                                        </div>
+                                    </div>
+                                    <div class="mt-2">
+                                        <a asp-controller="TbsoliRechazadums"
+                                           asp-action="Details"
+                                           asp-route-id="@item.IdSolicitud"
+                                           class="btn btn-sm btn-outline-secondary">
+                                            Ver completo
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    }
+}

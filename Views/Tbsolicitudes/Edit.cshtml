@@ -1,0 +1,134 @@
+﻿@model Farmacol.Models.Tbpersonal
+@{
+    ViewData["Title"] = "Editar Personal";
+}
+
+<h1>Editar Personal</h1>
+<hr />
+
+<div class="row">
+    <div class="col-md-6">
+        <form asp-action="Edit">
+            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+            <input type="hidden" asp-for="CC" />
+
+            <div class="form-group mb-2">
+                <label asp-for="Nombre" class="control-label"></label>
+                <input asp-for="Nombre" class="form-control" />
+            </div>
+            <div class="form-group mb-2">
+                <label asp-for="Cargo" class="control-label"></label>
+                <input asp-for="Cargo" class="form-control" />
+            </div>
+            <div class="form-group mb-2">
+                <label class="control-label">Área</label>
+                <select name="Area" class="form-select">
+                    <option value="">-- Selecciona área --</option>
+                    @foreach (var area in ViewBag.Areas as List<Farmacol.Models.Tbarea> ?? new())
+                    {
+                        <option value="@area.Nombre"
+                                selected="@(Model.Area == area.Nombre ? "selected" : null)">
+                            @area.Nombre
+                        </option>
+                    }
+                </select>
+            </div>
+            <div class="form-group mb-2">
+                <label asp-for="ExpediciónCiudad" class="control-label"></label>
+                <input asp-for="ExpediciónCiudad" class="form-control" />
+            </div>
+            <div class="form-group mb-2">
+                <label asp-for="CiudadTrabajo" class="control-label"></label>
+                <input asp-for="CiudadTrabajo" class="form-control" />
+            </div>
+            <div class="form-group mb-2">
+                <label asp-for="Barrio" class="control-label"></label>
+                <input asp-for="Barrio" class="form-control" />
+            </div>
+            <div class="form-group mb-2">
+                <label asp-for="Rh" class="control-label"></label>
+                <input asp-for="Rh" class="form-control" />
+            </div>
+            <div class="form-group mb-2">
+                <label asp-for="NúmeroCel" class="control-label"></label>
+                <input asp-for="NúmeroCel" class="form-control" />
+            </div>
+            <div class="form-group mb-2">
+                <label asp-for="ContactoEmergencia" class="control-label"></label>
+                <input asp-for="ContactoEmergencia" class="form-control" />
+            </div>
+            <div class="form-group mb-2">
+                <label asp-for="Parentesco" class="control-label"></label>
+                <input asp-for="Parentesco" class="form-control" />
+            </div>
+            <div class="form-group mb-2">
+                <label asp-for="CelularEmergencia" class="control-label"></label>
+                <input asp-for="CelularEmergencia" class="form-control" />
+            </div>
+            <div class="form-group mb-2">
+                <label asp-for="TipoContrato" class="control-label"></label>
+                <input asp-for="TipoContrato" class="form-control" />
+            </div>
+            <div class="form-group mb-2">
+                <label asp-for="Eps" class="control-label"></label>
+                <input asp-for="Eps" class="form-control" />
+            </div>
+            <div class="form-group mb-2">
+                <label asp-for="FondoPensiones" class="control-label"></label>
+                <input asp-for="FondoPensiones" class="form-control" />
+            </div>
+            <div class="form-group mb-2">
+                <label asp-for="FondoCesantias" class="control-label"></label>
+                <input asp-for="FondoCesantias" class="form-control" />
+            </div>
+            <div class="form-group mb-2">
+                <label asp-for="CajaCompensación" class="control-label"></label>
+                <input asp-for="CajaCompensación" class="form-control" />
+            </div>
+            <div class="form-group mb-2">
+                <label asp-for="Arl" class="control-label"></label>
+                <input asp-for="Arl" class="form-control" />
+            </div>
+            <div class="form-group mb-2">
+                <label asp-for="Tpcuenta" class="control-label"></label>
+                <input asp-for="Tpcuenta" class="form-control" />
+            </div>
+            <div class="form-group mb-2">
+                <label asp-for="NoCuenta" class="control-label"></label>
+                <input asp-for="NoCuenta" class="form-control" />
+            </div>
+            <div class="form-group mb-2">
+                <label asp-for="Banco" class="control-label"></label>
+                <input asp-for="Banco" class="form-control" />
+            </div>
+            <div class="form-group mb-2">
+                <label asp-for="TallaCamisa" class="control-label"></label>
+                <input asp-for="TallaCamisa" class="form-control" />
+            </div>
+
+            <hr />
+            <h5>Acceso al Sistema</h5>
+            <div class="form-group mb-2">
+                <label asp-for="CorreoCorporativo" class="control-label"></label>
+                <input asp-for="CorreoCorporativo" class="form-control"
+                       placeholder="usuario@empresa.com" />
+            </div>
+            <div class="form-group mb-2">
+                <label asp-for="UsuarioCorporativo" class="control-label"></label>
+                <input asp-for="UsuarioCorporativo" class="form-control"
+                       placeholder="usuario.corporativo" />
+            </div>
+
+            <div class="form-group mt-3">
+                <input type="submit" value="Guardar" class="btn btn-primary" />
+                <a asp-action="Index" class="btn btn-secondary">Cancelar</a>
+            </div>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+}6

@@ -1,0 +1,54 @@
+﻿@model IEnumerable<Farmacol.Models.Tbsolicitude>
+@{
+    ViewData["Title"] = "Mis Solicitudes";
+}
+
+<h2>📋 Mis Solicitudes</h2>
+<hr />
+
+<a asp-action="Create" class="btn btn-primary mb-3">+ Nueva Solicitud</a>
+
+@if (!Model.Any())
+{
+    <div class="alert alert-info">No tienes solicitudes registradas.</div>
+}
+else
+{
+    <table class="table table-striped table-hover">
+        <thead class="table-dark">
+            <tr>
+                <th>#</th>
+                <th>Tipo</th>
+                <th>Subtipo</th>
+                <th>Fecha</th>
+                <th>Estado</th>
+                <th>Etapa</th>
+                <th>Obs. Jefe</th>
+                <th>Obs. RRHH</th>
+                <th></th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var s in Model)
+            {
+                <tr>
+                    <td>@s.IdSolicitud</td>
+                    <td>@s.TipoSolicitud</td>
+                    <td>@s.SubtipoPermiso</td>
+                    <td>@s.FechaSolicitud</td>
+                    <td>
+                        <span class="badge @(s.Estado == "Aprobada" ? "bg-success" :
+                                                                           s.Estado == "Rechazada" ? "bg-danger" :
+                                                                           "bg-warning text-dark")">
+                            @s.Estado
+                        </span>
+                    </td>
+                    <td><small>@s.EtapaAprobacion</small></td>
+                    <td><small>@s.ObservacionJefe</small></td>
+                    <td><small>@s.ObservacionRRHH</small></td>
+                    <td><a asp-action="Details" asp-route-id="@s.IdSolicitud">Ver</a></td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}

@@ -1,0 +1,386 @@
+﻿<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] - Farmacol</title>
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+    <style>
+        :root {
+            --sidebar-w-collapsed: 60px;
+            --sidebar-w-expanded: 240px;
+            --sidebar-bg: #1a1d23;
+            --sidebar-hover: #2a2d35;
+            --sidebar-active: #0d6efd;
+            --sidebar-text: #adb5bd;
+            --sidebar-text-active: #ffffff;
+            --topbar-h: 56px;
+            --transition: 0.25s ease;
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+            background: #f4f6f9;
+        }
+
+        /* Topbar */
+        .topbar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: var(--topbar-h);
+            background: #ffffff;
+            border-bottom: 1px solid #dee2e6;
+            display: flex;
+            align-items: center;
+            padding: 0 1rem;
+            z-index: 1030;
+            box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+        }
+
+            .topbar .brand {
+                font-size: 1.2rem;
+                font-weight: 700;
+                color: #0d6efd;
+                text-decoration: none;
+                margin-left: calc(var(--sidebar-w-collapsed) + 0.5rem);
+                transition: margin-left var(--transition);
+            }
+
+            .topbar .user-info {
+                margin-left: auto;
+                display: flex;
+                align-items: center;
+                gap: 0.75rem;
+                font-size: 0.9rem;
+                color: #495057;
+            }
+
+                .topbar .user-info .avatar {
+                    width: 34px;
+                    height: 34px;
+                    border-radius: 50%;
+                    background: #0d6efd;
+                    color: white;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    font-weight: 700;
+                    font-size: 0.85rem;
+                }
+
+        /* Sidebar */
+        .sidebar {
+            position: fixed;
+            top: var(--topbar-h);
+            left: 0;
+            bottom: 0;
+            width: var(--sidebar-w-collapsed);
+            background: var(--sidebar-bg);
+            overflow: hidden;
+            transition: width var(--transition);
+            z-index: 1020;
+            display: flex;
+            flex-direction: column;
+        }
+
+            .sidebar:hover {
+                width: var(--sidebar-w-expanded);
+            }
+
+        .sidebar-section-title {
+            font-size: 0.65rem;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            color: #6c757d;
+            padding: 1rem 0 0.25rem 1rem;
+            white-space: nowrap;
+            overflow: hidden;
+            opacity: 0;
+            transition: opacity var(--transition);
+        }
+
+        .sidebar:hover .sidebar-section-title {
+            opacity: 1;
+        }
+
+        .sidebar-item {
+            display: flex;
+            align-items: center;
+            padding: 0.6rem 0;
+            cursor: pointer;
+            color: var(--sidebar-text);
+            text-decoration: none;
+            white-space: nowrap;
+            transition: background var(--transition), color var(--transition);
+            border-radius: 6px;
+            margin: 1px 6px;
+        }
+
+            .sidebar-item:hover {
+                background: var(--sidebar-hover);
+                color: var(--sidebar-text-active);
+            }
+
+            .sidebar-item.active {
+                background: var(--sidebar-active);
+                color: var(--sidebar-text-active);
+            }
+
+            .sidebar-item .icon {
+                min-width: var(--sidebar-w-collapsed);
+                text-align: center;
+                font-size: 1.1rem;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+            }
+
+            .sidebar-item .label {
+                font-size: 0.88rem;
+                opacity: 0;
+                transition: opacity var(--transition);
+            }
+
+        .sidebar:hover .sidebar-item .label {
+            opacity: 1;
+        }
+
+        .sidebar-divider {
+            border-top: 1px solid #2e3340;
+            margin: 0.5rem 10px;
+        }
+
+        .sidebar-bottom {
+            margin-top: auto;
+            padding-bottom: 0.5rem;
+        }
+
+        .main-wrapper {
+            margin-top: var(--topbar-h);
+            margin-left: var(--sidebar-w-collapsed);
+            padding: 1.5rem;
+            transition: margin-left var(--transition);
+            min-height: calc(100vh - var(--topbar-h));
+        }
+    </style>
+</head>
+<body>
+
+    @{
+        var userArea = ViewBag.UserArea as string ?? "";
+        bool esCapHumano = userArea == "Capital Humano";
+        bool esGerGen = userArea == "Gerencia General";
+        bool esDirectivo = userArea == "Directivo";
+
+        bool esAdmin = User.IsInRole("Administrador");
+        bool esRRHH = User.IsInRole("RRHH");
+        bool esGerente = User.IsInRole("Gerente");
+        bool esJefe = User.IsInRole("Jefe");
+        bool esDir = User.IsInRole("Directivo");
+        bool esCoord = User.IsInRole("Coordinador");
+        bool esUsuario = User.IsInRole("Usuario");
+        bool esAsistente = User.IsInRole("Asistente");
+
+        // Puede ver Personal
+        bool verPersonal = esAdmin || esRRHH ||
+        (esGerente && esCapHumano) ||
+        (esJefe && esCapHumano);
+
+        // Puede ver Solicitudes (tabla)
+        bool verSolicitudes = esAdmin || esRRHH || esDir || esGerente || esJefe || esAsistente;
+
+        // Puede crear solicitudes
+        bool crearSolicitud = esCoord || esUsuario || esGerente || esJefe || esAsistente;
+
+        // Puede ver Sol. Rechazadas
+        bool verRechazadas = esAdmin || esRRHH;
+
+        // Puede ver Inventario/Responsivas
+        bool verTI = esAdmin || esRRHH;
+
+        // Buscador
+        bool verBuscador = !esCoord && !esUsuario;
+    }
+
+    <!-- TOPBAR -->
+    <div class="topbar">
+        <a class="brand" href="/">💊 Farmacol</a>
+        <div class="user-info">
+            @if (User.Identity?.IsAuthenticated == true)
+            {
+                var initials = (User.Identity.Name ?? "?").Substring(0, 1).ToUpper();
+                <div class="avatar">@initials</div>
+                <span>@User.Identity.Name</span>
+                @if (!string.IsNullOrEmpty(userArea))
+                {
+                    <span class="badge bg-secondary">@userArea</span>
+                }
+                <form asp-controller="Login" asp-action="Logout" method="post" class="mb-0">
+                    @Html.AntiForgeryToken()
+                    <button type="submit" class="btn btn-sm btn-outline-danger">Salir</button>
+                </form>
+            }
+        </div>
+    </div>
+
+    <!-- SIDEBAR -->
+    <nav class="sidebar">
+
+        <!-- Notificaciones -->
+        @if (verSolicitudes || esCoord || esUsuario)
+        {
+            <a class="sidebar-item position-relative"
+               asp-controller="Tbsolicitudes" asp-action="Index">
+                <span class="icon">🔔</span>
+                <span class="label">Notificaciones</span>
+                <span id="badgeNotif"
+                      class="position-absolute badge rounded-pill bg-danger"
+                      style="top:4px; left:36px; font-size:0.65rem; display:none;">0</span>
+            </a>
+        }
+
+        <!-- Inicio -->
+        <a class="sidebar-item @(ViewContext.RouteData.Values["controller"]?.ToString() == "Home" ? "active" : "")"
+           asp-controller="Home" asp-action="Index">
+            <span class="icon">🏠</span>
+            <span class="label">Inicio</span>
+        </a>
+
+        <!-- Buscador -->
+        @if (verBuscador)
+        {
+            <a class="sidebar-item @(ViewContext.RouteData.Values["controller"]?.ToString() == "Buscador" ? "active" : "")"
+               asp-controller="Buscador" asp-action="Index">
+                <span class="icon">🔍</span>
+                <span class="label">Buscador</span>
+            </a>
+        }
+
+        <div class="sidebar-divider"></div>
+
+        <!-- Personal -->
+        @if (verPersonal)
+        {
+            <div class="sidebar-section-title">Personal</div>
+            <a class="sidebar-item @(ViewContext.RouteData.Values["controller"]?.ToString() == "Tbpersonals" ? "active" : "")"
+               asp-controller="Tbpersonals" asp-action="Index">
+                <span class="icon">👥</span>
+                <span class="label">Personal</span>
+            </a>
+        }
+
+        <!-- Solicitudes (tabla de revisión) -->
+        @if (verSolicitudes)
+        {
+            <div class="sidebar-section-title">
+                @(esAdmin || esRRHH ? "Gestión" : "Revisión")
+            </div>
+            <a class="sidebar-item @(ViewContext.RouteData.Values["controller"]?.ToString() == "Tbsolicitudes" &&
+                                                 ViewContext.RouteData.Values["action"]?.ToString() != "Create" ? "active" : "")"
+               asp-controller="Tbsolicitudes" asp-action="Index">
+                <span class="icon">📋</span>
+                <span class="label">Solicitudes</span>
+            </a>
+        }
+
+        <!-- Sol. Rechazadas -->
+        @if (verRechazadas)
+        {
+            <a class="sidebar-item @(ViewContext.RouteData.Values["controller"]?.ToString() == "TbsoliRechazadums" ? "active" : "")"
+               asp-controller="TbsoliRechazadums" asp-action="Index">
+                <span class="icon">❌</span>
+                <span class="label">Sol. Rechazadas</span>
+            </a>
+        }
+
+        <!-- Nueva Solicitud -->
+        @if (crearSolicitud)
+        {
+            <div class="sidebar-section-title">Mis Solicitudes</div>
+            <a class="sidebar-item @(ViewContext.RouteData.Values["action"]?.ToString() == "Create" &&
+                                                 ViewContext.RouteData.Values["controller"]?.ToString() == "Tbsolicitudes" ? "active" : "")"
+               asp-controller="Tbsolicitudes" asp-action="Create">
+                <span class="icon">➕</span>
+                <span class="label">Nueva Solicitud</span>
+            </a>
+        }
+
+        <div class="sidebar-divider"></div>
+
+        <!-- Tecnología -->
+        @if (verTI)
+        {
+            <div class="sidebar-section-title">Tecnología</div>
+            <a class="sidebar-item @(ViewContext.RouteData.Values["controller"]?.ToString() == "Tbinventarios" ? "active" : "")"
+               asp-controller="Tbinventarios" asp-action="Index">
+                <span class="icon">💻</span>
+                <span class="label">Inventario</span>
+            </a>
+            <a class="sidebar-item @(ViewContext.RouteData.Values["controller"]?.ToString() == "Tbresponsivas" ? "active" : "")"
+               asp-controller="Tbresponsivas" asp-action="Index">
+                <span class="icon">📄</span>
+                <span class="label">Responsivas</span>
+            </a>
+        }
+
+        <!-- Administración -->
+        @if (esAdmin)
+        {
+            <div class="sidebar-divider"></div>
+            <div class="sidebar-section-title">Administración</div>
+            <a class="sidebar-item @(ViewContext.RouteData.Values["controller"]?.ToString() == "Usuarios" ? "active" : "")"
+               asp-controller="Usuarios" asp-action="Index">
+                <span class="icon">⚙️</span>
+                <span class="label">Usuarios</span>
+            </a>
+        }
+
+        <!-- Cerrar sesión -->
+        <div class="sidebar-bottom">
+            <div class="sidebar-divider"></div>
+            @if (User.Identity?.IsAuthenticated == true)
+            {
+                <form asp-controller="Login" asp-action="Logout" method="post" class="mb-0">
+                    @Html.AntiForgeryToken()
+                    <button type="submit" class="sidebar-item w-100 border-0 bg-transparent text-start">
+                        <span class="icon">🚪</span>
+                        <span class="label" style="color:#dc3545;">Cerrar sesión</span>
+                    </button>
+                </form>
+            }
+        </div>
+
+    </nav>
+
+    <!-- CONTENIDO PRINCIPAL -->
+    <div class="main-wrapper">
+        @RenderBody()
+    </div>
+
+    <script src="~/lib/jquery/dist/jquery.min.js"></script>
+    <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="~/js/site.js" asp-append-version="true"></script>
+    @await RenderSectionAsync("Scripts", required: false)
+
+    <script>
+        async function actualizarNotificaciones() {
+            try {
+                const resp  = await fetch('/Tbsolicitudes/ContarNotificaciones');
+                const count = await resp.json();
+                const badge = document.getElementById('badgeNotif');
+                if (badge) {
+                    badge.textContent  = count;
+                    badge.style.display = count > 0 ? 'inline' : 'none';
+                }
+            } catch {}
+        }
+        actualizarNotificaciones();
+        setInterval(actualizarNotificaciones, 30000);
+    </script>
+
+</body>
+</html>

@@ -1,0 +1,44 @@
+﻿@model List<Farmacol.Models.UsuarioViewModel>
+@{
+    ViewData["Title"] = "Usuarios";
+}
+
+<h1>Usuarios del Sistema</h1>
+<p>
+    <a asp-action="Crear" class="btn btn-primary">+ Nuevo Usuario</a>
+</p>
+
+<table class="table table-striped table-hover">
+    <thead class="table-dark">
+        <tr>
+            <th>Nombre</th>
+            <th>Cargo</th>
+            <th>Email / Usuario</th>
+            <th>Rol</th>
+            <th></th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var item in Model)
+        {
+            <tr>
+                <td>@item.Nombre</td>
+                <td>@item.Cargo</td>
+                <td>@item.Email</td>
+                <td><span class="badge bg-primary">@item.Rol</span></td>
+                <td>
+                    <a asp-action="Editar" asp-route-id="@item.Id"
+                       class="btn btn-sm btn-primary">✏️ Editar</a>
+                    <a asp-action="CambiarPassword" asp-route-id="@item.Id"
+                       class="btn btn-sm btn-warning">🔑 Contraseña</a>
+                    <form asp-action="Eliminar" method="post" style="display:inline"
+                          onsubmit="return confirm('¿Eliminar este usuario?')">
+                        @Html.AntiForgeryToken()
+                        <input type="hidden" name="id" value="@item.Id" />
+                        <button type="submit" class="btn btn-sm btn-danger">🗑️ Eliminar</button>
+                    </form>
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>

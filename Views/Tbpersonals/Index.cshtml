@@ -1,0 +1,320 @@
+﻿@model IEnumerable<Farmacol.Models.Tbpersonal>
+@{
+    ViewData["Title"] = "Personal";
+}
+
+<h1>Personal</h1>
+
+<div class="d-flex gap-2 mb-3">
+    <a asp-action="Create" class="btn btn-primary">+ Nuevo</a>
+    <a asp-action="ImportarExcel" class="btn btn-success">📥 Importar Excel</a>
+</div>
+
+<form method="get" class="mb-3">
+    <div class="row g-2">
+        <div class="col-md-3">
+            <input type="text" name="busqueda" value="@ViewBag.Busqueda"
+                   class="form-control" placeholder="🔍 Buscar en todo..." />
+        </div>
+        <div class="col-md-2">
+            <input type="text" name="cedula" value="@ViewBag.Cedula"
+                   class="form-control" placeholder="CC" />
+        </div>
+        <div class="col-md-2">
+            <input type="text" name="nombre" value="@ViewBag.Nombre"
+                   class="form-control" placeholder="Nombre" />
+        </div>
+        <div class="col-md-2">
+            <input type="text" name="cargo" value="@ViewBag.Cargo"
+                   class="form-control" placeholder="Cargo" />
+        </div>
+        <div class="col-md-2">
+            <input type="text" name="ciudad" value="@ViewBag.Ciudad"
+                   class="form-control" placeholder="Ciudad" />
+        </div>
+        <div class="col-md-1">
+            <button type="submit" class="btn btn-secondary w-100">Filtrar</button>
+        </div>
+        <div class="col-md-1">
+            <a asp-action="Index" class="btn btn-outline-secondary w-100">✕</a>
+        </div>
+    </div>
+</form>
+
+@if (!Model.Any())
+{
+    <div class="alert alert-info">No hay registros para mostrar.</div>
+}
+else
+{
+    <div class="accordion" id="acordeonPersonal">
+        @foreach (var item in Model)
+        {
+            var colId = $"p{item.CC}";
+            <div class="accordion-item border-0 mb-2 shadow-sm">
+
+                <h2 class="accordion-header">
+                    <button class="accordion-button collapsed py-2"
+                            type="button"
+                            data-bs-toggle="collapse"
+                            data-bs-target="#@colId">
+                        <div class="d-flex flex-wrap gap-3 align-items-center w-100 small">
+                            <span class="fw-bold" style="min-width:180px">
+                                @item.NombreColaborador
+                            </span>
+                            <span class="badge bg-secondary">@item.CC</span>
+                            <span class="text-muted" style="min-width:160px">
+                                @item.Cargo
+                            </span>
+                            <span class="badge bg-primary">@item.Area</span>
+                            <span class="text-muted">@item.CiudadTrabajo</span>
+                        </div>
+                    </button>
+                </h2>
+
+                <div id="@colId" class="accordion-collapse collapse"
+                     data-bs-parent="">
+                    <div class="accordion-body pt-2 pb-3">
+
+                        <div class="d-flex gap-2 mb-3">
+                            <a asp-action="Edit" asp-route-id="@item.CC"
+                               class="btn btn-sm btn-outline-warning">✏️ Editar</a>
+                            <a asp-action="Delete" asp-route-id="@item.CC"
+                               class="btn btn-sm btn-outline-danger">🗑️ Eliminar</a>
+                        </div>
+
+                        <div class="row g-3">
+
+                            <div class="col-12">
+                                <div class="card border-0">
+                                    <div class="card-header text-white fw-semibold"
+                                         style="background:#343a40">
+                                        🪪 Identificación
+                                    </div>
+                                    <div class="card-body bg-light">
+                                        <div class="row row-cols-2 row-cols-md-4 g-2 small">
+                                            <div class="col">
+                                                <span class="text-muted">Cédula:</span>
+                                                <strong>@item.CC</strong>
+                                            </div>
+                                            <div class="col">
+                                                <span class="text-muted">Exp.:</span>
+                                                @item.ExpedicionCiudad
+                                            </div>
+                                            <div class="col">
+                                                <span class="text-muted">Nacimiento:</span>
+                                                @item.FechaNacimiento
+                                            </div>
+                                            <div class="col">
+                                                <span class="text-muted">Ciudad nac.:</span>
+                                                @item.CiudadNacimiento
+                                            </div>
+                                            <div class="col">
+                                                <span class="text-muted">Edad:</span>
+                                                @item.Edad a. @item.MesesEdad m.
+                                            </div>
+                                            <div class="col">
+                                                <span class="text-muted">Género:</span>
+                                                @item.Genero
+                                            </div>
+                                            <div class="col">
+                                                <span class="text-muted">Estado civil:</span>
+                                                @item.EstadoCivil
+                                            </div>
+                                            <div class="col">
+                                                <span class="text-muted">RH:</span>
+                                                @item.Rh
+                                            </div>
+                                            <div class="col">
+                                                <span class="text-muted">Generación:</span>
+                                                @item.Generacion
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="col-12">
+                                <div class="card border-0">
+                                    <div class="card-header text-white fw-semibold"
+                                         style="background:#0d6efd">
+                                        💼 Cargo y Área
+                                    </div>
+                                    <div class="card-body" style="background:#eef3ff">
+                                        <div class="row row-cols-2 row-cols-md-4 g-2 small">
+                                            <div class="col">
+                                                <span class="text-muted">Cargo:</span>
+                                                <strong>@item.Cargo</strong>
+                                            </div>
+                                            <div class="col">
+                                                <span class="text-muted">Área:</span>
+                                                @item.Area
+                                            </div>
+                                            <div class="col">
+                                                <span class="text-muted">Gerencia:</span>
+                                                @item.Gerencia
+                                            </div>
+                                            <div class="col">
+                                                <span class="text-muted">Centro costos:</span>
+                                                @item.NombreCentroCostos (@item.CodCeco)
+                                            </div>
+                                            <div class="col">
+                                                <span class="text-muted">Contrato:</span>
+                                                @item.TipoContrato
+                                            </div>
+                                            <div class="col">
+                                                <span class="text-muted">Ingreso:</span>
+                                                @item.FechaIngreso
+                                            </div>
+                                            <div class="col">
+                                                <span class="text-muted">Venc. prueba:</span>
+                                                @item.VencimientoPeriodoPrueba
+                                            </div>
+                                            <div class="col">
+                                                <span class="text-muted">Antigüedad:</span>
+                                                @item.AniosAntiguedad a. @item.MesesAntiguedad m.
+                                            </div>
+                                            <div class="col">
+                                                <span class="text-muted">Ciudad trabajo:</span>
+                                                @item.CiudadTrabajo
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="col-md-6">
+                                <div class="card border-0 h-100">
+                                    <div class="card-header text-white fw-semibold"
+                                         style="background:#198754">
+                                        📞 Contacto
+                                    </div>
+                                    <div class="card-body" style="background:#edfaf3">
+                                        <div class="row row-cols-1 row-cols-md-2 g-2 small">
+                                            <div class="col">
+                                                <span class="text-muted">Celular:</span>
+                                                @item.Contacto
+                                            </div>
+                                            <div class="col">
+                                                <span class="text-muted">Correo personal:</span>
+                                                @item.CorreoPersonal
+                                            </div>
+                                            <div class="col">
+                                                <span class="text-muted">Dirección:</span>
+                                                @item.DireccionResidencia
+                                            </div>
+                                            <div class="col">
+                                                <span class="text-muted">Barrio:</span>
+                                                @item.Barrio
+                                            </div>
+                                            <div class="col">
+                                                <span class="text-muted">Emergencia:</span>
+                                                @item.ContactoEmergencia
+                                            </div>
+                                            <div class="col">
+                                                <span class="text-muted">Parentesco:</span>
+                                                @item.Parentesco
+                                            </div>
+                                            <div class="col">
+                                                <span class="text-muted">Tel. emergencia:</span>
+                                                @item.TelefonoEmergencia
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="col-md-6">
+                                <div class="card border-0 h-100">
+                                    <div class="card-header text-white fw-semibold"
+                                         style="background:#dc3545">
+                                        🏥 Seguridad Social
+                                    </div>
+                                    <div class="card-body" style="background:#fff0f0">
+                                        <div class="row row-cols-1 row-cols-md-2 g-2 small">
+                                            <div class="col">
+                                                <span class="text-muted">EPS:</span>
+                                                @item.Eps
+                                            </div>
+                                            <div class="col">
+                                                <span class="text-muted">Pensiones:</span>
+                                                @item.FondoPensiones
+                                            </div>
+                                            <div class="col">
+                                                <span class="text-muted">Cesantías:</span>
+                                                @item.FondoCesantias
+                                            </div>
+                                            <div class="col">
+                                                <span class="text-muted">Caja comp.:</span>
+                                                @item.CajaCompensacion
+                                            </div>
+                                            <div class="col">
+                                                <span class="text-muted">ARL:</span>
+                                                @item.Arl
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="col-md-6">
+                                <div class="card border-0 h-100">
+                                    <div class="card-header text-white fw-semibold"
+                                         style="background:#6f42c1">
+                                        🏦 Cuenta Bancaria
+                                    </div>
+                                    <div class="card-body" style="background:#f3eeff">
+                                        <div class="row row-cols-1 row-cols-md-2 g-2 small">
+                                            <div class="col">
+                                                <span class="text-muted">Banco:</span>
+                                                @item.Banco
+                                            </div>
+                                            <div class="col">
+                                                <span class="text-muted">Tipo cuenta:</span>
+                                                @item.TipoCuenta
+                                            </div>
+                                            <div class="col">
+                                                <span class="text-muted">No. cuenta:</span>
+                                                @item.NumeroCuenta
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="col-md-6">
+                                <div class="card border-0 h-100">
+                                    <div class="card-header text-white fw-semibold"
+                                         style="background:#fd7e14">
+                                        🔐 Acceso al Sistema
+                                    </div>
+                                    <div class="card-body" style="background:#fff8f0">
+                                        <div class="row row-cols-1 g-2 small">
+                                            <div class="col">
+                                                <span class="text-muted">Correo corp.:</span>
+                                                @item.CorreoCorporativo
+                                            </div>
+                                            <div class="col">
+                                                <span class="text-muted">Usuario corp.:</span>
+                                                @item.UsuarioCorporativo
+                                            </div>
+                                            <div class="col">
+                                                <span class="text-muted">Talla camisa:</span>
+                                                @item.TallaCamisa
+                                            </div>
+                                            <div class="col">
+                                                <span class="text-muted">Grupo:</span>
+                                                @item.Grupo
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                        </div>
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+}

@@ -1,0 +1,220 @@
+﻿@model IEnumerable<Farmacol.Models.Tbinventario>
+@{
+    ViewData["Title"] = "Inventario";
+}
+
+<h1>Inventario</h1>
+
+<div class="d-flex gap-2 mb-3">
+    <a asp-action="Create" class="btn btn-primary">+ Nuevo</a>
+    <a asp-action="ImportarExcel" class="btn btn-success">📥 Importar Excel</a>
+</div>
+
+<form method="get" class="mb-3">
+    <div class="row g-2">
+        <div class="col-md-3">
+            <input type="text" name="busqueda" value="@ViewBag.Busqueda"
+                   class="form-control" placeholder="🔍 Buscar en todo..." />
+        </div>
+        <div class="col-md-2">
+            <input type="text" name="dispositivo" value="@ViewBag.Dispositivo"
+                   class="form-control" placeholder="Dispositivo" />
+        </div>
+        <div class="col-md-2">
+            <input type="text" name="marca" value="@ViewBag.Marca"
+                   class="form-control" placeholder="Marca" />
+        </div>
+        <div class="col-md-2">
+            <input type="text" name="serie" value="@ViewBag.Serie"
+                   class="form-control" placeholder="Serie" />
+        </div>
+        <div class="col-md-2">
+            <input type="text" name="ubicacion" value="@ViewBag.Ubicacion"
+                   class="form-control" placeholder="Ubicación" />
+        </div>
+        <div class="col-md-2">
+            <input type="text" name="planta" value="@ViewBag.Planta"
+                   class="form-control" placeholder="Planta" />
+        </div>
+        <div class="col-md-2">
+            <input type="text" name="cedula" value="@ViewBag.Cedula"
+                   class="form-control" placeholder="CC" />
+        </div>
+        <div class="col-md-1">
+            <button type="submit" class="btn btn-secondary w-100">Filtrar</button>
+        </div>
+        <div class="col-md-1">
+            <a asp-action="Index" class="btn btn-outline-secondary w-100">✕</a>
+        </div>
+    </div>
+</form>
+
+@if (!Model.Any())
+{
+    <div class="alert alert-info">No hay equipos registrados.</div>
+}
+else
+{
+    <div class="accordion" id="acordeonInventario">
+        @foreach (var item in Model)
+        {
+            var colId = $"eq{item.IdEquipo}";
+            <div class="accordion-item border-0 mb-2 shadow-sm">
+
+                <h2 class="accordion-header">
+                    <button class="accordion-button collapsed py-2"
+                            type="button"
+                            data-bs-toggle="collapse"
+                            data-bs-target="#@colId">
+                        <div class="d-flex flex-wrap gap-3 align-items-center w-100 small">
+                            <span class="fw-bold" style="min-width:160px">
+                                @item.Dispositivo
+                            </span>
+                            <span class="badge bg-secondary">@item.Marca</span>
+                            <span class="text-muted" style="min-width:120px">
+                                @item.Modelo
+                            </span>
+                            <span class="badge bg-primary">@item.Planta</span>
+                            <span class="text-muted">@item.Ubicación</span>
+                        </div>
+                    </button>
+                </h2>
+
+                <div id="@colId" class="accordion-collapse collapse">
+                    <div class="accordion-body pt-2 pb-3">
+
+                        <div class="d-flex gap-2 mb-3">
+                            <a asp-action="Edit" asp-route-id="@item.IdEquipo"
+                               class="btn btn-sm btn-outline-warning">✏️ Editar</a>
+                            <a asp-action="Delete" asp-route-id="@item.IdEquipo"
+                               class="btn btn-sm btn-outline-danger">🗑️ Eliminar</a>
+                        </div>
+
+                        <div class="row g-3">
+
+                            <div class="col-md-6">
+                                <div class="card border-0 h-100">
+                                    <div class="card-header text-white fw-semibold"
+                                         style="background:#0d6efd">
+                                        💻 Equipo
+                                    </div>
+                                    <div class="card-body" style="background:#eef3ff">
+                                        <div class="row row-cols-1 row-cols-md-2 g-2 small">
+                                            <div class="col">
+                                                <span class="text-muted">Dispositivo:</span>
+                                                <strong>@item.Dispositivo</strong>
+                                            </div>
+                                            <div class="col">
+                                                <span class="text-muted">Marca:</span>
+                                                @item.Marca
+                                            </div>
+                                            <div class="col">
+                                                <span class="text-muted">Modelo:</span>
+                                                @item.Modelo
+                                            </div>
+                                            <div class="col">
+                                                <span class="text-muted">Serie:</span>
+                                                @item.Serie
+                                            </div>
+                                            <div class="col">
+                                                <span class="text-muted">IMEI:</span>
+                                                @item.Imei
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="col-md-6">
+                                <div class="card border-0 h-100">
+                                    <div class="card-header text-white fw-semibold"
+                                         style="background:#198754">
+                                        📍 Ubicación
+                                    </div>
+                                    <div class="card-body" style="background:#edfaf3">
+                                        <div class="row row-cols-1 row-cols-md-2 g-2 small">
+                                            <div class="col">
+                                                <span class="text-muted">Ubicación:</span>
+                                                @item.Ubicación
+                                            </div>
+                                            <div class="col">
+                                                <span class="text-muted">Ubicación 2:</span>
+                                                @item.Ubicación2
+                                            </div>
+                                            <div class="col">
+                                                <span class="text-muted">Planta:</span>
+                                                @item.Planta
+                                            </div>
+                                            <div class="col">
+                                                <span class="text-muted">CC asignado:</span>
+                                                @item.CC
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="col-12">
+                                <div class="card border-0">
+                                    <div class="card-header text-white fw-semibold"
+                                         style="background:#343a40">
+                                        📝 Observaciones y Anexo
+                                    </div>
+                                    <div class="card-body bg-light">
+                                        <div class="row g-2 small">
+                                            <div class="col-md-8">
+                                                <span class="text-muted">Observación:</span>
+                                                @item.Observación
+                                            </div>
+                                            <div class="col-md-4">
+                                                <span class="text-muted">Anexo:</span>
+                                                @if (!string.IsNullOrEmpty(item.Anexo))
+                                                {
+                                                    <a href="#"
+                                                       onclick="verImagen('@item.Anexo')"
+                                                       class="btn btn-sm btn-outline-secondary ms-1">
+                                                        🖼️ Ver imagen
+                                                    </a>
+                                                }
+                                                else
+                                                {
+                                                    <span class="text-muted ms-1">—</span>
+                                                }
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                        </div>
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+}
+
+<div class="modal fade" id="modalImagen" tabindex="-1">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Anexo</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body text-center">
+                <img id="imgModal" src="" alt="Anexo"
+                     style="max-width:100%; max-height:70vh;" />
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        function verImagen(src) {
+            document.getElementById('imgModal').src = src;
+            var modal = new bootstrap.Modal(document.getElementById('modalImagen'));
+            modal.show();
+        }
+    </script>
+}

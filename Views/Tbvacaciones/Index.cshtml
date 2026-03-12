@@ -1,0 +1,83 @@
+﻿@model IEnumerable<Farmacol.Models.Tbvacacione>
+@{
+    ViewData["Title"] = "Vacaciones";
+}
+
+<h1>Vacaciones</h1>
+
+<p>
+    <a asp-action="Create" class="btn btn-primary">+ Nueva</a>
+</p>
+
+<form method="get" class="mb-3">
+    <div class="row g-2">
+        <div class="col-md-4">
+            <input type="text" name="busqueda" value="@ViewBag.Busqueda"
+                   class="form-control" placeholder="🔍 Buscar en todo..." />
+        </div>
+        <div class="col-md-2">
+            <input type="text" name="cedula" value="@ViewBag.Cedula"
+                   class="form-control" placeholder="CC" />
+        </div>
+        <div class="col-md-2">
+            <input type="text" name="nombre" value="@ViewBag.Nombre"
+                   class="form-control" placeholder="Nombre" />
+        </div>
+        <div class="col-md-2">
+            <input type="text" name="cargo" value="@ViewBag.Cargo"
+                   class="form-control" placeholder="Cargo" />
+        </div>
+        <div class="col-md-2">
+            <input type="date" name="fechaInicio" value="@ViewBag.FechaInicio"
+                   class="form-control" />
+        </div>
+        <div class="col-md-2">
+            <input type="date" name="fechaFin" value="@ViewBag.FechaFin"
+                   class="form-control" />
+        </div>
+        <div class="col-md-2">
+            <button type="submit" class="btn btn-secondary w-100">Filtrar</button>
+        </div>
+        <div class="col-md-2">
+            <a asp-action="Index" class="btn btn-outline-secondary w-100">Limpiar</a>
+        </div>
+    </div>
+</form>
+
+<table class="table table-striped table-hover">
+    <thead class="table-dark">
+        <tr>
+            <th>@Html.DisplayNameFor(model => model.Nombre)</th>
+            <th>@Html.DisplayNameFor(model => model.CC)</th>
+            <th>@Html.DisplayNameFor(model => model.Cargo)</th>
+            <th>@Html.DisplayNameFor(model => model.FechaInicio)</th>
+            <th>@Html.DisplayNameFor(model => model.FechaFin)</th>
+            <th>@Html.DisplayNameFor(model => model.TotalDías)</th>
+            <th>@Html.DisplayNameFor(model => model.FechaSolicitud)</th>
+            <th>@Html.DisplayNameFor(model => model.Observaciones)</th>
+            <th>@Html.DisplayNameFor(model => model.Anexos)</th>
+            <th></th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var item in Model)
+        {
+            <tr>
+                <td>@Html.DisplayFor(modelItem => item.Nombre)</td>
+                <td>@Html.DisplayFor(modelItem => item.CC)</td>
+                <td>@Html.DisplayFor(modelItem => item.Cargo)</td>
+                <td>@Html.DisplayFor(modelItem => item.FechaInicio)</td>
+                <td>@Html.DisplayFor(modelItem => item.FechaFin)</td>
+                <td>@Html.DisplayFor(modelItem => item.TotalDías)</td>
+                <td>@Html.DisplayFor(modelItem => item.FechaSolicitud)</td>
+                <td>@Html.DisplayFor(modelItem => item.Observaciones)</td>
+                <td>@Html.DisplayFor(modelItem => item.Anexos)</td>
+                <td>
+                    <a asp-action="Edit" asp-route-id="@item.IdVacación">Edit</a> |
+                    <a asp-action="Details" asp-route-id="@item.IdVacación">Details</a> |
+                    <a asp-action="Delete" asp-route-id="@item.IdVacación">Delete</a>
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>

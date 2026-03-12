@@ -1,0 +1,81 @@
+﻿@{
+    ViewData["Title"] = "Importar Personal desde Excel";
+}
+
+<h1>📥 Importar Personal desde Excel</h1>
+<hr />
+
+@if (TempData["Exito"] != null)
+{
+    <div class="alert alert-success">@TempData["Exito"]</div>
+}
+@if (TempData["Error"] != null)
+{
+    <div class="alert alert-danger">@TempData["Error"]</div>
+}
+@if (TempData["ErrorDetalle"] != null)
+{
+    <div class="alert alert-warning">
+        <strong>Detalles de errores:</strong><br />
+        @TempData["ErrorDetalle"]
+    </div>
+}
+
+<div class="row">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-body">
+                <h5 class="card-title">Subir archivo</h5>
+                <p class="text-muted">
+                    El archivo debe tener el mismo formato que la plantilla original.<br />
+                    La primera fila se toma como encabezado y se omite.<br />
+                    Si una cédula ya existe, el registro se <strong>actualiza</strong>.
+                </p>
+                <form asp-action="ImportarExcel" method="post" enctype="multipart/form-data">
+                    @Html.AntiForgeryToken()
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Archivo Excel (.xlsx)</label>
+                        <input type="file" name="archivoExcel" accept=".xlsx,.xls"
+                               class="form-control" required />
+                    </div>
+                    <button type="submit" class="btn btn-success">
+                        📤 Importar
+                    </button>
+                    <a asp-action="Index" class="btn btn-secondary ms-2">Cancelar</a>
+                </form>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="card border-info">
+            <div class="card-body">
+                <h5 class="card-title text-info">📋 Orden de columnas esperado</h5>
+                <small class="text-muted">
+                    <ol>
+                        <li>N° (se ignora)</li>
+                        <li><strong>C.C.</strong> (requerido)</li>
+                        <li>Expedición Ciudad</li>
+                        <li>Ciudad de Trabajo</li>
+                        <li>Nombre Colaborador</li>
+                        <li>Cargo</li>
+                        <li>Cod CECO</li>
+                        <li>Nombre Centro de Costos</li>
+                        <li>Área</li>
+                        <li>Gerencia</li>
+                        <li>Fecha Ingreso</li>
+                        <li>Venc. Periodo Prueba</li>
+                        <li>Años antigüedad</li>
+                        <li>Meses antigüedad</li>
+                        <li>Salarios (col 15–23)</li>
+                        <li>Auxilios (col 24–34)</li>
+                        <li>Fecha Nacimiento (col 35)</li>
+                        <li>Datos personales (col 36–50)</li>
+                        <li>Datos laborales (col 51–62)</li>
+                        <li>Correo Corporativo (col 63)</li>
+                        <li>Usuario Corporativo (col 64)</li>
+                    </ol>
+                </small>
+            </div>
+        </div>
+    </div>
+</div>

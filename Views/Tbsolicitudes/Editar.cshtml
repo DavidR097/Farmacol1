@@ -1,0 +1,174 @@
+﻿@model Farmacol.Models.Tbsolicitude
+@{
+    ViewData["Title"] = "Editar Solicitud Devuelta";
+}
+
+<h2>✏️ Editar Solicitud #@Model.IdSolicitud</h2>
+<hr />
+
+@if (TempData["Error"] != null)
+{
+    <div class="alert alert-danger">@TempData["Error"]</div>
+}
+
+@{
+    var motivoDevolucion = Model.Paso3Obs ?? Model.Paso2Obs ?? Model.Paso1Obs;
+}
+@if (!string.IsNullOrEmpty(motivoDevolucion))
+{
+    <div class="alert alert-warning">
+        <strong>↩️ Motivo de devolución:</strong> @motivoDevolucion
+        @if (Model.FechaDevolucion != null)
+        {
+            <br />
+            <small>
+                Devuelta el @Model.FechaDevolucion?.ToString("dd/MM/yyyy HH:mm") —
+                Vence el <strong>@Model.FechaDevolucion?.AddDays(3).ToString("dd/MM/yyyy")</strong>
+            </small>
+        }
+    </div>
+}
+
+<form asp-action="Reenviar" method="post" enctype="multipart/form-data">
+    @Html.AntiForgeryToken()
+    <input type="hidden" name="id" value="@Model.IdSolicitud" />
+
+    <div class="row">
+        <!-- Columna izquierda: documento -->
+        <div class="col-md-5">
+            @if (!string.IsNullOrEmpty(Model.Anexos))
+            {
+                <div class="mb-3">
+                    <label class="fw-bold">📎 Documento actual</label>
+                    <div class="border rounded" style="height:400px;">
+                        <iframe src="@Model.Anexos" width="100%" height="100%"
+                                style="border:none;"></iframe>
+                    </div>
+                    <a href="@Model.Anexos" target="_blank"
+                       class="btn btn-sm btn-outline-secondary mt-2">
+                        🔗 Abrir en nueva pestaña
+                    </a>
+                </div>
+            }
+
+            <div class="mb-3">
+                <label class="form-label fw-bold">📄 Reemplazar documento PDF</label>
+                <input type="file" name="archivoAnexo" accept=".pdf" class="form-control" />
+                <small class="text-muted">Deja vacío para conservar el documento actual.</small>
+            </div>
+        </div>
+
+        <!-- Columna derecha: datos editables -->
+        <div class="col-md-7">
+            <div class="card mb-3">
+                <div class="card-header fw-bold bg-primary text-white">
+                    📋 Datos de la Solicitud
+                </div>
+                <div class="card-body">
+                    <div class="row g-3">
+
+                        <!-- Tipo de solicitud (solo lectura) -->
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold">Tipo</label>
+                            <input type="text" class="form-control"
+                                   value="@Model.TipoSolicitud" readonly />
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold">Subtipo Permiso</label>
+                            <select name="SubtipoPermiso" class="form-select">
+                                <option value="">-- Ninguno --</option>
+                                @foreach (var s in ViewBag.SubtiposPermiso as
+                                                                IEnumerable<Farmacol.Models.TbsubtiposPermiso> ??
+                                                                new List<Farmacol.Models.TbsubtiposPermiso>())
+                                {
+                                    <option value="@s.Nombre"
+                                            selected="@(Model.SubtipoPermiso == s.Nombre)">
+                                        @s.Nombre
+                                    </option>
+                                }
+                            </select>
+                        </div>
+
+                        <!-- Horas -->
+                        <div class="col-md-4">
+                            <label class="form-label fw-bold">Hora Inicio</label>
+                            <input type="time" name="HoraInicio" class="form-control"
+                                   value="@(Model.HoraInicio.HasValue
+                                              ? $"{Model.HoraInicio / 100:D2}:{Model.HoraInicio % 100:D2}"
+                                              : "")" />
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label fw-bold">Hora Fin</label>
+                            <input type="time" name="HoraFin" class="form-control"
+                                   value="@(Model.HoraFin.HasValue
+                                              ? $"{Model.HoraFin / 100:D2}:{Model.HoraFin % 100:D2}"
+                                              : "")" />
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label fw-bold">Total Horas</label>
+                            <input type="number" step="0.5" name="TotalHoras"
+                                   class="form-control" value="@Model.TotalHoras" />
+                        </div>
+
+                        <!-- Fechas -->
+                        <div class="col-md-4">
+                            <label class="form-label fw-bold">Fecha Inicio</label>
+                            <input type="date" name="FechaInicio" class="form-control"
+                                   value="@Model.FechaInicio?.ToString("yyyy-MM-dd")" />
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label fw-bold">Fecha Fin</label>
+                            <input type="date" name="FechaFin" class="form-control"
+                                   value="@Model.FechaFin?.ToString("yyyy-MM-dd")" />
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label fw-bold">Total Días</label>
+                            <input type="number" step="0.5" name="TotalDias"
+                                   class="form-control" value="@Model.TotalDias" />
+                        </div>
+
+                        <!-- Motivo -->
+                        <div class="col-12">
+                            <label class="form-label fw-bold">Motivo</label>
+                            <textarea name="Motivo" class="form-control" rows="2">@Model.Motivo</textarea>
+                        </div>
+
+                        <!-- Observaciones -->
+                        <div class="col-12">
+                            <label class="form-label fw-bold">Observaciones adicionales</label>
+                            <textarea name="observaciones" class="form-control"
+                                      rows="2">@Model.Observaciones</textarea>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Botones -->
+            <button type="submit" class="btn btn-success w-100 mb-2">
+                📤 Reenviar Solicitud
+            </button>
+        </div>
+    </div>
+</form>
+
+<!-- Finalizar sin reenviar -->
+<form id="formFinalizar" asp-action="FinalizarDevuelta" method="post">
+    @Html.AntiForgeryToken()
+    <input type="hidden" name="id" value="@Model.IdSolicitud" />
+    <button type="button" class="btn btn-outline-danger w-100 mb-3"
+            onclick="confirmarFinalizar()">
+        🚫 Finalizar sin reenviar
+    </button>
+</form>
+
+<a asp-action="Index" class="btn btn-secondary">← Volver</a>
+
+@section Scripts {
+    <script>
+        function confirmarFinalizar() {
+            if (confirm("¿Seguro que deseas finalizar esta solicitud sin reenviarla?")) {
+                document.getElementById("formFinalizar").submit();
+            }
+        }
+    </script>
+}

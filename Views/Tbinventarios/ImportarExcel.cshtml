@@ -1,0 +1,61 @@
+﻿@{
+    ViewData["Title"] = "Importar Excel";
+}
+
+<h1>Importar Inventario desde Excel</h1>
+
+@if (ViewBag.Exito != null)
+{
+    <div class="alert alert-success">@ViewBag.Exito</div>
+}
+@if (ViewBag.Error != null)
+{
+    <div class="alert alert-danger">@ViewBag.Error</div>
+}
+
+<form method="post" enctype="multipart/form-data">
+    @Html.AntiForgeryToken()
+    <div class="mb-3">
+        <label class="form-label">Selecciona el archivo Excel (.xlsx)</label>
+        <input type="file" name="archivo" accept=".xlsx" class="form-control" />
+    </div>
+    <button type="submit" class="btn btn-success">📥 Importar</button>
+    <a asp-action="Index" class="btn btn-secondary">Cancelar</a>
+</form>
+
+<hr />
+
+<h5>Estructura esperada del Excel:</h5>
+<table class="table table-bordered table-sm mt-2" style="max-width:700px">
+    <thead class="table-dark">
+        <tr>
+            <th>A</th>
+            <th>B</th>
+            <th>C</th>
+            <th>D</th>
+            <th>E</th>
+            <th>F</th>
+            <th>G</th>
+            <th>H</th>
+            <th>I</th>
+            <th>J</th>
+            <th>K</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr>
+            <td>N° (ignorado)</td>
+            <td>Ubicación</td>
+            <td>Ubicación2</td>
+            <td>Dispositivo</td>
+            <td>Modelo</td>
+            <td>Serie</td>
+            <td>IMEI</td>
+            <td>Marca</td>
+            <td>Observación</td>
+            <td>Planta</td>
+            <td>CC</td>
+        </tr>
+    </tbody>
+</table>
+<p class="text-muted">La fila 1 debe ser encabezados. Los datos empiezan desde la fila 2.</p>

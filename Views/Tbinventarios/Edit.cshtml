@@ -1,0 +1,92 @@
+﻿@model Farmacol.Models.Tbinventario
+@{
+    ViewData["Title"] = "Editar Inventario";
+}
+
+<h1>Editar Inventario</h1>
+<hr />
+
+<div class="row">
+    <div class="col-md-5">
+        <form asp-action="Edit" enctype="multipart/form-data">
+            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+            <input type="hidden" asp-for="IdEquipo" />
+
+            <div class="form-group mb-2">
+                <label asp-for="Ubicación" class="control-label"></label>
+                <input asp-for="Ubicación" class="form-control" />
+                <span asp-validation-for="Ubicación" class="text-danger"></span>
+            </div>
+            <div class="form-group mb-2">
+                <label asp-for="Ubicación2" class="control-label"></label>
+                <input asp-for="Ubicación2" class="form-control" />
+                <span asp-validation-for="Ubicación2" class="text-danger"></span>
+            </div>
+            <div class="form-group mb-2">
+                <label asp-for="Dispositivo" class="control-label"></label>
+                <input asp-for="Dispositivo" class="form-control" />
+                <span asp-validation-for="Dispositivo" class="text-danger"></span>
+            </div>
+            <div class="form-group mb-2">
+                <label asp-for="Modelo" class="control-label"></label>
+                <input asp-for="Modelo" class="form-control" />
+                <span asp-validation-for="Modelo" class="text-danger"></span>
+            </div>
+            <div class="form-group mb-2">
+                <label asp-for="Serie" class="control-label"></label>
+                <input asp-for="Serie" class="form-control" />
+                <span asp-validation-for="Serie" class="text-danger"></span>
+            </div>
+            <div class="form-group mb-2">
+                <label asp-for="Imei" class="control-label"></label>
+                <input asp-for="Imei" class="form-control" />
+                <span asp-validation-for="Imei" class="text-danger"></span>
+            </div>
+            <div class="form-group mb-2">
+                <label asp-for="Marca" class="control-label"></label>
+                <input asp-for="Marca" class="form-control" />
+                <span asp-validation-for="Marca" class="text-danger"></span>
+            </div>
+            <div class="form-group mb-2">
+                <label asp-for="Observación" class="control-label"></label>
+                <input asp-for="Observación" class="form-control" />
+                <span asp-validation-for="Observación" class="text-danger"></span>
+            </div>
+            <div class="form-group mb-2">
+                <label asp-for="Planta" class="control-label"></label>
+                <input asp-for="Planta" class="form-control" />
+                <span asp-validation-for="Planta" class="text-danger"></span>
+            </div>
+            <div class="form-group mb-2">
+                <label asp-for="CC" class="control-label"></label>
+                <input asp-for="CC" class="form-control" />
+                <span asp-validation-for="CC" class="text-danger"></span>
+            </div>
+
+            <!-- ANEXO / IMAGEN -->
+            <div class="form-group mb-2">
+                <label class="control-label">Anexo (imagen)</label>
+                @if (!string.IsNullOrEmpty(Model.Anexo))
+                {
+                    <div class="mb-2">
+                        <img src="@Model.Anexo" alt="Anexo actual" style="max-width:200px; max-height:150px;" class="img-thumbnail" />
+                        <p class="text-muted small">Imagen actual. Sube una nueva para reemplazarla.</p>
+                    </div>
+                }
+                <input type="file" name="archivoAnexo" accept=".jpg,.jpeg,.png" class="form-control" />
+                <span class="text-muted small">Formatos permitidos: .jpg, .jpeg, .png</span>
+            </div>
+
+            <div class="form-group mt-3">
+                <input type="submit" value="Guardar" class="btn btn-primary" />
+                <a asp-action="Index" class="btn btn-secondary">Cancelar</a>
+            </div>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+}

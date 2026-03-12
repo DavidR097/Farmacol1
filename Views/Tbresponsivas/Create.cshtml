@@ -1,0 +1,317 @@
+﻿@model Farmacol.Models.Tbsolicitude
+@{
+    ViewData["Title"] = "Nueva Solicitud";
+}
+
+<h1>Nueva Solicitud</h1>
+<hr />
+
+@if (TempData["Exito"] != null)
+{
+    <div class="alert alert-success">@TempData["Exito"]</div>
+}
+
+<!-- SELECTOR DE TIPO -->
+<div class="mb-4">
+    <label class="form-label fw-bold fs-5">¿Qué tipo de solicitud deseas crear?</label>
+    <div class="d-flex gap-3 mt-2">
+        <button type="button" class="btn btn-outline-primary btn-lg px-5"
+                onclick="mostrarFormulario('permiso')">
+            🕐 Permiso
+        </button>
+        <button type="button" class="btn btn-outline-success btn-lg px-5"
+                onclick="mostrarFormulario('vacaciones')">
+            🏖️ Vacaciones
+        </button>
+    </div>
+</div>
+
+<!-- FORMULARIO PERMISO -->
+<div id="formPermiso" style="display:none">
+    <h4 class="text-primary mb-3">📋 Solicitud de Permiso</h4>
+    <form asp-action="Create" enctype="multipart/form-data">
+        @Html.AntiForgeryToken()
+        <input type="hidden" name="TipoSolicitud" value="Permiso" />
+
+        <div class="row">
+            <div class="col-md-6">
+                <div class="form-group mb-2">
+                    <label class="control-label">CC</label>
+                    <input name="CC" class="form-control"
+                           value="@ViewBag.CedulaActual"
+                           @(User.IsInRole("Usuario") ? "readonly" : "") />
+                </div>
+                <div class="form-group mb-2">
+                    <label class="control-label">Nombre</label>
+                    <input name="Nombre" class="form-control"
+                           value="@ViewBag.NombreActual"
+                           @(User.IsInRole("Usuario") ? "readonly" : "") />
+                </div>
+                <div class="form-group mb-2">
+                    <label class="control-label">Cargo</label>
+                    <input name="Cargo" class="form-control"
+                           value="@ViewBag.CargoActual"
+                           @(User.IsInRole("Usuario") ? "readonly" : "") />
+                </div>
+                <div class="form-group mb-2">
+                    <label class="control-label">Tipo de Permiso</label>
+                    <select name="SubtipoPermiso" class="form-select" required>
+                        <option value="">-- Selecciona --</option>
+                        @foreach (var s in ViewBag.SubtiposPermiso)
+                        {
+                            <option value="@s.Nombre">@s.Nombre</option>
+                        }
+                    </select>
+                </div>
+                <div class="form-group mb-2">
+                    <label class="control-label">Jefe Inmediato</label>
+                    <input name="JefeInmediato" class="form-control" required />
+                </div>
+                <div class="form-group mb-2">
+                    <label class="control-label">Cargo Jefe Inmediato</label>
+                    <input name="CargoJinmediato" class="form-control" required />
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="form-group mb-2">
+                    <label class="control-label">Hora Inicio</label>
+                    <input name="HoraInicio" id="horaInicioP" type="time"
+                           class="form-control" onchange="calcularHoras()" />
+                </div>
+                <div class="form-group mb-2">
+                    <label class="control-label">Hora Fin</label>
+                    <input name="HoraFin" id="horaFinP" type="time"
+                           class="form-control" onchange="calcularHoras()" />
+                </div>
+                <div class="form-group mb-2">
+                    <label class="control-label">Total Horas</label>
+                    <input name="TotalHoras" id="totalHorasP"
+                           class="form-control" readonly />
+                </div>
+                <div class="form-group mb-2">
+                    <label class="control-label">Fecha Solicitud</label>
+                    <input name="FechaSolicitud" class="form-control" type="date"
+                           value="@DateTime.Today.ToString("yyyy-MM-dd")" readonly />
+                </div>
+                <div class="form-group mb-2">
+                    <label class="control-label">Motivo (opcional)</label>
+                    <textarea name="Motivo" class="form-control" rows="2"></textarea>
+                </div>
+                <div class="form-group mb-2">
+                    <label class="control-label">Observaciones (opcional)</label>
+                    <textarea name="Observaciones" class="form-control" rows="2"></textarea>
+                </div>
+                <div class="form-group mb-2">
+                    <label class="control-label">Anexo (PDF)</label>
+                    <input type="file" name="archivoAnexo" accept=".pdf" class="form-control" />
+                </div>
+                @if (User.IsInRole("Administrador") || User.IsInRole("RRHH"))
+                {
+                    <div class="form-group mb-2">
+                        <label class="control-label">Estado</label>
+                        <select name="Estado" class="form-select">
+                            <option value="En progreso">En progreso</option>
+                            <option value="Aprobado">Aprobado</option>
+                            <option value="Rechazado">Rechazado</option>
+                        </select>
+                    </div>
+                    <div class="form-group mb-2">
+                        <label class="control-label">Aprobación Jefe</label>
+                        <input name="AprobJinmediato" class="form-control" />
+                    </div>
+                    <div class="form-group mb-2">
+                        <label class="control-label">Aprobación CH</label>
+                        <input name="AprobCh" class="form-control" />
+                    </div>
+                }
+                else
+                {
+                    <input type="hidden" name="Estado" value="En progreso" />
+                }
+            </div>
+        </div>
+        <div class="mt-3">
+            <button type="submit" class="btn btn-primary">Enviar Solicitud</button>
+            <a asp-action="Index" class="btn btn-secondary">Cancelar</a>
+        </div>
+    </form>
+</div>
+
+<!-- FORMULARIO VACACIONES -->
+<div id="formVacaciones" style="display:none">
+    <h4 class="text-success mb-3">🏖️ Solicitud de Vacaciones</h4>
+    <form asp-action="Create" enctype="multipart/form-data">
+        @Html.AntiForgeryToken()
+        <input type="hidden" name="TipoSolicitud" value="Vacaciones" />
+
+        <div class="row">
+            <div class="col-md-6">
+                <div class="form-group mb-2">
+                    <label class="control-label">CC</label>
+                    <input name="CC" class="form-control"
+                           value="@ViewBag.CedulaActual"
+                           @(User.IsInRole("Usuario") ? "readonly" : "") />
+                </div>
+                <div class="form-group mb-2">
+                    <label class="control-label">Nombre</label>
+                    <input name="Nombre" class="form-control"
+                           value="@ViewBag.NombreActual"
+                           @(User.IsInRole("Usuario") ? "readonly" : "") />
+                </div>
+                <div class="form-group mb-2">
+                    <label class="control-label">Cargo</label>
+                    <input name="Cargo" class="form-control"
+                           value="@ViewBag.CargoActual"
+                           @(User.IsInRole("Usuario") ? "readonly" : "") />
+                </div>
+                <div class="form-group mb-2">
+                    <label class="control-label">Observaciones (opcional)</label>
+                    <textarea name="Observaciones" class="form-control" rows="3"></textarea>
+                </div>
+                <div class="form-group mb-2">
+                    <label class="control-label">Anexo (PDF)</label>
+                    <input type="file" name="archivoAnexo" accept=".pdf" class="form-control" />
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="form-group mb-3">
+                    <label class="control-label fw-bold">Selecciona las fechas</label>
+                    <div id="calendarioVacaciones"></div>
+                    <input type="hidden" name="FechaInicio" id="inputFechaInicio" />
+                    <input type="hidden" name="FechaFin" id="inputFechaFin" />
+                    <div class="mt-2 d-flex gap-3">
+                        <span class="badge bg-primary p-2">🔵 Inicio: <span id="lblInicio">No seleccionado</span></span>
+                        <span class="badge bg-danger p-2">🔴 Fin: <span id="lblFin">No seleccionado</span></span>
+                    </div>
+                </div>
+                <div class="form-group mb-2">
+                    <label class="control-label">Total Días</label>
+                    <input name="TotalDias" id="totalDiasV"
+                           class="form-control" readonly />
+                </div>
+                <div class="form-group mb-2">
+                    <label class="control-label">Fecha Solicitud</label>
+                    <input name="FechaSolicitud" class="form-control" type="date"
+                           value="@DateTime.Today.ToString("yyyy-MM-dd")" readonly />
+                </div>
+            </div>
+        </div>
+        <div class="mt-3">
+            <button type="submit" class="btn btn-success">Enviar Solicitud</button>
+            <a asp-action="Index" class="btn btn-secondary">Cancelar</a>
+        </div>
+    </form>
+</div>
+
+@section Scripts {
+    <style>
+        .cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; }
+        .cal-header { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; margin-bottom: 4px; }
+        .cal-day { padding: 8px; text-align: center; border-radius: 6px; cursor: pointer; border: 1px solid #dee2e6; font-size: 0.9rem; }
+        .cal-day:hover { background: #e9ecef; }
+        .cal-day.inicio { background: #0d6efd; color: white; border-color: #0d6efd; }
+        .cal-day.fin { background: #dc3545; color: white; border-color: #dc3545; }
+        .cal-day.rango { background: #cfe2ff; border-color: #9ec5fe; }
+        .cal-day.vacio { border: none; cursor: default; }
+        .cal-nav { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+    </style>
+
+    <script>
+        // Mostrar formulario según tipo
+        function mostrarFormulario(tipo) {
+            document.getElementById('formPermiso').style.display = tipo === 'permiso' ? 'block' : 'none';
+            document.getElementById('formVacaciones').style.display = tipo === 'vacaciones' ? 'block' : 'none';
+            if (tipo === 'vacaciones') renderCalendario();
+        }
+
+        // Calcular horas automáticamente
+        function calcularHoras() {
+            const inicio = document.getElementById('horaInicioP').value;
+            const fin    = document.getElementById('horaFinP').value;
+            if (inicio && fin) {
+                const [h1, m1] = inicio.split(':').map(Number);
+                const [h2, m2] = fin.split(':').map(Number);
+                const totalMin = (h2 * 60 + m2) - (h1 * 60 + m1);
+                if (totalMin > 0) {
+                    document.getElementById('totalHorasP').value = (totalMin / 60).toFixed(1);
+                }
+            }
+        }
+
+        // Calendario interactivo
+        let fechaInicio = null, fechaFin = null;
+        let calYear = new Date().getFullYear();
+        let calMonth = new Date().getMonth();
+
+        const meses = ['Enero','Febrero','Marzo','Abril','Mayo','Junio',
+                       'Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+        const dias  = ['Dom','Lun','Mar','Mié','Jue','Vie','Sáb'];
+
+        function renderCalendario() {
+            const cont = document.getElementById('calendarioVacaciones');
+            const primerDia = new Date(calYear, calMonth, 1).getDay();
+            const totalDias = new Date(calYear, calMonth + 1, 0).getDate();
+
+            let html = `
+                <div class="cal-nav">
+                    <button type="button" class="btn btn-sm btn-outline-secondary" onclick="cambiarMes(-1)">◀</button>
+                    <strong>${meses[calMonth]} ${calYear}</strong>
+                    <button type="button" class="btn btn-sm btn-outline-secondary" onclick="cambiarMes(1)">▶</button>
+                </div>
+                <div class="cal-header">
+                    ${dias.map(d => `<div class="text-center fw-bold small text-muted">${d}</div>`).join('')}
+                </div>
+                <div class="cal-grid">`;
+
+            for (let i = 0; i < primerDia; i++)
+                html += `<div class="cal-day vacio"></div>`;
+
+            for (let d = 1; d <= totalDias; d++) {
+                const fecha = new Date(calYear, calMonth, d);
+                const fechaStr = fecha.toISOString().split('T')[0];
+                let clase = 'cal-day';
+
+                if (fechaInicio && fechaStr === fechaInicio) clase += ' inicio';
+                else if (fechaFin && fechaStr === fechaFin) clase += ' fin';
+                else if (fechaInicio && fechaFin && fechaStr > fechaInicio && fechaStr < fechaFin)
+                    clase += ' rango';
+
+                html += `<div class="${clase}" onclick="seleccionarFecha('${fechaStr}')">${d}</div>`;
+            }
+
+            html += `</div>`;
+            cont.innerHTML = html;
+        }
+
+        function cambiarMes(dir) {
+            calMonth += dir;
+            if (calMonth > 11) { calMonth = 0; calYear++; }
+            if (calMonth < 0)  { calMonth = 11; calYear--; }
+            renderCalendario();
+        }
+
+        function seleccionarFecha(fechaStr) {
+            if (!fechaInicio || (fechaInicio && fechaFin)) {
+                fechaInicio = fechaStr;
+                fechaFin    = null;
+            } else if (fechaStr > fechaInicio) {
+                fechaFin = fechaStr;
+            } else {
+                fechaInicio = fechaStr;
+                fechaFin    = null;
+            }
+
+            document.getElementById('inputFechaInicio').value = fechaInicio ?? '';
+            document.getElementById('inputFechaFin').value    = fechaFin ?? '';
+            document.getElementById('lblInicio').textContent  = fechaInicio ?? 'No seleccionado';
+            document.getElementById('lblFin').textContent     = fechaFin ?? 'No seleccionado';
+
+            if (fechaInicio && fechaFin) {
+                const diff = (new Date(fechaFin) - new Date(fechaInicio)) / (1000 * 60 * 60 * 24);
+                document.getElementById('totalDiasV').value = diff + 1;
+            }
+
+            renderCalendario();
+        }
+    </script>
+}

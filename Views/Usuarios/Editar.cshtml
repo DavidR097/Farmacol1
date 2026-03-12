@@ -1,0 +1,74 @@
+﻿@model Farmacol.Models.UsuarioViewModel
+@{
+    ViewData["Title"] = "Editar Usuario";
+    string rolActual = ViewBag.RolActual ?? "";
+}
+
+<h1>Editar Usuario</h1>
+<hr />
+
+<p class="text-muted">Email actual: <strong>@Model.Email</strong></p>
+
+@if (ViewBag.Error != null)
+{
+    <div class="alert alert-danger">@ViewBag.Error</div>
+}
+
+<div class="row">
+    <div class="col-md-5">
+        <form method="post">
+            @Html.AntiForgeryToken()
+            <input type="hidden" name="id" value="@Model.Id" />
+
+            <div class="mb-3">
+                <label class="form-label">Vincular empleado</label>
+                <select name="nuevaCedula" class="form-select">
+                    <option value="">-- Mantener empleado actual (@Model.Nombre) --</option>
+                    @foreach (var p in ViewBag.PersonalDisponible)
+                    {
+                        if (p.CC == Model.Cedula)
+                        {
+                            <option value="@p.CC" selected>
+                                @p.Nombre — @p.Cargo (@p.CorreoCorporativo)
+                            </option>
+                        }
+                        else
+                        {
+                            <option value="@p.CC">
+                                @p.Nombre — @p.Cargo (@p.CorreoCorporativo)
+                            </option>
+                        }
+                    }
+                </select>
+                <span class="text-muted small">Solo aparecen empleados con correo y usuario corporativo registrados</span>
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label">Nombre de usuario (para login)</label>
+                <input type="text" name="nuevoUserName" class="form-control"
+                       value="@Model.Email" placeholder="usuario o correo corporativo" />
+                <span class="text-muted small">Puede ser correo o usuario corporativo</span>
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label">Rol</label>
+                <select name="rol" class="form-select" required>
+                    @foreach (var r in ViewBag.Roles)
+                    {
+                        if (r.Name == rolActual)
+                        {
+                            <option value="@r.Name" selected>@r.Name</option>
+                        }
+                        else
+                        {
+                            <option value="@r.Name">@r.Name</option>
+                        }
+                    }
+                </select>
+            </div>
+
+            <button type="submit" class="btn btn-primary">Guardar</button>
+            <a asp-action="Index" class="btn btn-secondary">Cancelar</a>
+        </form>
+    </div>
+</div>

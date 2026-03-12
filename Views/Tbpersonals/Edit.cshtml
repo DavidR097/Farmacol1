@@ -1,0 +1,224 @@
+﻿@model Farmacol.Models.Tbpersonal
+@{
+    ViewData["Title"] = "Editar Personal";
+}
+
+<h1>Editar Personal — <small class="text-muted">CC: @Model.CC</small></h1>
+<hr />
+
+<form asp-action="Edit">
+    <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
+    <input type="hidden" asp-for="CC" />
+
+    <div class="card mb-3">
+        <div class="card-header bg-dark text-white">🪪 Identificación</div>
+        <div class="card-body">
+            <div class="row g-3">
+                <div class="col-md-4">
+                    <label asp-for="NombreColaborador" class="form-label">Nombre completo</label>
+                    <input asp-for="NombreColaborador" class="form-control" />
+                </div>
+                <div class="col-md-4">
+                    <label asp-for="ExpedicionCiudad" class="form-label">Ciudad expedición</label>
+                    <input asp-for="ExpedicionCiudad" class="form-control" />
+                </div>
+                <div class="col-md-3">
+                    <label asp-for="FechaNacimiento" class="form-label">Fecha nacimiento</label>
+                    <input asp-for="FechaNacimiento" type="date" class="form-control"
+                           value="@Model.FechaNacimiento?.ToString("yyyy-MM-dd")" />
+                </div>
+                <div class="col-md-3">
+                    <label asp-for="CiudadNacimiento" class="form-label">Ciudad nacimiento</label>
+                    <input asp-for="CiudadNacimiento" class="form-control" />
+                </div>
+                <div class="col-md-3">
+                    <label asp-for="Genero" class="form-label">Género</label>
+                    <input asp-for="Genero" class="form-control" />
+                </div>
+                <div class="col-md-3">
+                    <label asp-for="EstadoCivil" class="form-label">Estado civil</label>
+                    <input asp-for="EstadoCivil" class="form-control" />
+                </div>
+                <div class="col-md-3">
+                    <label asp-for="Rh" class="form-label">RH</label>
+                    <input asp-for="Rh" class="form-control" />
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="card mb-3">
+        <div class="card-header bg-dark text-white">💼 Cargo y Área</div>
+        <div class="card-body">
+            <div class="row g-3">
+                <div class="col-md-4">
+                    <label asp-for="Cargo" class="form-label">Cargo</label>
+                    <input asp-for="Cargo" class="form-control" />
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label">Área</label>
+                    <select name="Area" class="form-select">
+                        <option value="">-- Selecciona --</option>
+                        @foreach (var area in ViewBag.Areas as List<Farmacol.Models.Tbarea> ?? new())
+                        {
+                            <option value="@area.Nombre"
+                                    selected="@(Model.Area == area.Nombre ? "selected" : null)">
+                                @area.Nombre
+                            </option>
+                        }
+                    </select>
+                </div>
+                <div class="col-md-4">
+                    <label asp-for="Gerencia" class="form-label">Gerencia</label>
+                    <input asp-for="Gerencia" class="form-control" />
+                </div>
+                <div class="col-md-4">
+                    <label asp-for="TipoContrato" class="form-label">Tipo contrato</label>
+                    <input asp-for="TipoContrato" class="form-control" />
+                </div>
+                <div class="col-md-4">
+                    <label asp-for="FechaIngreso" class="form-label">Fecha ingreso</label>
+                    <input asp-for="FechaIngreso" type="date" class="form-control"
+                           value="@Model.FechaIngreso?.ToString("yyyy-MM-dd")" />
+                </div>
+                <div class="col-md-4">
+                    <label asp-for="CiudadTrabajo" class="form-label">Ciudad trabajo</label>
+                    <input asp-for="CiudadTrabajo" class="form-control" />
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="card mb-3">
+        <div class="card-header bg-dark text-white">📞 Contacto</div>
+        <div class="card-body">
+            <div class="row g-3">
+                <div class="col-md-4">
+                    <label asp-for="Contacto" class="form-label">Celular</label>
+                    <input asp-for="Contacto" class="form-control" />
+                </div>
+                <div class="col-md-4">
+                    <label asp-for="CorreoPersonal" class="form-label">Correo personal</label>
+                    <input asp-for="CorreoPersonal" class="form-control" />
+                </div>
+                <div class="col-md-4">
+                    <label asp-for="DireccionResidencia" class="form-label">Dirección</label>
+                    <input asp-for="DireccionResidencia" class="form-control" />
+                </div>
+                <div class="col-md-4">
+                    <label asp-for="Barrio" class="form-label">Barrio</label>
+                    <input asp-for="Barrio" class="form-control" />
+                </div>
+                <div class="col-md-4">
+                    <label asp-for="ContactoEmergencia" class="form-label">Contacto emergencia</label>
+                    <input asp-for="ContactoEmergencia" class="form-control" />
+                </div>
+                <div class="col-md-2">
+                    <label asp-for="Parentesco" class="form-label">Parentesco</label>
+                    <input asp-for="Parentesco" class="form-control" />
+                </div>
+                <div class="col-md-2">
+                    <label asp-for="TelefonoEmergencia" class="form-label">Tel. emergencia</label>
+                    <input asp-for="TelefonoEmergencia" class="form-control" />
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="card mb-3">
+        <div class="card-header bg-dark text-white">🏥 Beneficios y Seguridad Social</div>
+        <div class="card-body">
+            <div class="row g-3">
+                <div class="col-md-4">
+                    <label asp-for="Eps" class="form-label">EPS</label>
+                    <input asp-for="Eps" class="form-control" />
+                </div>
+                <div class="col-md-4">
+                    <label asp-for="FondoPensiones" class="form-label">Fondo pensiones</label>
+                    <input asp-for="FondoPensiones" class="form-control" />
+                </div>
+                <div class="col-md-4">
+                    <label asp-for="FondoCesantias" class="form-label">Fondo cesantías</label>
+                    <input asp-for="FondoCesantias" class="form-control" />
+                </div>
+                <div class="col-md-4">
+                    <label asp-for="CajaCompensacion" class="form-label">Caja compensación</label>
+                    <input asp-for="CajaCompensacion" class="form-control" />
+                </div>
+                <div class="col-md-4">
+                    <label asp-for="Arl" class="form-label">ARL</label>
+                    <input asp-for="Arl" class="form-control" />
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="card mb-3">
+        <div class="card-header bg-dark text-white">🏦 Cuenta Bancaria</div>
+        <div class="card-body">
+            <div class="row g-3">
+                <div class="col-md-4">
+                    <label asp-for="Banco" class="form-label">Banco</label>
+                    <input asp-for="Banco" class="form-control" />
+                </div>
+                <div class="col-md-4">
+                    <label asp-for="TipoCuenta" class="form-label">Tipo cuenta</label>
+                    <input asp-for="TipoCuenta" class="form-control" />
+                </div>
+                <div class="col-md-4">
+                    <label asp-for="NumeroCuenta" class="form-label">No. cuenta</label>
+                    <input asp-for="NumeroCuenta" class="form-control" />
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="card mb-3">
+        <div class="card-header bg-dark text-white">👕 Otros</div>
+        <div class="card-body">
+            <div class="row g-3">
+                <div class="col-md-3">
+                    <label asp-for="TallaCamisa" class="form-label">Talla camisa</label>
+                    <input asp-for="TallaCamisa" class="form-control" />
+                </div>
+                <div class="col-md-3">
+                    <label asp-for="Grupo" class="form-label">Grupo</label>
+                    <input asp-for="Grupo" class="form-control" />
+                </div>
+                <div class="col-md-6">
+                    <label asp-for="Concepto" class="form-label">Concepto</label>
+                    <input asp-for="Concepto" class="form-control" />
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="card mb-3">
+        <div class="card-header bg-dark text-white">🔐 Acceso al Sistema</div>
+        <div class="card-body">
+            <div class="row g-3">
+                <div class="col-md-6">
+                    <label asp-for="CorreoCorporativo" class="form-label">Correo corporativo</label>
+                    <input asp-for="CorreoCorporativo" class="form-control"
+                           placeholder="usuario@farmacol.com" />
+                </div>
+                <div class="col-md-6">
+                    <label asp-for="UsuarioCorporativo" class="form-label">Usuario corporativo</label>
+                    <input asp-for="UsuarioCorporativo" class="form-control"
+                           placeholder="usuario.corporativo" />
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="d-flex gap-2 mb-4">
+        <input type="submit" value="💾 Guardar cambios" class="btn btn-primary" />
+        <a asp-action="Index" class="btn btn-secondary">Cancelar</a>
+    </div>
+</form>
+
+@section Scripts {
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+}

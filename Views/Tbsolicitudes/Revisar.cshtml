@@ -1,0 +1,232 @@
+﻿@model Farmacol.Models.Tbsolicitude
+@{
+    ViewData["Title"] = "Revisar Solicitud";
+    bool puedeActuar = (bool)(ViewBag.PuedeActuar ?? false);
+    bool esAdmin = User.IsInRole("Administrador");
+    bool esRRHH = User.IsInRole("RRHH");
+    bool esAdminRRHH = esAdmin || esRRHH;
+    string userArea = ViewBag.UserArea as string ?? "";
+    bool esCapHumano = userArea == "Capital Humano";
+    bool puedeDevolver = esAdminRRHH || esCapHumano;
+}
+
+<h2>Revisar Solicitud #@Model.IdSolicitud</h2>
+<hr />
+
+@if (TempData["Exito"] != null)
+{
+    <div class="alert alert-success">@TempData["Exito"]</div>
+}
+@if (TempData["Error"] != null)
+{
+    <div class="alert alert-danger">@TempData["Error"]</div>
+}
+
+<div class="row">
+    <!-- Datos de la solicitud -->
+    <div class="col-md-6">
+        <h5>Datos de la solicitud</h5>
+        <table class="table table-bordered table-sm">
+            <tr><th>Solicitante</th>    <td>@Model.Nombre</td></tr>
+            <tr><th>CC</th>             <td>@Model.CC</td></tr>
+            <tr><th>Cargo</th>          <td>@Model.Cargo</td></tr>
+            <tr><th>Nivel</th>          <td>@Model.NivelSolicitante</td></tr>
+            <tr>
+                <th>Tipo</th>
+                <td>
+                    @Model.TipoSolicitud
+                    @if (!string.IsNullOrEmpty(Model.SubtipoPermiso))
+                    {
+                        <span class="text-muted">(@Model.SubtipoPermiso)</span>
+                    }
+                </td>
+            </tr>
+            <tr><th>Hora Inicio</th>    <td>@Model.HoraInicio</td></tr>
+            <tr><th>Hora Fin</th>       <td>@Model.HoraFin</td></tr>
+            <tr><th>Total Horas</th>    <td>@Model.TotalHoras</td></tr>
+            <tr><th>Fecha Inicio</th>   <td>@Model.FechaInicio</td></tr>
+            <tr><th>Fecha Fin</th>      <td>@Model.FechaFin</td></tr>
+            <tr><th>Total Días</th>     <td>@Model.TotalDias</td></tr>
+            <tr><th>Motivo</th>         <td>@Model.Motivo</td></tr>
+            <tr><th>Observaciones</th>  <td>@Model.Observaciones</td></tr>
+            <tr><th>Fecha Solicitud</th><td>@Model.FechaSolicitud</td></tr>
+            <tr>
+                <th>Estado</th>
+                <td>
+                    <span class="badge @(
+                          Model.Estado == "Aprobada" ? "bg-success" :
+                          Model.Estado == "Rechazada" ? "bg-danger" :
+                          Model.Estado == "Devuelta" ? "bg-warning text-dark" :
+                          Model.Estado == "Finalizada" ? "bg-secondary" :
+                          "bg-warning text-dark")">
+                        @Model.Estado
+                    </span>
+                </td>
+            </tr>
+        </table>
+
+        @if (!string.IsNullOrEmpty(Model.Anexos))
+        {
+            <div class="mb-3">
+                <label class="fw-bold">📎 Documento adjunto</label>
+                <div class="border rounded" style="height:450px;">
+                    <iframe src="@Model.Anexos" width="100%" height="100%"
+                            style="border:none;"></iframe>
+                </div>
+                <a href="@Model.Anexos" target="_blank"
+                   class="btn btn-sm btn-outline-secondary mt-2">
+                    🔗 Abrir en nueva pestaña
+                </a>
+            </div>
+        }
+    </div>
+
+    <!-- Flujo + acciones -->
+    <div class="col-md-6">
+        <h5>Flujo de aprobación</h5>
+
+        @for (int i = 1; i <= (Model.TotalPasos ?? 0); i++)
+        {
+            var cargo = i == 1 ? Model.Paso1Aprobador : i == 2 ? Model.Paso2Aprobador : Model.Paso3Aprobador;
+            var estado = i == 1 ? Model.Paso1Estado : i == 2 ? Model.Paso2Estado : Model.Paso3Estado;
+            var obs = i == 1 ? Model.Paso1Obs : i == 2 ? Model.Paso2Obs : Model.Paso3Obs;
+
+            var badgeClass = estado == "Aprobado" ? "bg-success" :
+            estado == "Rechazado" ? "bg-danger" :
+            estado == "Devuelta" ? "bg-warning text-dark" :
+            estado == "Pendiente" ? "bg-warning text-dark" :
+                                                      "bg-secondary";
+
+            var icono = estado == "Aprobado" ? "✅" :
+            estado == "Rechazado" ? "❌" :
+            estado == "Devuelta" ? "↩️" :
+            estado == "Pendiente" ? "⏳" : "🔒";
+
+            <div class="card mb-2 @(i == Model.PasoActual ? "border-primary" : "")">
+                <div class="card-body py-2 px-3">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <span><strong>@icono Paso @i</strong> — @cargo</span>
+                        <span class="badge @badgeClass">@estado</span>
+                    </div>
+                    @if (!string.IsNullOrEmpty(obs))
+                    {
+                        <small class="text-muted d-block mt-1">💬 @obs</small>
+                    }
+                </div>
+            </div>
+        }
+
+        <div class="mt-3">
+            @if (puedeActuar && Model.Estado == "En proceso")
+            {
+                <!-- APROBAR — todos los aprobadores -->
+                <div class="card border-success mb-3">
+                    <div class="card-header bg-success text-white fw-bold">
+                        ✅ Aprobar solicitud
+                    </div>
+                    <div class="card-body">
+                        <form asp-action="Aprobar" method="post">
+                            @Html.AntiForgeryToken()
+                            <input type="hidden" name="id" value="@Model.IdSolicitud" />
+                            <div class="mb-2">
+                                <label class="form-label">Observación (opcional)</label>
+                                <textarea name="observacion" class="form-control" rows="2"
+                                      placeholder="Puedes agregar una observación..."></textarea>
+                            </div>
+                            <button type="submit" class="btn btn-success w-100">
+                                ✅ Aprobar
+                            </button>
+                        </form>
+                    </div>
+                </div>
+
+                <!-- DEVOLVER — solo RRHH / Admin / Capital Humano -->
+                @if (puedeDevolver)
+                {
+                    <div class="card border-warning mb-3">
+                        <div class="card-header bg-warning text-dark fw-bold">
+                            ↩️ Devolver al solicitante
+                        </div>
+                        <div class="card-body">
+                            <form asp-action="Devolver" method="post">
+                                @Html.AntiForgeryToken()
+                                <input type="hidden" name="id" value="@Model.IdSolicitud" />
+                                <div class="mb-2">
+                                    <label class="form-label">
+                                        Motivo <span class="text-danger">*</span>
+                                    </label>
+                                    <textarea name="observacion" class="form-control" rows="3"
+                                      required minlength="10"
+                                      placeholder="Explica qué debe corregir..."></textarea>
+                                    <small class="text-muted">Mínimo 10 caracteres.</small>
+                                </div>
+                                <button type="submit" class="btn btn-warning w-100 text-dark">
+                                    ↩️ Devolver
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                }
+
+                <!-- RECHAZAR — todos los aprobadores -->
+                <div class="card border-danger mb-3">
+                    <div class="card-header bg-danger text-white fw-bold">
+                        ❌ Rechazar solicitud
+                    </div>
+                    <div class="card-body">
+                        <form asp-action="Rechazar" method="post">
+                            @Html.AntiForgeryToken()
+                            <input type="hidden" name="id" value="@Model.IdSolicitud" />
+                            <div class="mb-2">
+                                <label class="form-label">
+                                    Motivo <span class="text-danger">*</span>
+                                </label>
+                                <textarea name="observacion" class="form-control" rows="3"
+                                      required
+                                      placeholder="Indica el motivo del rechazo..."></textarea>
+                            </div>
+                            <button type="submit" class="btn btn-danger w-100">
+                                ❌ Rechazar
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            }
+            else if (Model.Estado == "Aprobada")
+            {
+                <div class="alert alert-success">
+                    ✅ Esta solicitud ha sido aprobada completamente.
+                </div>
+            }
+            else if (Model.Estado == "Rechazada")
+            {
+                <div class="alert alert-danger">❌ Esta solicitud fue rechazada.</div>
+            }
+            else if (Model.Estado == "Devuelta")
+            {
+                <div class="alert alert-warning">
+                    ↩️ Solicitud devuelta al solicitante para corrección.
+                    @if (Model.FechaDevolucion != null)
+                    {
+                        <br />
+                        <small>
+                            Devuelta el @Model.FechaDevolucion?.ToString("dd/MM/yyyy HH:mm") —
+                            Vence el <strong>
+                                @Model.FechaDevolucion?.AddDays(3).ToString("dd/MM/yyyy")
+                            </strong>
+                        </small>
+                    }
+                </div>
+            }
+            else
+            {
+                <div class="alert alert-secondary">
+                    Esta solicitud no requiere tu acción en este momento.<br />
+                    <small>Etapa actual: <strong>@Model.EtapaAprobacion</strong></small>
+                </div>
+            }
+        </div>
+    </div>
+</div>
+
+<a asp-action="Index" class="btn btn-secondary mt-2">← Volver</a>
