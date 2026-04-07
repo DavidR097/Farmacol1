@@ -289,9 +289,9 @@ namespace Farmacol.Controllers
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Create(
-    [Bind("CC,Nombre,Cargo,TipoSolicitud,SubtipoPermiso,HoraInicio,HoraFin,TotalHoras," +
-          "FechaInicio,FechaFin,TotalDias,Motivo,FechaSolicitud,Observaciones")]
-    Tbsolicitude tbsolicitude, IFormFile? archivoAnexo)
+                            [Bind("CC,Nombre,Cargo,TipoSolicitud,SubtipoPermiso,HoraInicio,HoraFin,TotalHoras," +
+                            "FechaInicio,FechaFin,TotalDias,Motivo,FechaSolicitud,Observaciones")]
+                            Tbsolicitude tbsolicitude, IFormFile? archivoAnexo)
         {
             ModelState.Remove("Motivo"); ModelState.Remove("Anexos");
             ModelState.Remove("Estado"); ModelState.Remove("EtapaAprobacion");
@@ -406,7 +406,6 @@ namespace Farmacol.Controllers
         }
 
         // ── APROBAR ───────────────────────────────────────────────────────
-        // ── APROBAR ───────────────────────────────────────────────────────
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Aprobar(int id, string? observacion)
@@ -420,11 +419,12 @@ namespace Farmacol.Controllers
 
             try
             {
-                await _audit.RegistrarAsync(AuditService.MOD_SOLICITUDES,
+                await _audit.RegistrarAsync(
+                    AuditService.MOD_SOLICITUDES,
                     completado ? AuditService.ACC_APROBAR : "Aprobación parcial",
-                    $"Solicitud #{id} aprobada por {User.Identity?.Name}. " +
-                    (completado ? "Aprobación final." : $"Pasa a: {solicitud.EtapaAprobacion}"),
-                    id.ToString());
+                    $"Solicitud #{id} aprobada por {User.Identity?.Name}.",
+                    id.ToString()
+                );
             }
             catch { }
 
@@ -433,104 +433,77 @@ namespace Farmacol.Controllers
                 var pasoSig = solicitud.PasoActual ?? 1;
                 await NotificarAprobador(solicitud, pasoSig);
                 try { await _email.NotificarSiguienteAprobadorAsync(solicitud); } catch { }
-                var cargo = pasoSig == 2 ? solicitud.Paso2Aprobador : solicitud.Paso3Aprobador;
-                TempData["Exito"] = $"✅ Aprobado. Enviado a: {cargo}.";
+
+                TempData["Exito"] = $"✅ Aprobado. Enviado a: {solicitud.EtapaAprobacion}.";
                 return RedirectToAction(nameof(Index));
             }
 
-            // ================================================
-            // === APROBACIÓN FINAL (completado == true) ===
-            // ================================================
+            // ===============================
+            // APROBACIÓN FINAL
+            // ===============================
 
             try { await _email.NotificarSolicitudAprobadaAsync(solicitud); } catch { }
 
             var personal = await _context.Tbpersonals.FirstOrDefaultAsync(p => p.CC == solicitud.CC);
-            bool esVacaciones = solicitud.TipoSolicitud?.Contains("Vacaciones", StringComparison.OrdinalIgnoreCase) == true;
-
-            if (personal != null)
+            if (personal == null)
             {
-                var dest = personal.UsuarioCorporativo ?? personal.CorreoCorporativo ?? "";
-                await _notif.CrearNotificacion(dest, $"Tu solicitud de {solicitud.TipoSolicitud} ha sido APROBADA.", id);
+                TempData["Exito"] = "✅ Solicitud aprobada.";
+                return RedirectToAction(nameof(Index));
+            }
 
-                // BLOQUEO PARA TODOS LOS USUARIOS (incluyendo TI, Usuario, etc.)
-                if (esVacaciones && solicitud.FechaInicio.HasValue && solicitud.FechaFin.HasValue)
+            var esVacaciones = solicitud.TipoSolicitud?.Contains("Vacaciones", StringComparison.OrdinalIgnoreCase) == true;
+
+            await _notif.CrearNotificacion(
+                personal.UsuarioCorporativo ?? personal.CorreoCorporativo ?? "",
+                $"Tu solicitud de {solicitud.TipoSolicitud} fue APROBADA.",
+                id
+            );
+
+            if (esVacaciones && solicitud.FechaInicio.HasValue && solicitud.FechaFin.HasValue)
+            {
+                // 1️⃣ Crear delegación
+                await _delegacion.CrearDelegacion(
+                    personal.CC,
+                    personal.NombreColaborador ?? "",
+                    personal.Cargo ?? "",
+                    personal.Area ?? "",
+                    "Vacaciones aprobadas automáticamente",
+                    solicitud.FechaInicio.Value,
+                    solicitud.FechaFin.Value,
+                    User.Identity?.Name ?? ""
+                );
+
+                // 2️⃣ Buscar usuario Identity (ROBUSTO)
+                IdentityUser? identityUser = await _userManager.Users.FirstOrDefaultAsync(u =>
+                    u.UserName == personal.UsuarioCorporativo ||
+                    u.Email == personal.CorreoCorporativo ||
+                    u.NormalizedUserName == (personal.UsuarioCorporativo ?? "").ToUpper() ||
+                    u.NormalizedEmail == (personal.CorreoCorporativo ?? "").ToUpper()
+                );
+
+                // 3️⃣ BLOQUEO REAL DE IDENTITY (ESTO FALTABA)
+                if (identityUser != null)
                 {
-                    // 1. Crear delegación
-                    await _delegacion.CrearDelegacion(
-                        cc: personal.CC,
-                        nombre: personal.NombreColaborador ?? "",
-                        cargo: personal.Cargo ?? "",
-                        area: personal.Area ?? "",
-                        motivo: "Vacaciones aprobadas automáticamente",
-                        inicio: solicitud.FechaInicio.Value,
-                        fin: solicitud.FechaFin.Value,
-                        creadaPor: User.Identity?.Name ?? "");
+                    await _userManager.SetLockoutEnabledAsync(identityUser, true);
 
-                    // 2. Bloqueo en Identity
-                    IdentityUser? identityUser = null;
-                    if (!string.IsNullOrWhiteSpace(personal.UsuarioCorporativo))
-                        identityUser = await _userManager.FindByNameAsync(personal.UsuarioCorporativo);
 
-                    if (identityUser == null && !string.IsNullOrWhiteSpace(personal.CorreoCorporativo))
-                        identityUser = await _userManager.FindByEmailAsync(personal.CorreoCorporativo);
+                    var lockoutEndUtc = solicitud.FechaFin.Value
+                        .ToDateTime(TimeOnly.MaxValue) // 23:59:59 LOCAL
+                        .ToUniversalTime();
 
-                    if (identityUser != null)
-                    {
-                        await _userManager.SetLockoutEnabledAsync(identityUser, true);
+                    await _userManager.SetLockoutEnabledAsync(identityUser, true);
+                    await _userManager.SetLockoutEndDateAsync(identityUser, lockoutEndUtc);
+                    await _userManager.UpdateAsync(identityUser);
 
-                        var lockoutEnd = new DateTimeOffset(
-                            solicitud.FechaFin.Value.Year,
-                            solicitud.FechaFin.Value.Month,
-                            solicitud.FechaFin.Value.Day,
-                            23, 59, 59,
-                            TimeSpan.FromHours(-5)); // UTC-5 Colombia
-
-                        await _userManager.SetLockoutEndDateAsync(identityUser, lockoutEnd);
-                        await _userManager.UpdateAsync(identityUser);
-                    }
-
-                    // Notificaciones
-                    var fi = solicitud.FechaInicio.Value.ToString("dd/MM/yyyy");
-                    var ff = solicitud.FechaFin.Value.ToString("dd/MM/yyyy");
-                    var msg = $"⏸️ {personal.NombreColaborador} ({personal.Cargo}) inhabilitado por vacaciones del {fi} al {ff}.";
-
-                    foreach (var admin in await _userManager.GetUsersInRoleAsync("Administrador"))
-                        await _notif.CrearNotificacion(admin.UserName ?? admin.Email ?? "", msg, id);
-
-                    foreach (var rrhh in await _userManager.GetUsersInRoleAsync("RRHH"))
-                        await _notif.CrearNotificacion(rrhh.UserName ?? rrhh.Email ?? "", msg, id);
-
-                    TempData["Exito"] = $"✅ Aprobada. {personal.NombreColaborador} inhabilitado del {fi} al {ff}.";
                 }
-                else
-                {
-                    TempData["Exito"] = "✅ Solicitud aprobada definitivamente.";
-                }
+
+                var fi = solicitud.FechaInicio.Value.ToString("dd/MM/yyyy");
+                var ff = solicitud.FechaFin.Value.ToString("dd/MM/yyyy");
+                TempData["Exito"] = $"✅ Aprobada. {personal.NombreColaborador} inhabilitado del {fi} al {ff}.";
             }
             else
             {
                 TempData["Exito"] = "✅ Solicitud aprobada definitivamente.";
-            }
-
-            // Registrar consumo de vacaciones
-            if (esVacaciones && solicitud.TotalDias.HasValue && solicitud.TotalDias.Value > 0)
-            {
-                try
-                {
-                    _context.Tbvacaciones.Add(new Tbvacacione
-                    {
-                        Nombre = personal?.NombreColaborador ?? solicitud.Nombre ?? "",
-                        CC = personal?.CC.ToString() ?? solicitud.CC.ToString(),
-                        Cargo = personal?.Cargo ?? solicitud.Cargo ?? "",
-                        FechaInicio = solicitud.FechaInicio!.Value,
-                        FechaFin = solicitud.FechaFin!.Value,
-                        TotalDías = solicitud.TotalDias.Value,
-                        FechaSolicitud = DateOnly.FromDateTime(DateTime.Now),
-                        Observaciones = "Consumo por aprobación de vacaciones"
-                    });
-                    await _context.SaveChangesAsync();
-                }
-                catch { }
             }
 
             return RedirectToAction(nameof(Index));
