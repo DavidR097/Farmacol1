@@ -1,52 +1,53 @@
 ﻿@model Farmacol.Models.Tbresponsiva
-
 @{
-    ViewData["Title"] = "Edit";
+    ViewData["Title"] = "Editar responsiva";
 }
 
-<h1>Edit</h1>
-
-<h4>Tbresponsiva</h4>
-<hr />
-<div class="row">
-    <div class="col-md-4">
-        <form asp-action="Edit">
-            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+<div class="card border-0 shadow-sm">
+    <div class="card-header bg-primary text-white">
+        <h4 class="mb-0">✏️ Editar responsiva</h4>
+    </div>
+    <div class="card-body">
+        <form asp-action="Edit" method="post">
+            @Html.AntiForgeryToken()
             <input type="hidden" asp-for="CC" />
-            <div class="form-group">
-                <label asp-for="Equipo" class="control-label"></label>
-                <input asp-for="Equipo" class="form-control" />
-                <span asp-validation-for="Equipo" class="text-danger"></span>
+
+            <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
+
+            <div class="row g-3">
+                <div class="col-md-6">
+                    <label asp-for="Equipo" class="form-label">Equipo</label>
+                    <input asp-for="Equipo" class="form-control" />
+                    <span asp-validation-for="Equipo" class="text-danger"></span>
+                </div>
+                <div class="col-md-6">
+                    <label asp-for="Marca" class="form-label">Marca</label>
+                    <input asp-for="Marca" class="form-control" />
+                    <span asp-validation-for="Marca" class="text-danger"></span>
+                </div>
+                <div class="col-md-6">
+                    <label asp-for="Serie" class="form-label">Serie</label>
+                    <input asp-for="Serie" class="form-control" />
+                    <span asp-validation-for="Serie" class="text-danger"></span>
+                </div>
+                <div class="col-md-6">
+                    <label asp-for="Estado" class="form-label">Estado</label>
+                    <input asp-for="Estado" class="form-control" />
+                    <span asp-validation-for="Estado" class="text-danger"></span>
+                </div>
+                <div class="col-12">
+                    <label asp-for="Observación" class="form-label">Observación</label>
+                    <textarea asp-for="Observación" class="form-control" rows="3"></textarea>
+                    <span asp-validation-for="Observación" class="text-danger"></span>
+                </div>
             </div>
-            <div class="form-group">
-                <label asp-for="Marca" class="control-label"></label>
-                <input asp-for="Marca" class="form-control" />
-                <span asp-validation-for="Marca" class="text-danger"></span>
-            </div>
-            <div class="form-group">
-                <label asp-for="Serie" class="control-label"></label>
-                <input asp-for="Serie" class="form-control" />
-                <span asp-validation-for="Serie" class="text-danger"></span>
-            </div>
-            <div class="form-group">
-                <label asp-for="Observación" class="control-label"></label>
-                <input asp-for="Observación" class="form-control" />
-                <span asp-validation-for="Observación" class="text-danger"></span>
-            </div>
-            <div class="form-group">
-                <label asp-for="Estado" class="control-label"></label>
-                <input asp-for="Estado" class="form-control" />
-                <span asp-validation-for="Estado" class="text-danger"></span>
-            </div>
-            <div class="form-group">
-                <input type="submit" value="Save" class="btn btn-primary" />
+
+            <div class="mt-4">
+                <button type="submit" class="btn btn-primary">Guardar cambios</button>
+                <a asp-action="Index" class="btn btn-secondary ms-2">Cancelar</a>
             </div>
         </form>
     </div>
-</div>
-
-<div>
-    <a asp-action="Index">Back to List</a>
 </div>
 
 @section Scripts {

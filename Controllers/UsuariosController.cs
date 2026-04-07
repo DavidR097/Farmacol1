@@ -1,220 +1,413 @@
-﻿using Microsoft.AspNetCore.Authorization;
+﻿using Farmacol.Models;
+using Farmacol.Services;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using Farmacol.Models;
 
 namespace Farmacol.Controllers
 {
-    [Authorize(Roles = "Administrador")]
+    // Administrador tiene acceso a todo
+    // TI solo tiene acceso a Desbloquear (puede ver la lista de usuarios pero no acciones sensibles)
+    [Authorize(Roles = "Administrador,TI")]
     public class UsuariosController : Controller
     {
         private readonly UserManager<IdentityUser> _userManager;
         private readonly RoleManager<IdentityRole> _roleManager;
         private readonly Farmacol1Context _context;
+        private readonly AuditService _audit;
 
-        public UsuariosController(UserManager<IdentityUser> userManager,
-                                   RoleManager<IdentityRole> roleManager,
-                                   Farmacol1Context context)
+        public UsuariosController(
+            UserManager<IdentityUser> userManager,
+            RoleManager<IdentityRole> roleManager,
+            Farmacol1Context context,
+            AuditService audit)
         {
             _userManager = userManager;
             _roleManager = roleManager;
             _context = context;
+            _audit = audit;
         }
 
+        // Verifica que solo Admin puede hacer acciones sensibles
+        private IActionResult? SoloAdmin()
+        {
+            if (!User.IsInRole("Administrador"))
+            {
+                TempData["Error"] = "No tienes permiso para esta acción.";
+                return RedirectToAction(nameof(Index));
+            }
+            return null;
+        }
+
+        // ── INDEX ─────────────────────────────────────────────────────────
         public async Task<IActionResult> Index()
         {
-            var usuarios = await _userManager.Users.ToListAsync();
+            var users = await _userManager.Users.ToListAsync();
+
+            var personal = await _context.Tbpersonals
+                .Select(p => new {
+                    p.CC,
+                    p.NombreColaborador,
+                    p.Cargo,
+                    p.Area,
+                    p.UsuarioCorporativo,
+                    p.CorreoCorporativo
+                })
+                .ToListAsync();
+
             var lista = new List<UsuarioViewModel>();
 
-            foreach (var u in usuarios)
+            foreach (var u in users)
             {
-                var roles = await _userManager.GetRolesAsync(u);
-                var personal = await _context.Tbpersonals
-                    .FirstOrDefaultAsync(p => p.CorreoCorporativo == u.Email);
+                // Buscar por UsuarioCorporativo primero (más confiable), luego por email
+                var p = personal.FirstOrDefault(x =>
+                    x.UsuarioCorporativo == u.UserName)
+                    ?? personal.FirstOrDefault(x => x.CorreoCorporativo == u.Email);
 
                 lista.Add(new UsuarioViewModel
                 {
                     Id = u.Id,
-                    Email = u.Email ?? "",
-                    Rol = roles.FirstOrDefault() ?? "Sin rol",
-                    Nombre = personal?.Nombre ?? "Sin vincular",
-                    Cargo = personal?.Cargo ?? ""
+                    Email = u.UserName ?? u.Email ?? "",
+                    Rol = (await _userManager.GetRolesAsync(u)).FirstOrDefault() ?? "Sin rol",
+                    Nombre = p?.NombreColaborador ?? u.UserName ?? "Sin nombre",
+                    Cargo = p?.Cargo ?? "",
+                    Area = p?.Area,
+                    Cedula = p?.CC ?? 0,
+                    Bloqueado = u.LockoutEnd.HasValue && u.LockoutEnd > DateTimeOffset.UtcNow,
                 });
             }
 
-            return View(lista);
+            ViewBag.EsAdmin = User.IsInRole("Administrador");
+            return View(lista.OrderBy(u => u.Nombre).ThenBy(u => u.Email).ToList());
         }
 
+        // ── CREAR ─────────────────────────────────────────────────────────
+        [HttpGet]
         public async Task<IActionResult> Crear()
         {
-            await CargarViewBagCrear();
+            if (SoloAdmin() is { } r) return r;
+
+            // 1. Obtener usernames que YA existen en Identity
+            var usuariosExistentes = await _userManager.Users
+                .Select(u => u.UserName!)
+                .ToListAsync();
+
+            // 2. Traer empleados que aún no tienen usuario (sin GroupBy problemático)
+            var personalListo = await _context.Tbpersonals
+                .Where(p => !string.IsNullOrEmpty(p.UsuarioCorporativo))
+                .Where(p => !usuariosExistentes.Contains(p.UsuarioCorporativo))
+                .OrderBy(p => p.NombreColaborador)
+                .Select(p => new
+                {
+                    p.CC,
+                    Nombre = p.NombreColaborador,
+                    p.Cargo,
+                    p.UsuarioCorporativo
+                })
+                .ToListAsync();
+
+            // 3. (Opcional pero recomendado) Eliminar duplicados por CC en memoria (por si hay repetidos en la tabla)
+            var personalDistinct = personalListo
+                .GroupBy(x => x.CC)
+                .Select(g => g.First())
+                .ToList();
+
+            ViewBag.Roles = await _roleManager.Roles
+                .Select(r => r.Name)
+                .ToListAsync();
+
+            ViewBag.Personal = personalDistinct;
+
             return View();
         }
 
         [HttpPost]
+        [ValidateAntiForgeryToken]
         public async Task<IActionResult> Crear(int cedula, string password, string rol)
         {
+            if (SoloAdmin() is { } r) return r;
+
             var personal = await _context.Tbpersonals.FindAsync(cedula);
-            if (personal == null)
+            if (personal == null) { TempData["Error"] = "Empleado no encontrado."; return RedirectToAction(nameof(Crear)); }
+            if (string.IsNullOrWhiteSpace(personal.UsuarioCorporativo))
+            { TempData["Error"] = "El empleado no tiene usuario corporativo."; return RedirectToAction(nameof(Crear)); }
+
+            var user = new IdentityUser
             {
-                ViewBag.Error = "No se encontró el empleado.";
-                await CargarViewBagCrear();
-                return View();
-            }
+                UserName = personal.UsuarioCorporativo,
+                Email = string.IsNullOrWhiteSpace(personal.CorreoCorporativo) ? null : personal.CorreoCorporativo
+            };
+            var result = await _userManager.CreateAsync(user, password);
+            if (!result.Succeeded)
+            { TempData["Error"] = string.Join(", ", result.Errors.Select(e => e.Description)); return RedirectToAction(nameof(Crear)); }
 
-            if (string.IsNullOrEmpty(personal.CorreoCorporativo))
+            if (!string.IsNullOrEmpty(rol)) await _userManager.AddToRoleAsync(user, rol);
+            try
             {
-                ViewBag.Error = "El empleado no tiene correo corporativo registrado. Edítalo primero en Personal.";
-                await CargarViewBagCrear();
-                return View();
+                await _audit.RegistrarAsync(AuditService.MOD_USUARIOS, AuditService.ACC_CREAR,
+                $"Usuario '{personal.UsuarioCorporativo}' creado con rol '{rol}'");
             }
+            catch { }
 
-            var email = personal.CorreoCorporativo;
-            var userName = !string.IsNullOrEmpty(personal.UsuarioCorporativo)
-                           ? personal.UsuarioCorporativo
-                           : email;
-
-            var user = new IdentityUser { UserName = userName, Email = email };
-            var resultado = await _userManager.CreateAsync(user, password);
-
-            if (!resultado.Succeeded)
-            {
-                ViewBag.Error = string.Join(", ", resultado.Errors.Select(e => e.Description));
-                await CargarViewBagCrear();
-                return View();
-            }
-
-            await _userManager.AddToRoleAsync(user, rol);
+            TempData["Exito"] = $"✅ Usuario '{personal.UsuarioCorporativo}' creado.";
             return RedirectToAction(nameof(Index));
         }
 
+        // ── EDITAR ────────────────────────────────────────────────────────
+        [HttpGet]
         public async Task<IActionResult> Editar(string id)
         {
+            if (SoloAdmin() is { } r) return r;
+
             var user = await _userManager.FindByIdAsync(id);
             if (user == null) return NotFound();
 
             var roles = await _userManager.GetRolesAsync(user);
-            var personal = await _context.Tbpersonals
-                .FirstOrDefaultAsync(p => p.CorreoCorporativo == user.Email);
+            var rolActual = roles.FirstOrDefault() ?? "";
 
-            // Empleados sin usuario + el empleado actual vinculado
-            var emailsConUsuario = await _userManager.Users
-                .Where(u => u.Id != id)
-                .Select(u => u.Email)
+            // Obtener empleados disponibles (los que NO tienen usuario aún)
+            var usuariosExistentes = await _userManager.Users
+                .Select(u => u.UserName!)
                 .ToListAsync();
+
+            var personalDisponible = await _context.Tbpersonals
+                .Where(p => !string.IsNullOrEmpty(p.UsuarioCorporativo))
+                .Where(p => !usuariosExistentes.Contains(p.UsuarioCorporativo))
+                .OrderBy(p => p.NombreColaborador)
+                .Select(p => new
+                {
+                    p.CC,
+                    Nombre = p.NombreColaborador,
+                    p.Cargo,
+                    p.CorreoCorporativo
+                })
+                .ToListAsync();
+
+            // Eliminar duplicados por CC en memoria (por seguridad)
+            var personalDistinct = personalDisponible
+                .GroupBy(x => x.CC)
+                .Select(g => g.First())
+                .ToList();
 
             ViewBag.Roles = await _roleManager.Roles.ToListAsync();
-            ViewBag.RolActual = roles.FirstOrDefault() ?? "";
-            ViewBag.PersonalDisponible = await _context.Tbpersonals
-                .Where(p => !string.IsNullOrEmpty(p.CorreoCorporativo) &&
-                            !string.IsNullOrEmpty(p.UsuarioCorporativo) &&
-                            (!emailsConUsuario.Contains(p.CorreoCorporativo) ||
-                             p.CorreoCorporativo == user.Email))
-                .ToListAsync();
+            ViewBag.RolActual = rolActual;
+            ViewBag.PersonalDisponible = personalDistinct;   // ← Aquí está la clave
 
-            var vm = new UsuarioViewModel
+            var pActual = await _context.Tbpersonals.FirstOrDefaultAsync(x =>
+                x.CorreoCorporativo == user.Email || x.UsuarioCorporativo == user.UserName);
+
+            return View(new UsuarioViewModel
             {
                 Id = user.Id,
-                Email = user.Email ?? "",
-                Rol = roles.FirstOrDefault() ?? "",
-                Nombre = personal?.Nombre ?? "",
-                Cargo = personal?.Cargo ?? "",
-                Cedula = personal?.CC ?? 0
-            };
-
-            return View(vm);
+                Email = user.UserName ?? user.Email ?? "",
+                Rol = rolActual,
+                Nombre = pActual?.NombreColaborador ?? "",
+                Cargo = pActual?.Cargo ?? "",
+                Area = pActual?.Area,
+                Cedula = pActual?.CC ?? 0,
+                Bloqueado = user.LockoutEnd.HasValue && user.LockoutEnd > DateTimeOffset.UtcNow,
+            });
         }
 
         [HttpPost]
-        [HttpPost]
-        public async Task<IActionResult> Editar(string id, string rol, string nuevoUserName, int? nuevaCedula)
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Editar(string id, string nuevoUserName, string? nuevoEmail, string rol, int? nuevaCedula)
         {
-            var user = await _userManager.FindByIdAsync(id);
-            if (user == null) return NotFound();
+            if (SoloAdmin() is { } r) return r;
 
-            // Cambiar username si es diferente
-            if (!string.IsNullOrEmpty(nuevoUserName) && nuevoUserName != user.UserName)
+            var user = await _userManager.FindByIdAsync(id);
+            if (user == null)
             {
-                var resultadoUser = await _userManager.SetUserNameAsync(user, nuevoUserName);
-                if (!resultadoUser.Succeeded)
-                {
-                    ViewBag.Error = string.Join(", ", resultadoUser.Errors.Select(e => e.Description));
-                    ViewBag.Roles = await _roleManager.Roles.ToListAsync();
-                    ViewBag.RolActual = rol;
-                    var vm2 = new UsuarioViewModel { Id = user.Id, Email = user.Email ?? "" };
-                    return View(vm2);
-                }
+                TempData["Error"] = "Usuario no encontrado.";
+                return RedirectToAction(nameof(Index));
             }
 
-            // Si se seleccionó un nuevo empleado, actualizar el correo corporativo vinculado
+            // Actualizar UserName y Email de forma segura
+            if (!string.IsNullOrWhiteSpace(nuevoUserName) && nuevoUserName != user.UserName)
+            {
+                var existing = await _userManager.FindByNameAsync(nuevoUserName);
+                if (existing != null && existing.Id != user.Id)
+                {
+                    TempData["Error"] = "El nombre de usuario ya está en uso.";
+                    return RedirectToAction(nameof(Editar), new { id });
+                }
+                await _userManager.SetUserNameAsync(user, nuevoUserName.Trim());
+            }
+
+            if (!string.IsNullOrWhiteSpace(nuevoEmail) && nuevoEmail != user.Email)
+            {
+                await _userManager.SetEmailAsync(user, nuevoEmail.Trim());
+            }
+
+            var updateResult = await _userManager.UpdateAsync(user);
+            if (!updateResult.Succeeded)
+            {
+                TempData["Error"] = string.Join(", ", updateResult.Errors.Select(e => e.Description));
+                return RedirectToAction(nameof(Editar), new { id });
+            }
+
+            // Actualizar Rol
+            var rolesActuales = await _userManager.GetRolesAsync(user);
+            if (rolesActuales.Any())
+                await _userManager.RemoveFromRolesAsync(user, rolesActuales);
+
+            if (!string.IsNullOrEmpty(rol))
+                await _userManager.AddToRoleAsync(user, rol);
+
+            // === ACTUALIZAR VÍNCULO CON TBPERSONAL (lo más importante) ===
             if (nuevaCedula.HasValue && nuevaCedula.Value > 0)
             {
-                var nuevoPersonal = await _context.Tbpersonals.FindAsync(nuevaCedula.Value);
-                if (nuevoPersonal != null && !string.IsNullOrEmpty(nuevoPersonal.CorreoCorporativo))
+                var personal = await _context.Tbpersonals.FindAsync(nuevaCedula.Value);
+                if (personal != null)
                 {
-                    // Actualizar email en Identity para que coincida con el nuevo empleado
-                    await _userManager.SetEmailAsync(user, nuevoPersonal.CorreoCorporativo);
+                    personal.UsuarioCorporativo = user.UserName;
+                    personal.CorreoCorporativo = user.Email;
+                    await _context.SaveChangesAsync();
                 }
             }
 
-            // Cambiar rol
-            var rolesActuales = await _userManager.GetRolesAsync(user);
-            await _userManager.RemoveFromRolesAsync(user, rolesActuales);
-            await _userManager.AddToRoleAsync(user, rol);
+            try
+            {
+                await _audit.RegistrarAsync(AuditService.MOD_USUARIOS, AuditService.ACC_EDITAR,
+                    $"Usuario '{user.UserName}' editado. Rol: '{rol}'", id);
+            }
+            catch { }
 
+            TempData["Exito"] = "✅ Usuario actualizado correctamente.";
             return RedirectToAction(nameof(Index));
         }
 
-        [HttpPost]
-        public async Task<IActionResult> Eliminar(string id)
-        {
-            var user = await _userManager.FindByIdAsync(id);
-            if (user != null)
-                await _userManager.DeleteAsync(user);
-
-            return RedirectToAction(nameof(Index));
-        }
-
+        // ── CAMBIAR CONTRASEÑA ────────────────────────────────────────────
+        [HttpGet]
         public async Task<IActionResult> CambiarPassword(string id)
         {
+            if (SoloAdmin() is { } r) return r;
+
             var user = await _userManager.FindByIdAsync(id);
             if (user == null) return NotFound();
+            ViewBag.UserName = user.UserName;
             ViewBag.UserId = id;
-            ViewBag.Email = user.Email;
             return View();
         }
 
         [HttpPost]
+        [ValidateAntiForgeryToken]
         public async Task<IActionResult> CambiarPassword(string id, string nuevaPassword)
         {
+            if (SoloAdmin() is { } r) return r;
+
+            var user = await _userManager.FindByIdAsync(id);
+            if (user == null) return NotFound();
+            var token = await _userManager.GeneratePasswordResetTokenAsync(user);
+            var result = await _userManager.ResetPasswordAsync(user, token, nuevaPassword);
+            if (!result.Succeeded)
+            {
+                TempData["Error"] = string.Join(", ", result.Errors.Select(e => e.Description));
+                return RedirectToAction(nameof(CambiarPassword), new { id });
+            }
+
+            try
+            {
+                await _audit.RegistrarAsync(AuditService.MOD_USUARIOS, "Cambiar contraseña",
+                $"Contraseña cambiada para '{user.UserName}' por {User.Identity?.Name}", id);
+            }
+            catch { }
+
+            TempData["Exito"] = "✅ Contraseña actualizada.";
+            return RedirectToAction(nameof(Index));
+        }
+
+        // ── DESBLOQUEAR ← TI y Admin pueden hacer esto ───────────────────
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        [Authorize(Roles = "Administrador,TI")]
+        public async Task<IActionResult> Desbloquear(string id)
+        {
+            // No tiene restricción SoloAdmin — TI también puede desbloquear
             var user = await _userManager.FindByIdAsync(id);
             if (user == null) return NotFound();
 
-            var token = await _userManager.GeneratePasswordResetTokenAsync(user);
-            var resultado = await _userManager.ResetPasswordAsync(user, token, nuevaPassword);
+            await _userManager.SetLockoutEndDateAsync(user, null);
+            await _userManager.ResetAccessFailedCountAsync(user);
 
-            if (resultado.Succeeded)
-                return RedirectToAction(nameof(Index));
+            try
+            {
+                await _audit.RegistrarAsync(AuditService.MOD_USUARIOS, AuditService.ACC_DESBLOQUEAR,
+                $"Usuario '{user.UserName}' desbloqueado por {User.Identity?.Name}", id);
+            }
+            catch { }
 
-            ViewBag.Error = string.Join(", ", resultado.Errors.Select(e => e.Description));
-            ViewBag.UserId = id;
-            ViewBag.Email = user.Email;
-            return View();
+            TempData["Exito"] = $"✅ Usuario '{user.UserName}' desbloqueado.";
+            return RedirectToAction(nameof(Index));
         }
 
-        private async Task CargarViewBagCrear()
+        // ── ELIMINAR ──────────────────────────────────────────────────────
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Eliminar(string id)
         {
-            var emailsConUsuario = await _userManager.Users
-                .Select(u => u.Email)
+            if (SoloAdmin() is { } r) return r;
+
+            var user = await _userManager.FindByIdAsync(id);
+            if (user != null)
+            {
+                try
+                {
+                    await _audit.RegistrarAsync(AuditService.MOD_USUARIOS, AuditService.ACC_ELIMINAR,
+                    $"Usuario '{user.UserName}' eliminado por {User.Identity?.Name}", id);
+                }
+                catch { }
+                await _userManager.DeleteAsync(user);
+            }
+            TempData["Exito"] = "Usuario eliminado.";
+            return RedirectToAction(nameof(Index));
+        }
+        
+        // ── VISTA SOLO PARA TI: ver bloqueados y desbloquear ─────────────
+        [HttpGet]
+        [Authorize(Roles = "TI,Administrador")]
+        public async Task<IActionResult> Bloqueados()
+        {
+            var users = await _userManager.Users.ToListAsync();
+
+            var personal = await _context.Tbpersonals
+                .Select(p => new {
+                    p.CC,
+                    p.NombreColaborador,
+                    p.Cargo,
+                    p.Area,
+                    p.UsuarioCorporativo,
+                    p.CorreoCorporativo
+                })
                 .ToListAsync();
 
-            ViewBag.Personal = await _context.Tbpersonals
-                .Where(p => !string.IsNullOrEmpty(p.CorreoCorporativo) &&
-                            !emailsConUsuario.Contains(p.CorreoCorporativo))
-                .ToListAsync();
+            var lista = new List<UsuarioViewModel>();
 
-            ViewBag.Roles = await _roleManager.Roles.ToListAsync();
+            foreach (var u in users)
+            {
+                // Solo usuarios bloqueados
+                if (!(u.LockoutEnd.HasValue && u.LockoutEnd > DateTimeOffset.UtcNow))
+                    continue;
+
+                var p = personal.FirstOrDefault(x => x.UsuarioCorporativo == u.UserName)
+                     ?? personal.FirstOrDefault(x => x.CorreoCorporativo == u.Email);
+
+                lista.Add(new UsuarioViewModel
+                {
+                    Id = u.Id,
+                    Email = u.UserName ?? u.Email ?? "",
+                    Rol = (await _userManager.GetRolesAsync(u)).FirstOrDefault() ?? "Sin rol",
+                    Nombre = p?.NombreColaborador ?? u.UserName ?? "Sin nombre",
+                    Cargo = p?.Cargo ?? "",
+                    Area = p?.Area,
+                    Cedula = p?.CC ?? 0,
+                    Bloqueado = true,
+                });
+            }
+
+            ViewBag.EsAdmin = User.IsInRole("Administrador");
+            return View(lista.OrderBy(u => u.Nombre).ToList());
         }
     }
 }

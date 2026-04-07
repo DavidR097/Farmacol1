@@ -68,9 +68,13 @@ public partial class Tbpersonal
     public string? TallaCamisa { get; set; }
     public string? Grupo { get; set; }
     public string? Concepto { get; set; }
-
     public string? CorreoCorporativo { get; set; }
     public string? UsuarioCorporativo { get; set; }
+    public string? FotoPerfil { get; set; }
+    public string? FirmaPath { get; set; }           
+    public string? JefeInmediato { get; set; }      
+    public string? CargoJefeInmediato { get; set; }
+    public int? JefeInmediatoCC { get; set; }
 
 
     [NotMapped] public string? Nombre => NombreColaborador;

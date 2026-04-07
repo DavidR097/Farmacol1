@@ -1,0 +1,319 @@
+﻿@{
+    ViewData["Title"] = "Expedientes RRHH";
+    var personal = ViewBag.Personal as IEnumerable<dynamic> ?? new List<dynamic>();
+    var conteo = ViewBag.Conteo as Dictionary<int, int> ?? new Dictionary<int, int>();
+    var docsRec = ViewBag.DocsRecientes as Dictionary<int, List<Farmacol.Models.TbExpediente>> ?? new();
+    var areas = ViewBag.Areas as List<string> ?? new List<string>();
+    var plantillas = ViewBag.Plantillas as List<Farmacol.Models.TbPlantilla> ?? new();
+}
+
+<h1>📂 Expedientes RRHH</h1>
+
+<div class="d-flex gap-2 mb-3">
+    <a asp-action="ExportarExcel" asp-route-busqueda="@ViewBag.Busqueda"
+       class="btn btn-success btn-sm">📥 Exportar filtrado</a>
+    <a asp-action="ExportarExcel" asp-route-todo="true"
+       class="btn btn-outline-success btn-sm">📥 Exportar todo</a>
+</div>
+
+@if (TempData["Exito"] != null)
+{
+    <div class="alert alert-success alert-dismissible fade show">@TempData["Exito"]<button type="button" class="btn-close" data-bs-dismiss="alert"></button></div>
+}
+@if (TempData["Error"] != null)
+{
+    <div class="alert alert-danger alert-dismissible fade show">@TempData["Error"]<button type="button" class="btn-close" data-bs-dismiss="alert"></button></div>
+}
+
+<!-- Subida masiva -->
+<div class="card border-0 shadow-sm mb-3">
+    <div class="card-header fw-semibold text-white" style="background:#198754">📤 Subida masiva</div>
+    <div class="card-body" style="background:#edfaf3">
+        <form asp-action="SubirMasivo" method="post" enctype="multipart/form-data">
+            @Html.AntiForgeryToken()
+            <input type="hidden" name="ccs" id="ccsRRHH" />
+            <div class="row g-2 align-items-end">
+                <div class="col-md-3">
+                    <select name="tipoDocumento" class="form-select form-select-sm">
+                        <option value="">Sin categoría</option>
+                        <option>Contrato</option>
+                        <option>Hoja de vida</option>
+                        <option>Certificado</option>
+                        <option>Paz y salvo</option>
+                        <option>Constancia laboral</option>
+                        <option>Carta de retiro</option>
+                        <option>Certificado de ingresos</option>
+                        <option>Otros RRHH</option>
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <input type="text" name="nombrePersonalizado" class="form-control form-control-sm" placeholder="Nombre del documento" />
+                </div>
+                <div class="col-md-4">
+                    <input type="file" name="archivo" accept=".pdf" class="form-control form-control-sm" required />
+                </div>
+                <div class="col-md-2">
+                    <button type="submit" class="btn btn-sm btn-success w-100" id="btnMasivoRRHH" disabled>
+                        📤 Subir (<span id="lblSelRRHH">0</span>)
+                    </button>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Filtros -->
+<form method="get" class="mb-3">
+    <div class="row g-2">
+        <div class="col-md-4">
+            <input type="text" name="busqueda" value="@ViewBag.Busqueda" class="form-control" placeholder="🔍 Nombre o cargo..." />
+        </div>
+        <div class="col-md-3">
+            <select name="area" class="form-select">
+                <option value="">Todas las áreas</option>
+                @foreach (var a in areas)
+                {
+                    <option value="@a" selected="@(ViewBag.Area == a)">@a</option>
+                }
+            </select>
+        </div>
+        <div class="col-md-2"><button type="submit" class="btn btn-secondary w-100">Filtrar</button></div>
+        <div class="col-md-1"><a asp-action="Index" class="btn btn-outline-secondary w-100">✕</a></div>
+        <div class="col-md-2 d-flex align-items-center gap-2">
+            <input type="checkbox" id="chkTodosRRHH" class="form-check-input" style="width:18px;height:18px" />
+            <label for="chkTodosRRHH" class="small text-muted">Seleccionar todos</label>
+        </div>
+    </div>
+</form>
+
+@if (!personal.Any())
+{
+    <div class="alert alert-info">No hay personal registrado.</div>
+}
+else
+{
+    <div class="accordion" id="acordeonRRHH">
+        @foreach (var p in personal)
+        {
+            var cc = (int)p.CC;
+            var totalDocs = conteo.ContainsKey(cc) ? conteo[cc] : 0;
+            var colId = $"rrhh{cc}";
+            var docs = docsRec.ContainsKey(cc) ? docsRec[cc] : new List<Farmacol.Models.TbExpediente>();
+            var visibles = docs.Count(d => d.Visible);
+            var ocultos = docs.Count(d => !d.Visible);
+
+            <div class="accordion-item border-0 mb-2 shadow-sm">
+                <h2 class="accordion-header">
+                    <button class="accordion-button collapsed py-2" type="button"
+                            data-bs-toggle="collapse" data-bs-target="#@colId">
+                        <div class="d-flex flex-wrap gap-3 align-items-center w-100 small">
+                            <span onclick="event.stopPropagation()">
+                                <input type="checkbox" class="chk-rrhh form-check-input" value="@cc" style="width:16px;height:16px" />
+                            </span>
+                            <span class="badge bg-secondary">@cc</span>
+                            <span class="fw-bold" style="min-width:200px">@p.NombreColaborador</span>
+                            <span class="text-muted" style="min-width:150px">@p.Cargo</span>
+                            <span class="badge bg-primary">@p.Area</span>
+                            @if (totalDocs > 0)
+                            {
+                                <span class="badge bg-success rounded-pill">@totalDocs doc(s)</span>
+                                @if (ocultos > 0)
+                                {
+                                    <span class="badge bg-secondary rounded-pill" title="Ocultos para el usuario">@ocultos oculto(s)</span>
+                                }
+                            }
+                            else
+                            {
+                                <span class="badge bg-light text-muted border">Sin docs</span>
+                            }
+                        </div>
+                    </button>
+                </h2>
+                <div id="@colId" class="accordion-collapse collapse">
+                    <div class="accordion-body pt-2 pb-3">
+                        <div class="row g-3">
+
+                            <!-- Identificación -->
+                            <div class="col-md-6">
+                                <div class="card border-0 h-100">
+                                    <div class="card-header text-white fw-semibold" style="background:#343a40">🪪 Identificación</div>
+                                    <div class="card-body bg-light small">
+                                        <div><span class="text-muted">CC:</span> <strong>@cc</strong></div>
+                                        <div><span class="text-muted">Nombre:</span> <strong>@p.NombreColaborador</strong></div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Cargo -->
+                            <div class="col-md-6">
+                                <div class="card border-0 h-100">
+                                    <div class="card-header text-white fw-semibold" style="background:#0d6efd">💼 Cargo / Área</div>
+                                    <div class="card-body small" style="background:#eef3ff">
+                                        <div><span class="text-muted">Cargo:</span> @p.Cargo</div>
+                                        <div><span class="text-muted">Área:</span> @p.Area</div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Generar documentos -->
+                            @if (plantillas.Any())
+                            {
+                                <div class="col-12">
+                                    <div class="card border-0">
+                                        <div class="card-header text-white fw-semibold" style="background:#6f42c1">📄 Generar documento</div>
+                                        <div class="card-body" style="background:#f3eeff">
+                                            <div class="d-flex flex-wrap gap-2">
+                                                @foreach (var plt in plantillas)
+                                                {
+                                                    <a asp-action="Generar" asp-route-cc="@cc"
+                                                       asp-route-tipoDocumento="@plt.TipoDocumento"
+                                                       class="btn btn-sm" style="border:1px solid #6f42c1;color:#6f42c1">
+                                                        📄 @plt.TipoDocumento
+                                                    </a>
+                                                }
+                                            </div>
+                                            <small class="text-muted mt-1 d-block">Se descarga como .docx con los datos del empleado ya rellenados.</small>
+                                        </div>
+                                    </div>
+                                </div>
+                            }
+
+                            <!-- ── DOCUMENTOS: tabla completa ── -->
+                            <div class="col-12">
+                                <div class="card border-0">
+                                    <div class="card-header text-white fw-semibold d-flex justify-content-between align-items-center"
+                                         style="background:#198754">
+                                        <span>📁 Documentos (@totalDocs)</span>
+                                        @if (totalDocs > 0)
+                                        {
+                                            <small class="fw-normal opacity-75">
+                                                @visibles visible(s) para el usuario · @ocultos oculto(s)
+                                            </small>
+                                        }
+                                    </div>
+                                    <div class="card-body p-0" style="background:#edfaf3">
+                                        @if (!docs.Any())
+                                        {
+                                            <p class="text-muted small p-3 mb-0">Sin documentos.</p>
+                                        }
+                                        else
+                                        {
+                                            <div class="table-responsive">
+                                                <table class="table table-sm table-hover align-middle mb-0 small">
+                                                    <thead class="table-dark">
+                                                        <tr>
+                                                            <th>Documento</th>
+                                                            <th>Tipo</th>
+                                                            <th>Fecha subida</th>
+                                                            <th class="text-center">Visible usuario</th>
+                                                            <th class="text-center">Acciones</th>
+                                                        </tr>
+                                                    </thead>
+                                                    <tbody>
+                                                        @foreach (var doc in docs.OrderByDescending(d => d.FechaSubida))
+                                                        {
+                                                            <tr class="@(!doc.Visible ? "table-secondary" : "")">
+                                                                <td>
+                                                                    <span>📄</span>
+                                                                    <strong class="ms-1">@doc.NombreArchivo</strong>
+                                                                    @if (!doc.Visible)
+                                                                    {
+                                                                        <span class="badge bg-secondary ms-1" style="font-size:.65rem">Oculto</span>
+                                                                    }
+                                                                </td>
+                                                                <td><small class="text-muted">@(doc.TipoDocumento ?? "—")</small></td>
+                                                                <td><small class="text-muted">@doc.FechaSubida.ToString("dd/MM/yyyy HH:mm")</small></td>
+                                                                <td class="text-center">
+                                                                    <form asp-action="ToggleVisible" method="post" class="d-inline">
+                                                                        @Html.AntiForgeryToken()
+                                                                        <input type="hidden" name="id" value="@doc.Id" />
+                                                                        <button type="submit"
+                                                                                class="btn btn-sm @(doc.Visible ? "btn-success" : "btn-outline-secondary")"
+                                                                                title="@(doc.Visible ? "Visible — clic para ocultar" : "Oculto — clic para mostrar")">
+                                                                            @(doc.Visible ? "👁️ Sí" : "🙈 No")
+                                                                        </button>
+                                                                    </form>
+                                                                </td>
+                                                                <td class="text-center">
+                                                                    <a asp-action="Ver" asp-route-id="@doc.Id"
+                                                                       target="_blank" class="btn btn-sm btn-outline-primary">👁️</a>
+                                                                    <form asp-action="Eliminar" method="post" class="d-inline">
+                                                                        @Html.AntiForgeryToken()
+                                                                        <input type="hidden" name="id" value="@doc.Id" />
+                                                                        <button type="submit" class="btn btn-sm btn-outline-danger"
+                                                                                onclick="return confirm('¿Eliminar «@doc.NombreArchivo»?')">
+                                                                            🗑️
+                                                                        </button>
+                                                                    </form>
+                                                                </td>
+                                                            </tr>
+                                                        }
+                                                    </tbody>
+                                                </table>
+                                            </div>
+                                        }
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Subir individual -->
+                            <div class="col-12">
+                                <div class="card border-0">
+                                    <div class="card-header text-white fw-semibold" style="background:#0d6efd">📤 Subir documento</div>
+                                    <div class="card-body" style="background:#eef3ff">
+                                        <form asp-action="Subir" method="post" enctype="multipart/form-data">
+                                            @Html.AntiForgeryToken()
+                                            <input type="hidden" name="cc" value="@cc" />
+                                            <div class="row g-2 align-items-end">
+                                                <div class="col-md-3">
+                                                    <select name="tipoDocumento" class="form-select form-select-sm">
+                                                        <option value="">Sin categoría</option>
+                                                        <option>Contrato</option>
+                                                        <option>Hoja de vida</option>
+                                                        <option>Certificado</option>
+                                                        <option>Paz y salvo</option>
+                                                        <option>Constancia laboral</option>
+                                                        <option>Carta de retiro</option>
+                                                        <option>Certificado de ingresos</option>
+                                                        <option>Otros RRHH</option>
+                                                    </select>
+                                                </div>
+                                                <div class="col-md-3">
+                                                    <input type="text" name="nombrePersonalizado" class="form-control form-control-sm" placeholder="Nombre del documento" />
+                                                </div>
+                                                <div class="col-md-4">
+                                                    <input type="file" name="archivo" accept=".pdf" class="form-control form-control-sm" required />
+                                                </div>
+                                                <div class="col-md-2">
+                                                    <button type="submit" class="btn btn-sm btn-primary w-100">📤 Subir</button>
+                                                </div>
+                                            </div>
+                                        </form>
+                                    </div>
+                                </div>
+                            </div>
+
+                        </div>
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+}
+
+@section Scripts {
+    <script>
+        var chkTodos = document.getElementById('chkTodosRRHH');
+        var ccsInput = document.getElementById('ccsRRHH');
+        var lblSel   = document.getElementById('lblSelRRHH');
+        var btnMas   = document.getElementById('btnMasivoRRHH');
+        function actualizarSel() {
+            var sel = Array.from(document.querySelectorAll('.chk-rrhh:checked')).map(c => c.value);
+            ccsInput.value = sel.join(','); lblSel.textContent = sel.length; btnMas.disabled = sel.length === 0;
+        }
+        if (chkTodos) chkTodos.addEventListener('change', function() {
+            document.querySelectorAll('.chk-rrhh').forEach(c => c.checked = chkTodos.checked); actualizarSel();
+        });
+        document.querySelectorAll('.chk-rrhh').forEach(c => c.addEventListener('change', actualizarSel));
+    </script>
+}

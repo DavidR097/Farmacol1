@@ -1,386 +1,858 @@
-﻿<!DOCTYPE html>
-<html lang="es">
-<head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>@ViewData["Title"] - Farmacol</title>
-    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
-    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
-    <style>
-        :root {
-            --sidebar-w-collapsed: 60px;
-            --sidebar-w-expanded: 240px;
-            --sidebar-bg: #1a1d23;
-            --sidebar-hover: #2a2d35;
-            --sidebar-active: #0d6efd;
-            --sidebar-text: #adb5bd;
-            --sidebar-text-active: #ffffff;
-            --topbar-h: 56px;
-            --transition: 0.25s ease;
-        }
-
-        body {
-            margin: 0;
-            padding: 0;
-            background: #f4f6f9;
-        }
-
-        /* Topbar */
-        .topbar {
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            height: var(--topbar-h);
-            background: #ffffff;
-            border-bottom: 1px solid #dee2e6;
-            display: flex;
-            align-items: center;
-            padding: 0 1rem;
-            z-index: 1030;
-            box-shadow: 0 1px 4px rgba(0,0,0,0.08);
-        }
-
-            .topbar .brand {
-                font-size: 1.2rem;
-                font-weight: 700;
-                color: #0d6efd;
-                text-decoration: none;
-                margin-left: calc(var(--sidebar-w-collapsed) + 0.5rem);
-                transition: margin-left var(--transition);
+﻿    <!DOCTYPE html>
+    <html lang="es">
+    <head>
+        <meta charset="utf-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>@ViewData["Title"] - Farmacol</title>
+        <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+        <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+        <style>
+            :root {
+                --sb-collapsed: 60px;
+                --sb-expanded: 240px;
+                --sb-bg: #1a1d23;
+                --sb-hover: #2a2d35;
+                --sb-active: #0d6efd;
+                --sb-text: #adb5bd;
+                --sb-text-on: #ffffff;
+                --topbar-h: 56px;
+                --speed: 0.22s;
             }
 
-            .topbar .user-info {
-                margin-left: auto;
+            *, *::before, *::after {
+                box-sizing: border-box;
+            }
+
+            body {
+                margin: 0;
+                padding: 0;
+                background: #f4f6f9;
+                font-family: system-ui, sans-serif;
+            }
+
+            /* ── Topbar ── */
+            #topbar {
+                position: fixed;
+                top: 0;
+                left: 0;
+                right: 0;
+                height: var(--topbar-h);
+                background: #fff;
+                border-bottom: 1px solid #dee2e6;
                 display: flex;
                 align-items: center;
-                gap: 0.75rem;
-                font-size: 0.9rem;
-                color: #495057;
+                padding: 0 1rem;
+                z-index: 200;
+                box-shadow: 0 1px 4px rgba(0,0,0,.08);
             }
 
-                .topbar .user-info .avatar {
-                    width: 34px;
-                    height: 34px;
+                #topbar .brand {
+                    font-size: 1.15rem;
+                    font-weight: 700;
+                    color: #0d6efd;
+                    text-decoration: none;
+                    margin-left: .5rem;
+                }
+
+                #topbar .user-info {
+                    margin-left: auto;
+                    display: flex;
+                    align-items: center;
+                    gap: .75rem;
+                    font-size: .875rem;
+                    color: #495057;
+                }
+
+                #topbar .avatar {
+                    width: 32px;
+                    height: 32px;
                     border-radius: 50%;
                     background: #0d6efd;
-                    color: white;
+                    color: #fff;
                     display: flex;
                     align-items: center;
                     justify-content: center;
                     font-weight: 700;
-                    font-size: 0.85rem;
+                    font-size: .8rem;
+                    flex-shrink: 0;
                 }
 
-        /* Sidebar */
-        .sidebar {
-            position: fixed;
-            top: var(--topbar-h);
-            left: 0;
-            bottom: 0;
-            width: var(--sidebar-w-collapsed);
-            background: var(--sidebar-bg);
-            overflow: hidden;
-            transition: width var(--transition);
-            z-index: 1020;
-            display: flex;
-            flex-direction: column;
-        }
-
-            .sidebar:hover {
-                width: var(--sidebar-w-expanded);
+            /* ── Notificaciones ── */
+            .notif-btn {
+                position: relative;
+                background: none;
+                border: none;
+                cursor: pointer;
+                font-size: 1.3rem;
+                line-height: 1;
+                padding: .25rem .4rem;
+                border-radius: 8px;
+                transition: background .15s;
+                color: #495057;
             }
 
-        .sidebar-section-title {
-            font-size: 0.65rem;
-            text-transform: uppercase;
-            letter-spacing: 0.08em;
-            color: #6c757d;
-            padding: 1rem 0 0.25rem 1rem;
-            white-space: nowrap;
-            overflow: hidden;
-            opacity: 0;
-            transition: opacity var(--transition);
-        }
+                .notif-btn:hover {
+                    background: #f0f0f0;
+                }
 
-        .sidebar:hover .sidebar-section-title {
-            opacity: 1;
-        }
-
-        .sidebar-item {
-            display: flex;
-            align-items: center;
-            padding: 0.6rem 0;
-            cursor: pointer;
-            color: var(--sidebar-text);
-            text-decoration: none;
-            white-space: nowrap;
-            transition: background var(--transition), color var(--transition);
-            border-radius: 6px;
-            margin: 1px 6px;
-        }
-
-            .sidebar-item:hover {
-                background: var(--sidebar-hover);
-                color: var(--sidebar-text-active);
-            }
-
-            .sidebar-item.active {
-                background: var(--sidebar-active);
-                color: var(--sidebar-text-active);
-            }
-
-            .sidebar-item .icon {
-                min-width: var(--sidebar-w-collapsed);
-                text-align: center;
-                font-size: 1.1rem;
-                display: flex;
+            .notif-badge {
+                position: absolute;
+                top: 0;
+                right: 0;
+                background: #dc3545;
+                color: #fff;
+                border-radius: 50%;
+                font-size: .6rem;
+                font-weight: 700;
+                min-width: 16px;
+                height: 16px;
+                display: none;
                 align-items: center;
                 justify-content: center;
+                padding: 0 3px;
             }
 
-            .sidebar-item .label {
-                font-size: 0.88rem;
+            #notifDropdown {
+                display: none;
+                position: fixed;
+                top: var(--topbar-h);
+                right: 1rem;
+                width: 360px;
+                max-height: 480px;
+                background: #fff;
+                border: 1px solid #dee2e6;
+                border-radius: 12px;
+                box-shadow: 0 8px 24px rgba(0,0,0,.12);
+                z-index: 300;
+                flex-direction: column;
+                overflow: hidden;
+            }
+
+                #notifDropdown.open {
+                    display: flex;
+                }
+
+            .notif-header {
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+                padding: .75rem 1rem;
+                border-bottom: 1px solid #dee2e6;
+                font-weight: 600;
+                font-size: .9rem;
+                background: #f8f9fa;
+            }
+
+            .notif-list {
+                overflow-y: auto;
+                flex: 1;
+            }
+
+            .notif-item {
+                display: flex;
+                gap: .75rem;
+                padding: .75rem 1rem;
+                border-bottom: 1px solid #f0f0f0;
+                cursor: pointer;
+                transition: background .12s;
+                text-decoration: none;
+                color: inherit;
+            }
+
+                .notif-item:hover {
+                    background: #f8f9fa;
+                }
+
+                .notif-item.no-leida {
+                    background: #eff6ff;
+                }
+
+                    .notif-item.no-leida:hover {
+                        background: #dbeafe;
+                    }
+
+            .notif-icon {
+                font-size: 1.4rem;
+                flex-shrink: 0;
+                margin-top: .1rem;
+            }
+
+            .notif-body {
+                flex: 1;
+                min-width: 0;
+            }
+
+            .notif-msg {
+                font-size: .82rem;
+                color: #212529;
+                line-height: 1.4;
+                margin-bottom: .2rem;
+            }
+
+            .notif-time {
+                font-size: .72rem;
+                color: #6c757d;
+            }
+
+            .notif-dot {
+                width: 8px;
+                height: 8px;
+                border-radius: 50%;
+                background: #0d6efd;
+                flex-shrink: 0;
+                margin-top: .45rem;
+            }
+
+            .notif-empty {
+                text-align: center;
+                padding: 2rem 1rem;
+                color: #6c757d;
+                font-size: .9rem;
+            }
+
+            .notif-footer {
+                padding: .5rem 1rem;
+                border-top: 1px solid #dee2e6;
+                text-align: center;
+            }
+
+                .notif-footer a {
+                    font-size: .82rem;
+                    color: #0d6efd;
+                    text-decoration: none;
+                }
+
+                    .notif-footer a:hover {
+                        text-decoration: underline;
+                    }
+
+            /* ── Sidebar ── */
+            #sb {
+                position: fixed;
+                top: var(--topbar-h);
+                left: 0;
+                bottom: 0;
+                width: var(--sb-collapsed);
+                background: var(--sb-bg);
+                display: flex;
+                flex-direction: column;
+                z-index: 100;
+                transition: width var(--speed) ease;
+                overflow: hidden;
+                border-right: 1px solid #2c3040;
+            }
+
+                #sb.expanded {
+                    width: var(--sb-expanded);
+                }
+
+            .sb-scroll {
+                flex: 1;
+                overflow-y: auto;
+                overflow-x: hidden;
+                scrollbar-width: thin;
+                scrollbar-color: #3a3f4b transparent;
+            }
+
+            .sb-label {
+                font-size: .68rem;
+                font-weight: 600;
+                text-transform: uppercase;
+                letter-spacing: .06em;
+                color: #6c757d;
+                padding: 1.1rem 0 .4rem 1.25rem;
+                white-space: nowrap;
                 opacity: 0;
-                transition: opacity var(--transition);
+                transition: opacity var(--speed);
             }
 
-        .sidebar:hover .sidebar-item .label {
-            opacity: 1;
-        }
+            #sb.expanded .sb-label {
+                opacity: 1;
+            }
 
-        .sidebar-divider {
-            border-top: 1px solid #2e3340;
-            margin: 0.5rem 10px;
-        }
+            .sb-divider {
+                border-top: 1px solid #2c3040;
+                margin: .5rem 1rem;
+                opacity: .5;
+            }
 
-        .sidebar-bottom {
-            margin-top: auto;
-            padding-bottom: 0.5rem;
-        }
+            .sb-item {
+                display: flex;
+                align-items: center;
+                margin: 2px 8px;
+                padding: 0 8px;
+                border-radius: 6px;
+                color: var(--sb-text);
+                text-decoration: none;
+                cursor: pointer;
+                white-space: nowrap;
+                background: transparent;
+                transition: background .18s ease, color .18s ease;
+                height: 40px;
+                font-weight: 500;
+                border: none;
+            }
 
-        .main-wrapper {
-            margin-top: var(--topbar-h);
-            margin-left: var(--sidebar-w-collapsed);
-            padding: 1.5rem;
-            transition: margin-left var(--transition);
-            min-height: calc(100vh - var(--topbar-h));
-        }
-    </style>
-</head>
-<body>
+            #sb:not(.expanded) .sb-item {
+                justify-content: center;
+                margin: 4px auto;
+                width: 40px;
+                height: 40px;
+                padding: 0;
+            }
 
+            #sb.expanded .sb-item {
+                justify-content: flex-start;
+                padding: 0 12px;
+            }
+
+            .sb-item:hover {
+                background: var(--sb-hover);
+                color: #e9ecef;
+            }
+
+            .sb-item.active {
+                background: rgba(13,110,253,.12);
+                color: #0d6efd;
+                font-weight: 600;
+            }
+
+            .sb-icon {
+                width: 40px;
+                min-width: 40px;
+                text-align: center;
+                font-size: 1.2rem;
+                flex-shrink: 0;
+                line-height: 1;
+                color: inherit;
+            }
+
+            #sb.expanded .sb-icon {
+                margin-right: 14px;
+                font-size: 1.15rem;
+            }
+
+            .sb-text {
+                font-size: .875rem;
+                opacity: 0;
+                transition: opacity var(--speed) ease;
+                overflow: hidden;
+                text-overflow: ellipsis;
+                font-weight: 500;
+            }
+
+            #sb.expanded .sb-text {
+                opacity: 1;
+            }
+
+            .sb-arrow {
+                margin-left: auto;
+                font-size: .65rem;
+                transition: transform .18s ease;
+                opacity: .6;
+                padding-right: 4px;
+            }
+
+            .sb-item.open .sb-arrow {
+                transform: rotate(90deg);
+                opacity: .9;
+            }
+
+            .sb-sub {
+                max-height: 0;
+                overflow: hidden;
+                transition: max-height var(--speed) ease;
+                background: rgba(20,25,35,.4);
+                margin: 0 12px 6px 12px;
+                border-radius: 0 0 6px 6px;
+                border-left: 3px solid #0d6efd33;
+            }
+
+                .sb-sub.open {
+                    max-height: 600px;
+                }
+
+            .sb-sub-item {
+                display: flex;
+                align-items: center;
+                padding: 0 12px 0 20px;
+                margin: 1px 0;
+                border-radius: 5px;
+                color: var(--sb-text);
+                text-decoration: none;
+                height: 36px;
+                transition: all .18s ease;
+                font-size: .86rem;
+                font-weight: 400;
+            }
+
+                .sb-sub-item:hover {
+                    background: var(--sb-hover);
+                    color: #e9ecef;
+                    padding-left: 24px;
+                }
+
+                .sb-sub-item.active {
+                    background: rgba(13,110,253,.08);
+                    color: #0d6efd;
+                    font-weight: 600;
+                }
+
+                .sb-sub-item .sb-icon {
+                    width: 32px;
+                    min-width: 32px;
+                    font-size: 1rem;
+                    margin-right: 0;
+                }
+
+            #sb.expanded .sb-sub-item .sb-icon {
+                margin-right: 10px;
+            }
+
+            .sb-bottom {
+                margin-top: auto;
+                padding: 12px 8px 20px;
+            }
+
+                .sb-bottom .sb-item {
+                    color: #dc3545;
+                }
+
+                    .sb-bottom .sb-item:hover {
+                        background: rgba(220,53,69,.08);
+                        color: #c82333;
+                    }
+
+            /* ── Contenido ── */
+            #content {
+                margin-top: var(--topbar-h);
+                margin-left: var(--sb-collapsed);
+                padding: 1.5rem;
+                min-height: calc(100vh - var(--topbar-h));
+                transition: margin-left var(--speed) ease;
+            }
+
+                #content.pushed {
+                    margin-left: var(--sb-expanded);
+                }
+        </style>
+    </head>
+    <body>
     @{
         var userArea = ViewBag.UserArea as string ?? "";
-        bool esCapHumano = userArea == "Capital Humano";
-        bool esGerGen = userArea == "Gerencia General";
-        bool esDirectivo = userArea == "Directivo";
+        var userCargo = ViewBag.UserCargo as string ?? "";
 
         bool esAdmin = User.IsInRole("Administrador");
         bool esRRHH = User.IsInRole("RRHH");
         bool esGerente = User.IsInRole("Gerente");
         bool esJefe = User.IsInRole("Jefe");
-        bool esDir = User.IsInRole("Directivo");
         bool esCoord = User.IsInRole("Coordinador");
+        bool esAsistente = User.IsInRole("Asistente") || User.IsInRole("Asistente CH") || User.IsInRole("Asistente Capital Humano");
         bool esUsuario = User.IsInRole("Usuario");
-        bool esAsistente = User.IsInRole("Asistente");
+        bool esAprendiz = User.IsInRole("Aprendiz");
+        bool esRecepcionista = User.IsInRole("Recepcionista");
+        bool esTI = User.IsInRole("TI");
+        bool esDirectivo = User.IsInRole("Directivo");
 
-        // Puede ver Personal
-        bool verPersonal = esAdmin || esRRHH ||
-        (esGerente && esCapHumano) ||
-        (esJefe && esCapHumano);
+        bool esCapHumano = string.Equals(userArea, "Capital Humano", StringComparison.OrdinalIgnoreCase) ||
+                           string.Equals(userArea, "RRHH", StringComparison.OrdinalIgnoreCase);
 
-        // Puede ver Solicitudes (tabla)
-        bool verSolicitudes = esAdmin || esRRHH || esDir || esGerente || esJefe || esAsistente;
+        bool esGerenteCH = string.Equals(userCargo, "Gerente Capital Humano", StringComparison.OrdinalIgnoreCase);
 
-        // Puede crear solicitudes
-        bool crearSolicitud = esCoord || esUsuario || esGerente || esJefe || esAsistente;
+        // Permisos clave
+        bool verPersonal = esAdmin || esRRHH || esGerenteCH ||
+                           ((esGerente || esJefe || esCoord || esAsistente) && esCapHumano);
 
-        // Puede ver Sol. Rechazadas
-        bool verRechazadas = esAdmin || esRRHH;
+        bool verSolicitudes = esAdmin || esRRHH || esDirectivo || esGerente || esJefe ||
+                              esAsistente || esCoord || esRecepcionista || esGerenteCH;
 
-        // Puede ver Inventario/Responsivas
-        bool verTI = esAdmin || esRRHH;
+        bool crearSolicitud = esAdmin || esCoord || esUsuario || esGerente || esJefe ||
+                              esAsistente || esAprendiz || esRecepcionista || esRRHH || esTI;
 
-        // Buscador
-        bool verBuscador = !esCoord && !esUsuario;
+        bool verRechazadas = esAdmin || esRRHH || esGerenteCH;
+
+        bool verGestionRRHH = esAdmin || esRRHH || esGerenteCH;   // ← Importante para Gerente CH
+
+        bool verTI = esAdmin || esTI;
+        bool verBuscador = !(User.IsInRole("Usuario") && !esCapHumano);
+        bool verAdmin = esAdmin;
+        bool verUsuarios = esAdmin;
+
+        bool hayNotif = verSolicitudes || User.IsInRole("Usuario") || esRecepcionista;
+
+        var ctrl = ViewContext.RouteData.Values["controller"]?.ToString() ?? "";
+        var action = ViewContext.RouteData.Values["action"]?.ToString() ?? "";
+
+        bool enPersonal = ctrl == "Tbpersonals" || ctrl == "PersonalRetirado" ||
+                          ctrl == "ExpedientesRRHH" || ctrl == "ExpedientesAdmin";
+        bool enSoli = ctrl == "Tbsolicitudes" || ctrl == "TbsoliRechazadums" ||
+                      ctrl == "SolicitudRRHH";
+        bool enTI = ctrl == "Tbinventarios" || ctrl == "Tbresponsivas" || ctrl == "ExpedientesTI";
+        bool enAdmin = ctrl == "Usuarios" || ctrl == "Delegaciones" ||
+                       ctrl == "Plantillas" || ctrl == "AuditTrail";
     }
 
-    <!-- TOPBAR -->
-    <div class="topbar">
-        <a class="brand" href="/">💊 Farmacol</a>
-        <div class="user-info">
-            @if (User.Identity?.IsAuthenticated == true)
-            {
-                var initials = (User.Identity.Name ?? "?").Substring(0, 1).ToUpper();
-                <div class="avatar">@initials</div>
-                <span>@User.Identity.Name</span>
-                @if (!string.IsNullOrEmpty(userArea))
+        <!-- TOPBAR -->
+        <div id="topbar">
+            <a class="brand" href="/">Farmacol Chinoin</a>
+            <div class="user-info">
+                @if (User.Identity?.IsAuthenticated == true)
                 {
-                    <span class="badge bg-secondary">@userArea</span>
+                    @await Component.InvokeAsync("UserAvatar")
+                    @if (!string.IsNullOrEmpty(userArea))
+                    {
+                        <span class="badge bg-secondary">@userArea</span>
+                    }
+                    @if (hayNotif)
+                    {
+                        <button class="notif-btn" id="btnCampana" title="Notificaciones">
+                            🔔<span class="notif-badge" id="notifBadge">0</span>
+                        </button>
+                    }
                 }
-                <form asp-controller="Login" asp-action="Logout" method="post" class="mb-0">
-                    @Html.AntiForgeryToken()
-                    <button type="submit" class="btn btn-sm btn-outline-danger">Salir</button>
-                </form>
-            }
-        </div>
-    </div>
-
-    <!-- SIDEBAR -->
-    <nav class="sidebar">
-
-        <!-- Notificaciones -->
-        @if (verSolicitudes || esCoord || esUsuario)
-        {
-            <a class="sidebar-item position-relative"
-               asp-controller="Tbsolicitudes" asp-action="Index">
-                <span class="icon">🔔</span>
-                <span class="label">Notificaciones</span>
-                <span id="badgeNotif"
-                      class="position-absolute badge rounded-pill bg-danger"
-                      style="top:4px; left:36px; font-size:0.65rem; display:none;">0</span>
-            </a>
-        }
-
-        <!-- Inicio -->
-        <a class="sidebar-item @(ViewContext.RouteData.Values["controller"]?.ToString() == "Home" ? "active" : "")"
-           asp-controller="Home" asp-action="Index">
-            <span class="icon">🏠</span>
-            <span class="label">Inicio</span>
-        </a>
-
-        <!-- Buscador -->
-        @if (verBuscador)
-        {
-            <a class="sidebar-item @(ViewContext.RouteData.Values["controller"]?.ToString() == "Buscador" ? "active" : "")"
-               asp-controller="Buscador" asp-action="Index">
-                <span class="icon">🔍</span>
-                <span class="label">Buscador</span>
-            </a>
-        }
-
-        <div class="sidebar-divider"></div>
-
-        <!-- Personal -->
-        @if (verPersonal)
-        {
-            <div class="sidebar-section-title">Personal</div>
-            <a class="sidebar-item @(ViewContext.RouteData.Values["controller"]?.ToString() == "Tbpersonals" ? "active" : "")"
-               asp-controller="Tbpersonals" asp-action="Index">
-                <span class="icon">👥</span>
-                <span class="label">Personal</span>
-            </a>
-        }
-
-        <!-- Solicitudes (tabla de revisión) -->
-        @if (verSolicitudes)
-        {
-            <div class="sidebar-section-title">
-                @(esAdmin || esRRHH ? "Gestión" : "Revisión")
             </div>
-            <a class="sidebar-item @(ViewContext.RouteData.Values["controller"]?.ToString() == "Tbsolicitudes" &&
-                                                 ViewContext.RouteData.Values["action"]?.ToString() != "Create" ? "active" : "")"
-               asp-controller="Tbsolicitudes" asp-action="Index">
-                <span class="icon">📋</span>
-                <span class="label">Solicitudes</span>
-            </a>
-        }
-
-        <!-- Sol. Rechazadas -->
-        @if (verRechazadas)
-        {
-            <a class="sidebar-item @(ViewContext.RouteData.Values["controller"]?.ToString() == "TbsoliRechazadums" ? "active" : "")"
-               asp-controller="TbsoliRechazadums" asp-action="Index">
-                <span class="icon">❌</span>
-                <span class="label">Sol. Rechazadas</span>
-            </a>
-        }
-
-        <!-- Nueva Solicitud -->
-        @if (crearSolicitud)
-        {
-            <div class="sidebar-section-title">Mis Solicitudes</div>
-            <a class="sidebar-item @(ViewContext.RouteData.Values["action"]?.ToString() == "Create" &&
-                                                 ViewContext.RouteData.Values["controller"]?.ToString() == "Tbsolicitudes" ? "active" : "")"
-               asp-controller="Tbsolicitudes" asp-action="Create">
-                <span class="icon">➕</span>
-                <span class="label">Nueva Solicitud</span>
-            </a>
-        }
-
-        <div class="sidebar-divider"></div>
-
-        <!-- Tecnología -->
-        @if (verTI)
-        {
-            <div class="sidebar-section-title">Tecnología</div>
-            <a class="sidebar-item @(ViewContext.RouteData.Values["controller"]?.ToString() == "Tbinventarios" ? "active" : "")"
-               asp-controller="Tbinventarios" asp-action="Index">
-                <span class="icon">💻</span>
-                <span class="label">Inventario</span>
-            </a>
-            <a class="sidebar-item @(ViewContext.RouteData.Values["controller"]?.ToString() == "Tbresponsivas" ? "active" : "")"
-               asp-controller="Tbresponsivas" asp-action="Index">
-                <span class="icon">📄</span>
-                <span class="label">Responsivas</span>
-            </a>
-        }
-
-        <!-- Administración -->
-        @if (esAdmin)
-        {
-            <div class="sidebar-divider"></div>
-            <div class="sidebar-section-title">Administración</div>
-            <a class="sidebar-item @(ViewContext.RouteData.Values["controller"]?.ToString() == "Usuarios" ? "active" : "")"
-               asp-controller="Usuarios" asp-action="Index">
-                <span class="icon">⚙️</span>
-                <span class="label">Usuarios</span>
-            </a>
-        }
-
-        <!-- Cerrar sesión -->
-        <div class="sidebar-bottom">
-            <div class="sidebar-divider"></div>
-            @if (User.Identity?.IsAuthenticated == true)
-            {
-                <form asp-controller="Login" asp-action="Logout" method="post" class="mb-0">
-                    @Html.AntiForgeryToken()
-                    <button type="submit" class="sidebar-item w-100 border-0 bg-transparent text-start">
-                        <span class="icon">🚪</span>
-                        <span class="label" style="color:#dc3545;">Cerrar sesión</span>
-                    </button>
-                </form>
-            }
         </div>
 
-    </nav>
-
-    <!-- CONTENIDO PRINCIPAL -->
-    <div class="main-wrapper">
-        @RenderBody()
-    </div>
-
-    <script src="~/lib/jquery/dist/jquery.min.js"></script>
-    <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
-    <script src="~/js/site.js" asp-append-version="true"></script>
-    @await RenderSectionAsync("Scripts", required: false)
-
-    <script>
-        async function actualizarNotificaciones() {
-            try {
-                const resp  = await fetch('/Tbsolicitudes/ContarNotificaciones');
-                const count = await resp.json();
-                const badge = document.getElementById('badgeNotif');
-                if (badge) {
-                    badge.textContent  = count;
-                    badge.style.display = count > 0 ? 'inline' : 'none';
-                }
-            } catch {}
+        @if (hayNotif)
+        {
+            <div id="notifDropdown">
+                <div class="notif-header">
+                    <span>🔔 Notificaciones</span>
+                    <button class="btn btn-sm btn-link p-0 text-muted" id="btnMarcarTodas" style="font-size:.78rem;">
+                        Marcar todas leídas
+                    </button>
+                </div>
+                <div class="notif-list" id="notifList"><div class="notif-empty">Cargando...</div></div>
+                <div class="notif-footer">
+                    <a asp-controller="Tbsolicitudes" asp-action="MisSolicitudes">Ver mis solicitudes</a>
+                </div>
+            </div>
         }
-        actualizarNotificaciones();
-        setInterval(actualizarNotificaciones, 30000);
-    </script>
 
-</body>
-</html>
+        <!-- SIDEBAR -->
+        <nav id="sb">
+            <div class="sb-scroll">
+
+                <a class="sb-item @(ctrl == "Home" ? "active" : "")" asp-controller="Home" asp-action="Index">
+                    <span class="sb-icon">🏠</span><span class="sb-text">Inicio</span>
+                </a>
+
+                @if (verBuscador)
+                {
+                    <a class="sb-item @(ctrl == "Buscador" ? "active" : "")" asp-controller="Buscador" asp-action="Index">
+                        <span class="sb-icon">🔍</span><span class="sb-text">Buscador</span>
+                    </a>
+                }
+
+                @if (crearSolicitud || esUsuario)
+                {
+                    <a class="sb-item @(ctrl == "Tbsolicitudes" && action == "MisSolicitudes" ? "active" : "")"
+                       asp-controller="Tbsolicitudes" asp-action="MisSolicitudes">
+                        <span class="sb-icon">📁</span><span class="sb-text">Mis Solicitudes</span>
+                    </a>
+                }
+
+                @if (User.Identity?.IsAuthenticated == true)
+                {
+                    <a class="sb-item @(ctrl == "MiExpediente" ? "active" : "")"
+                       asp-controller="MiExpediente" asp-action="Index">
+                        <span class="sb-icon">📂</span><span class="sb-text">Mi Expediente</span>
+                    </a>
+                }
+
+                <div class="sb-divider"></div>
+
+                @if (verPersonal)
+                {
+                    <div class="sb-label">Personal</div>
+                    <div class="sb-item sb-toggle @(enPersonal ? "open" : "")" data-sub="sub-personal">
+                        <span class="sb-icon">👥</span>
+                        <span class="sb-text">Personal <span class="sb-arrow">▶</span></span>
+                    </div>
+                    <div class="sb-sub @(enPersonal ? "open" : "")" id="sub-personal">
+                        <a class="sb-sub-item @(ctrl == "Tbpersonals" ? "active" : "")"
+                           asp-controller="Tbpersonals" asp-action="Index">
+                            <span class="sb-icon">👤</span><span class="sb-text">Activo</span>
+                        </a>
+                        <a class="sb-sub-item @(ctrl == "PersonalRetirado" ? "active" : "")"
+                           asp-controller="PersonalRetirado" asp-action="Index">
+                            <span class="sb-icon">🗂️</span><span class="sb-text">Retirado</span>
+                        </a>
+                        <a class="sb-sub-item @(ctrl == "ExpedientesRRHH" ? "active" : "")"
+                           asp-controller="ExpedientesRRHH" asp-action="Index">
+                            <span class="sb-icon">📂</span><span class="sb-text">Expedientes RRHH</span>
+                        </a>
+                    </div>
+                }
+
+                @if (verSolicitudes || crearSolicitud)
+                {
+                    <div class="sb-label">Solicitudes</div>
+                    <div class="sb-item sb-toggle @(enSoli ? "open" : "")" data-sub="sub-soli">
+                        <span class="sb-icon">📋</span>
+                        <span class="sb-text">Solicitudes <span class="sb-arrow">▶</span></span>
+                    </div>
+                    <div class="sb-sub @(enSoli ? "open" : "")" id="sub-soli">
+                        @if (verSolicitudes)
+                        {
+                            <a class="sb-sub-item @(ctrl == "Tbsolicitudes" && action == "Index" ? "active" : "")"
+                               asp-controller="Tbsolicitudes" asp-action="Index">
+                                <span class="sb-icon">📄</span><span class="sb-text">Ver todas</span>
+                            </a>
+                        }
+                        @if (crearSolicitud)
+                        {
+                            <a class="sb-sub-item @(ctrl == "Tbsolicitudes" && action == "Create" ? "active" : "")"
+                               asp-controller="Tbsolicitudes" asp-action="Create">
+                                <span class="sb-icon">➕</span><span class="sb-text">Nueva</span>
+                            </a>
+                        }
+                        <a class="sb-sub-item @(ctrl == "SolicitudRRHH" && action == "Create" ? "active" : "")"
+                           asp-controller="SolicitudRRHH" asp-action="Create">
+                            <span class="sb-icon">📄</span><span class="sb-text">Solicitud RRHH</span>
+                        </a>
+                        @if (verGestionRRHH)
+                        {
+                            <a class="sb-sub-item @(ctrl == "SolicitudRRHH" && action == "Gestion" ? "active" : "")"
+                               asp-controller="SolicitudRRHH" asp-action="Gestion">
+                                <span class="sb-icon">📋</span><span class="sb-text">Gestión doc. RRHH</span>
+                            </a>
+                        }
+                        @if (verRechazadas)
+                        {
+                            <a class="sb-sub-item @(ctrl == "TbsoliRechazadums" ? "active" : "")"
+                               asp-controller="TbsoliRechazadums" asp-action="Index">
+                                <span class="sb-icon">❌</span><span class="sb-text">Rechazadas</span>
+                            </a>
+                        }
+                    </div>
+                }
+
+                <div class="sb-divider"></div>
+
+                <a class="sb-item @(ctrl == "Salas" ? "active" : "")"
+                   asp-controller="Salas" asp-action="Index">
+                    <span class="sb-icon">🏢</span><span class="sb-text">Salas</span>
+                </a>
+
+                @if (verTI)
+                {
+                    <div class="sb-divider"></div>
+                    <div class="sb-label">Tecnología</div>
+                    <div class="sb-item sb-toggle @(enTI ? "open" : "")" data-sub="sub-ti">
+                        <span class="sb-icon">💻</span>
+                        <span class="sb-text">TI <span class="sb-arrow">▶</span></span>
+                    </div>
+                    <div class="sb-sub @(enTI ? "open" : "")" id="sub-ti">
+                        <a class="sb-sub-item @(ctrl == "Tbinventarios" ? "active" : "")"
+                           asp-controller="Tbinventarios" asp-action="Index">
+                            <span class="sb-icon">🖥️</span><span class="sb-text">Inventario</span>
+                        </a>
+                        <a class="sb-sub-item @(ctrl == "Tbresponsivas" ? "active" : "")"
+                           asp-controller="Tbresponsivas" asp-action="Index">
+                            <span class="sb-icon">📝</span><span class="sb-text">Responsivas</span>
+                        </a>
+                        <a class="sb-sub-item @(ctrl == "ExpedientesTI" ? "active" : "")"
+                           asp-controller="ExpedientesTI" asp-action="Index">
+                            <span class="sb-icon">📁</span><span class="sb-text">Expedientes TI</span>
+                        </a>
+                    </div>
+                }
+
+            @* ── Administración: solo Admin ── *@
+            @if (verAdmin)
+            {
+                <div class="sb-divider"></div>
+                <div class="sb-label">Administración</div>
+                <div class="sb-item sb-toggle @(enAdmin ? "open" : "")" data-sub="sub-admin">
+                    <span class="sb-icon">⚙️</span>
+                    <span class="sb-text">Administración <span class="sb-arrow">▶</span></span>
+                </div>
+                <div class="sb-sub @(enAdmin ? "open" : "")" id="sub-admin">
+                    <a class="sb-sub-item @(ctrl == "Usuarios" && action == "Index" ? "active" : "")"
+                           asp-controller="Usuarios" asp-action="Index">
+                        <span class="sb-icon">👤</span><span class="sb-text">Usuarios</span>
+                    </a>
+                    <a class="sb-sub-item @(ctrl == "Anuncios" ? "active" : "")"
+                           asp-controller="Anuncios" asp-action="Index">
+                        <span class="sb-icon">📢</span><span class="sb-text">Anuncios</span>
+                    </a>
+                    <a class="sb-sub-item @(ctrl == "Delegaciones" ? "active" : "")"
+                           asp-controller="Delegaciones" asp-action="Index">
+                        <span class="sb-icon">⏸️</span><span class="sb-text">Inhabilitaciones</span>
+                    </a>
+                    <a class="sb-sub-item @(ctrl == "Plantillas" ? "active" : "")"
+                           asp-controller="Plantillas" asp-action="Index">
+                        <span class="sb-icon">📋</span><span class="sb-text">Plantillas</span>
+                    </a>
+                    <a class="sb-sub-item @(ctrl == "AuditTrail" ? "active" : "")"
+                           asp-controller="AuditTrail" asp-action="Index">
+                        <span class="sb-icon">🔍</span><span class="sb-text">Audit Trail</span>
+                    </a>
+                </div>
+            }
+
+            @* ── Anuncios: RRHH (sin el resto de Administración) ── *@
+            @if (esRRHH && !esAdmin)
+            {
+                <div class="sb-divider"></div>
+                <div class="sb-label">Comunicaciones</div>
+                <a class="sb-item @(ctrl == "Anuncios" ? "active" : "")"
+                       asp-controller="Anuncios" asp-action="Index">
+                    <span class="sb-icon">📢</span><span class="sb-text">Anuncios</span>
+                </a>
+            }
+
+            @* ── Soporte: TI (solo desbloquear) ── *@
+            @if (esTI && !esAdmin)
+            {
+                <div class="sb-divider"></div>
+                <div class="sb-label">Soporte</div>
+                <a class="sb-item @(ctrl == "Usuarios" && action == "Bloqueados" ? "active" : "")"
+                       asp-controller="Usuarios" asp-action="Bloqueados">
+                    <span class="sb-icon">🔓</span><span class="sb-text">Desbloquear usuarios</span>
+                </a>
+            }
+
+            </div>
+            <div class="sb-bottom">
+                <div class="sb-divider"></div>
+                @if (User.Identity?.IsAuthenticated == true)
+                {
+                    <form asp-controller="Login" asp-action="Logout" method="post" class="m-0">
+                        @Html.AntiForgeryToken()
+                        <button type="submit" class="sb-item" style="width:calc(100% - 16px)">
+                            <span class="sb-icon">🚪</span>
+                            <span class="sb-text" style="color:#dc3545">Cerrar sesión</span>
+                        </button>
+                    </form>
+                }
+            </div>
+        </nav>
+
+        <div id="content">@RenderBody()</div>
+
+        <script src="~/lib/jquery/dist/jquery.min.js"></script>
+        <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+        <script src="~/js/site.js" asp-append-version="true"></script>
+        @await RenderSectionAsync("Scripts", required: false)
+
+        <script>
+            (function () {
+                var sb      = document.getElementById('sb');
+                var content = document.getElementById('content');
+
+                function expand()   { sb.classList.add('expanded');    content.classList.add('pushed'); }
+                function collapse() { sb.classList.remove('expanded'); content.classList.remove('pushed'); }
+                function isPinned() { return sb.dataset.pinned === '1'; }
+                function pin()      { sb.dataset.pinned = '1'; expand(); }
+                function unpin()    { sb.dataset.pinned = ''; if (!sb.matches(':hover')) collapse(); }
+
+                sb.addEventListener('mouseenter', expand);
+                sb.addEventListener('mouseleave', function () { if (!isPinned()) collapse(); });
+
+                document.querySelectorAll('.sb-toggle').forEach(function (tog) {
+                    tog.addEventListener('click', function (e) {
+                        e.stopPropagation();
+                        var subEl  = document.getElementById(this.dataset.sub);
+                        var isOpen = subEl.classList.contains('open');
+                        document.querySelectorAll('.sb-sub').forEach(function (s)    { s.classList.remove('open'); });
+                        document.querySelectorAll('.sb-toggle').forEach(function (t) { t.classList.remove('open'); });
+                        if (!isOpen) { subEl.classList.add('open'); this.classList.add('open'); pin(); }
+                        else { unpin(); }
+                    });
+                });
+
+                document.addEventListener('click', function (e) {
+                    if (!sb.contains(e.target)) {
+                        document.querySelectorAll('.sb-sub').forEach(function (s)    { s.classList.remove('open'); });
+                        document.querySelectorAll('.sb-toggle').forEach(function (t) { t.classList.remove('open'); });
+                        sb.dataset.pinned = ''; collapse();
+                    }
+                    var dropdown = document.getElementById('notifDropdown');
+                    var campana  = document.getElementById('btnCampana');
+                    if (dropdown && !dropdown.contains(e.target) && e.target !== campana)
+                        dropdown.classList.remove('open');
+                });
+
+                if (document.querySelector('.sb-sub.open')) pin();
+
+                var campana  = document.getElementById('btnCampana');
+                var dropdown = document.getElementById('notifDropdown');
+                var badge    = document.getElementById('notifBadge');
+                var list     = document.getElementById('notifList');
+
+                function iconoPor(msg) {
+                    msg = (msg || '').toLowerCase();
+                    if (msg.includes('aprobada'))    return '✅';
+                    if (msg.includes('rechazada'))   return '❌';
+                    if (msg.includes('devuelta'))    return '↩️';
+                    if (msg.includes('inhabilitad')) return '⏸️';
+                    if (msg.includes('vacacion'))    return '🌴';
+                    if (msg.includes('permiso'))     return '🕐';
+                    return '🔔';
+                }
+
+                function tiempoRel(fechaStr) {
+                    if (!fechaStr) return '';
+                    var diff = Math.floor((Date.now() - new Date(fechaStr).getTime()) / 1000);
+                    if (diff < 60)    return 'hace un momento';
+                    if (diff < 3600)  return 'hace ' + Math.floor(diff / 60) + ' min';
+                    if (diff < 86400) return 'hace ' + Math.floor(diff / 3600) + ' h';
+                    return 'hace ' + Math.floor(diff / 86400) + ' días';
+                }
+
+                function cargarNotifs() {
+                    fetch('/Tbsolicitudes/ObtenerNotificaciones')
+                        .then(function (r) { return r.json(); })
+                        .then(function (data) {
+                            var noLeidas = data.filter(function (n) { return !n.leida; }).length;
+                            if (badge) { badge.textContent = noLeidas; badge.style.display = noLeidas > 0 ? 'flex' : 'none'; }
+                            if (!list) return;
+                            if (data.length === 0) { list.innerHTML = '<div class="notif-empty">🎉 Sin notificaciones</div>'; return; }
+                            list.innerHTML = data.map(function (n) {
+                                var icono = iconoPor(n.mensaje);
+                                var nl    = n.leida ? '' : ' no-leida';
+                                var href  = n.idSolicitud ? '/Tbsolicitudes/Revisar/' + n.idSolicitud : '#';
+                                return '<a class="notif-item' + nl + '" href="' + href + '">' +
+                                       '<span class="notif-icon">' + icono + '</span>' +
+                                       '<div class="notif-body"><div class="notif-msg">' + n.mensaje + '</div>' +
+                                       '<div class="notif-time">' + tiempoRel(n.fechaCreacion) + '</div></div>' +
+                                       (!n.leida ? '<div class="notif-dot"></div>' : '') + '</a>';
+                            }).join('');
+                        }).catch(function () {});
+                }
+
+                function actualizarBadge() {
+                    fetch('/Tbsolicitudes/ContarNotificaciones')
+                        .then(function (r) { return r.json(); })
+                        .then(function (n) {
+                            if (badge) { badge.textContent = n; badge.style.display = n > 0 ? 'flex' : 'none'; }
+                        }).catch(function () {});
+                }
+
+                if (campana) {
+                    campana.addEventListener('click', function (e) {
+                        e.stopPropagation();
+                        dropdown.classList.toggle('open');
+                        if (dropdown.classList.contains('open')) cargarNotifs();
+                    });
+                }
+
+                var btnMarcar = document.getElementById('btnMarcarTodas');
+                if (btnMarcar) {
+                    btnMarcar.addEventListener('click', function () {
+                        var token = document.querySelector('input[name="__RequestVerificationToken"]');
+                        fetch('/Tbsolicitudes/MarcarLeidas', {
+                            method: 'POST',
+                            headers: { 'RequestVerificationToken': token ? token.value : '' }
+                        }).then(function () { cargarNotifs(); });
+                    });
+                }
+
+                actualizarBadge();
+                setInterval(actualizarBadge, 30000);
+            })();
+        </script>
+    </body>
+    </html>

@@ -1,57 +1,147 @@
 ﻿@{
-    ViewData["Title"] = "Iniciar Sesión";
     Layout = null;
 }
-
 <!DOCTYPE html>
 <html lang="es">
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Login - Farmacol</title>
+    <title>Farmacol — Iniciar Sesión</title>
     <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
     <style>
         body {
-            background-color: #f0f2f5;
+            min-height: 100vh;
+            background: linear-gradient(135deg, #1a1d23 0%, #2a2d35 100%);
             display: flex;
-            justify-content: center;
             align-items: center;
-            height: 100vh;
+            justify-content: center;
+            font-family: system-ui, sans-serif;
         }
+
         .login-card {
+            background: #fff;
+            border-radius: 20px;
+            padding: 2.5rem 2.25rem;
             width: 100%;
             max-width: 400px;
-            padding: 2rem;
-            background: white;
-            border-radius: 12px;
-            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+            box-shadow: 0 24px 64px rgba(0,0,0,.35);
+        }
+
+        .login-logo {
+            font-size: 2.5rem;
+            text-align: center;
+            margin-bottom: .25rem;
+        }
+
+        .login-titulo {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #1a1d23;
+            text-align: center;
+            margin-bottom: .15rem;
+        }
+
+        .login-sub {
+            font-size: .85rem;
+            color: #6c757d;
+            text-align: center;
+            margin-bottom: 1.75rem;
+        }
+
+        .form-label {
+            font-weight: 600;
+            font-size: .85rem;
+            color: #343a40;
+        }
+
+        .form-control {
+            border-radius: 10px;
+            padding: .6rem .85rem;
+            font-size: .9rem;
+            border: 1.5px solid #dee2e6;
+            transition: border-color .15s;
+        }
+
+            .form-control:focus {
+                border-color: #0d6efd;
+                box-shadow: 0 0 0 3px rgba(13,110,253,.12);
+            }
+
+        .btn-login {
+            background: #0d6efd;
+            color: #fff;
+            border: none;
+            border-radius: 10px;
+            padding: .65rem;
+            font-size: .95rem;
+            font-weight: 600;
+            width: 100%;
+            transition: background .15s, transform .1s;
+        }
+
+            .btn-login:hover {
+                background: #0b5ed7;
+            }
+
+            .btn-login:active {
+                transform: scale(.98);
+            }
+
+        .alert-error {
+            background: #fff5f5;
+            border: 1px solid #fecaca;
+            border-radius: 10px;
+            color: #dc2626;
+            padding: .65rem .9rem;
+            font-size: .85rem;
+            margin-bottom: 1rem;
+        }
+
+        .hint {
+            font-size: .78rem;
+            color: #6c757d;
+            margin-top: .3rem;
         }
     </style>
 </head>
 <body>
     <div class="login-card">
-        <h3 class="text-center mb-4">🏥 Farmacol</h3>
-        <h5 class="text-center text-muted mb-4">Iniciar Sesión</h5>
+        <div class="login-logo">💊</div>
+        <div class="login-titulo">Farmacol</div>
+        <div class="login-sub">Sistema de Recursos Humanos</div>
 
         @if (ViewBag.Error != null)
         {
-            <div class="alert alert-danger">@ViewBag.Error</div>
+            <div class="alert-error">
+                ⚠️ @ViewBag.Error
+            </div>
         }
 
-        <form method="post">
+        <form asp-action="Index" method="post">
             @Html.AntiForgeryToken()
+
             <div class="mb-3">
-                <label class="form-label">Correo o usuario corporativo</label>
-                <input type="text" name="email" class="form-control"
-                       placeholder="correo@empresa.com o usuario.corporativo" required />
+                <label class="form-label">Usuario corporativo</label>
+                <input type="text" name="usuario" class="form-control"
+                       placeholder="ej: jperez" autocomplete="username"
+                       autofocus required />
+                <div class="hint">Ingresa tu usuario corporativo (no el correo)</div>
             </div>
-            <div class="mb-3">
+
+            <div class="mb-4">
                 <label class="form-label">Contraseña</label>
-                <input type="password" name="password" class="form-control" placeholder="••••••••" required />
+                <input type="password" name="password" class="form-control"
+                       placeholder="••••••••" autocomplete="current-password" required />
             </div>
-            <button type="submit" class="btn btn-primary w-100">Ingresar</button>
+
+            <button type="submit" class="btn-login">Ingresar →</button>
         </form>
+
+        <div class="text-center mt-3">
+            <small class="text-muted">
+                ¿Problemas para ingresar? Contacta al administrador del sistema.
+            </small>
+        </div>
     </div>
-    <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>

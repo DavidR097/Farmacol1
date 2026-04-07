@@ -1,0 +1,239 @@
+﻿@model IEnumerable<Farmacol.Models.Tbsolicitude>
+@{
+    ViewData["Title"] = "Solicitudes de Documentos RRHH";
+    var plantillas = ViewBag.Plantillas as List<Farmacol.Models.TbPlantilla> ?? new();
+    var pendientes = (int)(ViewBag.Pendientes ?? 0);
+}
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h2 class="mb-0">📄 Solicitudes de Documentos RRHH</h2>
+        @if (pendientes > 0)
+        {
+            <span class="badge bg-warning text-dark ms-2 fs-6">@pendientes pendiente(s)</span>
+        }
+    </div>
+</div>
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <div>
+        <h2 class="mb-0">📄 Solicitudes de Documentos RRHH</h2>
+        @if ((int)(ViewBag.Pendientes ?? 0) > 0)
+        {
+            <span class="badge bg-warning text-dark ms-2 fs-6">@ViewBag.Pendientes pendiente(s)</span>
+        }
+    </div>
+    <div class="d-flex gap-2">
+        <a asp-action="ExportarExcel"
+           asp-route-estado="@ViewBag.Estado"
+           class="btn btn-success btn-sm">📥 Exportar filtrado</a>
+        <a asp-action="ExportarExcel" asp-route-todo="true"
+           class="btn btn-outline-success btn-sm">📥 Exportar todo</a>
+    </div>
+</div>
+
+@if (TempData["Exito"] != null)
+{
+    <div class="alert alert-success alert-dismissible fade show">@TempData["Exito"]<button type="button" class="btn-close" data-bs-dismiss="alert"></button></div>
+}
+@if (TempData["Error"] != null)
+{
+    <div class="alert alert-danger alert-dismissible fade show">@TempData["Error"]<button type="button" class="btn-close" data-bs-dismiss="alert"></button></div>
+}
+
+<!-- Filtro por estado -->
+<form method="get" class="mb-4">
+    <div class="row g-2 align-items-end">
+        <div class="col-md-3">
+            <select name="estado" class="form-select form-select-sm">
+                <option value="">Todos los estados</option>
+                <option value="Pendiente" selected="@(ViewBag.Estado == "Pendiente")">⏳ Pendiente</option>
+                <option value="Aprobada" selected="@(ViewBag.Estado == "Aprobada")">✅ Completada</option>
+                <option value="Rechazada" selected="@(ViewBag.Estado == "Rechazada")">❌ Rechazada</option>
+            </select>
+        </div>
+        <div class="col-auto">
+            <button type="submit" class="btn btn-sm btn-secondary">🔍 Filtrar</button>
+            <a asp-action="Gestion" class="btn btn-sm btn-outline-secondary">✕</a>
+        </div>
+    </div>
+</form>
+
+@if (!Model.Any())
+{
+    <div class="alert alert-info">No hay solicitudes con los filtros aplicados.</div>
+}
+else
+{
+    <div class="d-flex flex-column gap-3">
+        @foreach (var s in Model)
+        {
+            var badge = s.Estado switch
+            {
+                        "Aprobada" => "success",
+                        "Rechazada" => "danger",
+                _ => "warning text-dark"
+            };
+            <div class="card border-0 shadow-sm">
+                <div class="card-body">
+                    <div class="row align-items-center g-3">
+
+                        <!-- Info solicitante -->
+                        <div class="col-md-5">
+                            <div class="d-flex align-items-center gap-3">
+                                <div style="width:44px;height:44px;border-radius:50%;
+                                                background:#198754;color:#fff;display:flex;
+                                                align-items:center;justify-content:center;
+                                                font-weight:700;font-size:1.1rem;flex-shrink:0">
+                                    @((s.Nombre ?? "?")[..1].ToUpper())
+                                </div>
+                                <div>
+                                    <div class="fw-bold">@s.Nombre</div>
+                                    <div class="text-muted small">@s.Cargo</div>
+                                    <div class="text-muted small">CC: @s.CC</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Detalle solicitud -->
+                        <div class="col-md-4">
+                            <div class="fw-semibold text-success">📄 @s.DocumentoSolicitado</div>
+                            <div class="text-muted small mt-1">@s.Motivo</div>
+                            <div class="mt-1">
+                                <span class="badge bg-@badge">@s.Estado</span>
+                                <small class="text-muted ms-2">
+                                    @s.FechaSolicitud?.ToString("dd/MM/yyyy")
+                                </small>
+                            </div>
+                        </div>
+
+                        <!-- Acciones -->
+                        <div class="col-md-3 text-end">
+                            @if (s.Estado == "Pendiente")
+                            {
+                                @if (plantillas.Any())
+                                {
+                                    <!-- Botón principal: generar documento -->
+                                    <button type="button" class="btn btn-success btn-sm fw-bold w-100 mb-2"
+                                            onclick="abrirModalDoc(@s.IdSolicitud, '@s.DocumentoSolicitado')">
+                                        📄 Generar documento
+                                    </button>
+                                }
+                                else
+                                {
+                                    <div class="alert alert-warning small py-1 mb-2">
+                                        ⚠️ Sin plantillas activas
+                                    </div>
+                                }
+                                <!-- Rechazar -->
+                                <button type="button" class="btn btn-outline-danger btn-sm w-100"
+                                        onclick="abrirModalRechazar(@s.IdSolicitud)">
+                                    ❌ Rechazar solicitud
+                                </button>
+                            }
+                            @if (s.Estado == "Aprobada")
+                            {
+                                <!-- Generar de nuevo si necesita otra copia -->
+                                @if (plantillas.Any())
+                                {
+                                    <button type="button" class="btn btn-outline-success btn-sm w-100"
+                                            onclick="abrirModalDoc(@s.IdSolicitud, '@s.DocumentoSolicitado')">
+                                        📄 Generar otra copia
+                                    </button>
+                                }
+                                <div class="text-muted small mt-1">@s.EtapaAprobacion</div>
+                            }
+                        </div>
+
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+}
+
+<!-- Modal: seleccionar documento a generar -->
+<div class="modal fade" id="modalDoc" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form id="formDoc" asp-action="GenerarDocumento" method="post">
+                @Html.AntiForgeryToken()
+                <input type="hidden" name="idSolicitud" id="docSolicitudId" />
+                <div class="modal-header">
+                    <h6 class="modal-title">📄 Generar documento</h6>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <p class="text-muted small mb-3">
+                        Selecciona la plantilla a usar. Los datos del solicitante se
+                        completarán automáticamente.
+                    </p>
+                    <label class="form-label fw-bold">Plantilla / Tipo de documento</label>
+                    <select name="tipoDocumento" class="form-select" required id="selectDoc">
+                        <option value="">Selecciona...</option>
+                        @foreach (var plt in plantillas)
+                        {
+                            <option value="@plt.TipoDocumento">@plt.TipoDocumento</option>
+                        }
+                    </select>
+                </div>
+                <div class="modal-footer">
+                    <button type="submit" class="btn btn-success fw-bold">
+                        📥 Generar y descargar
+                    </button>
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Modal: rechazar solicitud -->
+<div class="modal fade" id="modalRechazar" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form asp-action="Rechazar" method="post">
+                @Html.AntiForgeryToken()
+                <input type="hidden" name="id" id="rechazarId" />
+                <div class="modal-header">
+                    <h6 class="modal-title">❌ Rechazar solicitud</h6>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <label class="form-label fw-bold">Motivo del rechazo</label>
+                    <textarea name="observacion" class="form-control" rows="3"
+                              placeholder="Indica el motivo..." required></textarea>
+                </div>
+                <div class="modal-footer">
+                    <button type="submit" class="btn btn-danger">❌ Rechazar</button>
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        var modalDoc      = new bootstrap.Modal(document.getElementById('modalDoc'));
+        var modalRechazar = new bootstrap.Modal(document.getElementById('modalRechazar'));
+
+        function abrirModalDoc(idSolicitud, docSolicitado) {
+            document.getElementById('docSolicitudId').value = idSolicitud;
+            // Pre-seleccionar el tipo si coincide con alguna plantilla
+            var sel = document.getElementById('selectDoc');
+            for (var i = 0; i < sel.options.length; i++) {
+                if (sel.options[i].value === docSolicitado) {
+                    sel.selectedIndex = i;
+                    break;
+                }
+            }
+            modalDoc.show();
+        }
+
+        function abrirModalRechazar(id) {
+            document.getElementById('rechazarId').value = id;
+            modalRechazar.show();
+        }
+    </script>
+}

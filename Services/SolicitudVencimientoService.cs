@@ -19,7 +19,7 @@ public class SolicitudVencimientoService : BackgroundService
         while (!stoppingToken.IsCancellationRequested)
         {
             await ProcesarVencidas();
-            // Revisar cada hora
+            await ProcesarDelegaciones();
             await Task.Delay(TimeSpan.FromHours(1), stoppingToken);
         }
     }
@@ -44,5 +44,12 @@ public class SolicitudVencimientoService : BackgroundService
 
         if (vencidas.Any())
             await context.SaveChangesAsync();
+    }
+
+    private async Task ProcesarDelegaciones()
+    {
+        using var scope = _scopeFactory.CreateScope();
+        var delegSvc = scope.ServiceProvider.GetRequiredService<DelegacionService>();
+        await delegSvc.DesactivarVencidas();
     }
 }

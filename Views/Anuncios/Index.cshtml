@@ -1,0 +1,50 @@
+@model List<Farmacol.Models.TbAnuncio>
+
+@{
+    ViewData["Title"] = "Administrar Anuncios";
+}
+
+<h2>Administrar Anuncios</h2>
+
+<p>
+    <a class="btn btn-primary" asp-action="Create">Crear nuevo anuncio</a>
+</p>
+
+<table class="table table-striped">
+    <thead>
+        <tr>
+            <th>Título</th>
+            <th>Mensaje</th>
+            <th>Tipo</th>
+            <th>Activo</th>
+            <th>Imagen</th>
+            <th></th>
+        </tr>
+    </thead>
+    <tbody>
+    @foreach (var a in Model)
+    {
+        <tr>
+            <td>@a.Titulo</td>
+            <td>@a.Mensaje</td>
+            <td>@a.Tipo</td>
+            <td>@a.Activo</td>
+            <td>
+                @if (!string.IsNullOrEmpty(a.Imagen))
+                {
+                    <img src="@a.Imagen" alt="Imagen" style="max-height:80px;" />
+                }
+            </td>
+            <td>
+                <a class="btn btn-sm btn-secondary" asp-action="Edit" asp-route-id="@a.Id">Editar</a>
+                <form asp-action="Delete" asp-route-id="@a.Id" method="post" style="display:inline">
+                    <button type="submit" class="btn btn-sm btn-danger" onclick="return confirm('¿Eliminar anuncio?')">Eliminar</button>
+                </form>
+                <form asp-action="ToggleActivo" asp-route-id="@a.Id" method="post" style="display:inline">
+                    <button type="submit" class="btn btn-sm btn-warning">Toggle Activo</button>
+                </form>
+            </td>
+        </tr>
+    }
+    </tbody>
+</table>

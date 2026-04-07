@@ -1,4 +1,5 @@
 using Farmacol.Filters;
+using Farmacol.Middleware;
 using Farmacol.Models;
 using Farmacol.Services;
 using Microsoft.AspNetCore.Identity;
@@ -17,7 +18,16 @@ builder.Services.AddDbContext<Farmacol1Context>(options =>
 builder.Services.AddScoped<NotificacionService>();
 builder.Services.AddScoped<FlujoAprobacionService>();
 builder.Services.AddScoped<UserAreaFilter>();
-builder.Services.AddHostedService<SolicitudVencimientoService>(); // ← AQUÍ, antes del Build
+builder.Services.AddHostedService<SolicitudVencimientoService>();
+builder.Services.AddScoped<PersonalRetiroService>();
+builder.Services.AddScoped<DelegacionService>();
+builder.Services.AddScoped<DocumentoService>();
+builder.Services.AddScoped<EmailService>();
+builder.Services.AddHttpContextAccessor();
+builder.Services.AddScoped<AuditService>();
+builder.Services.AddScoped<ExcelService>();
+builder.Services.AddScoped<VacacionesService>();
+builder.Services.AddScoped<AnuncioService>();
 
 builder.Services.AddIdentity<IdentityUser, IdentityRole>(options =>
 {
@@ -26,6 +36,11 @@ builder.Services.AddIdentity<IdentityUser, IdentityRole>(options =>
     options.Password.RequireUppercase = false;
     options.Password.RequireNonAlphanumeric = false;
     options.Password.RequiredLength = 4;
+
+    // Bloqueo tras 3 intentos fallidos — sin tiempo límite (solo admin puede desbloquear)
+    options.Lockout.DefaultLockoutTimeSpan = TimeSpan.FromDays(365);
+    options.Lockout.MaxFailedAccessAttempts = 3;
+    options.Lockout.AllowedForNewUsers = true;
 })
 .AddEntityFrameworkStores<Farmacol1Context>()
 .AddDefaultTokenProviders();
@@ -34,7 +49,8 @@ builder.Services.AddAuthorization(options =>
 {
     options.AddPolicy("SolicitudesAccess", policy =>
         policy.RequireRole("Administrador", "RRHH", "Directivo",
-                           "Gerente", "Jefe", "Coordinador", "Asistente", "Usuario"));
+                           "Gerente", "Jefe", "Coordinador", "Asistente", "Usuario",
+                           "Aprendiz", "Recepcionista", "TI"));
 });
 
 builder.Services.ConfigureApplicationCookie(options =>
@@ -56,6 +72,7 @@ app.UseStaticFiles();
 app.UseRouting();
 app.UseAuthentication();
 app.UseAuthorization();
+app.UseInhabilitadoCheck();
 
 app.MapControllerRoute(
     name: "default",
@@ -67,8 +84,11 @@ using (var scope = app.Services.CreateScope())
     var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<IdentityRole>>();
     var userManager = scope.ServiceProvider.GetRequiredService<UserManager<IdentityUser>>();
 
-    string[] roles = { "Administrador", "Directivo", "Gerente", "RRHH",
-                       "Jefe", "Coordinador", "Asistente", "Usuario" };
+    // ── Crear roles ────────────────────────────────────────────────────
+    string[] roles = {
+        "Administrador", "Directivo", "Gerente", "RRHH", "Jefe",
+        "Coordinador", "Asistente", "Usuario", "TI", "Aprendiz", "Recepcionista"
+    };
 
     foreach (var rol in roles)
     {
@@ -76,13 +96,28 @@ using (var scope = app.Services.CreateScope())
             await roleManager.CreateAsync(new IdentityRole(rol));
     }
 
-    var adminEmail = "admin@farmacol.com";
-    var adminUser = await userManager.FindByEmailAsync(adminEmail);
-    if (adminUser == null)
+    // ── Crear usuario admin por defecto si no existe ───────────────────
+    var adminUser = "admin";
+    var adminPass = "Admin1234!";
+
+    if (await userManager.FindByNameAsync(adminUser) == null)
     {
-        adminUser = new IdentityUser { UserName = adminEmail, Email = adminEmail };
-        await userManager.CreateAsync(adminUser, "admin1234");
-        await userManager.AddToRoleAsync(adminUser, "Administrador");
+        var user = new IdentityUser { UserName = adminUser, Email = "admin@farmacol.com" };
+        var result = await userManager.CreateAsync(user, adminPass);
+        if (result.Succeeded)
+            await userManager.AddToRoleAsync(user, "Administrador");
+    }
+
+    // Seed salas básicas si no existen
+    var dbContext = scope.ServiceProvider.GetRequiredService<Farmacol1Context>();
+    if (!await dbContext.TbSalas.AnyAsync())
+    {
+        dbContext.TbSalas.AddRange(
+            new Farmacol.Models.TbSala { Nombre = "Sala Colombia", Activa = true },
+            new Farmacol.Models.TbSala { Nombre = "Sala Vasoton", Activa = true },
+            new Farmacol.Models.TbSala { Nombre = "Sala Apifolt", Activa = true }
+        );
+        await dbContext.SaveChangesAsync();
     }
 }
 

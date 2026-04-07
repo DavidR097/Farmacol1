@@ -21,9 +21,17 @@ public partial class Farmacol1Context : IdentityDbContext<IdentityUser, Identity
     public virtual DbSet<TbtiposSolicitud> TbtiposSolicituds { get; set; }
     public virtual DbSet<Tbvacacione> Tbvacaciones { get; set; }
     public virtual DbSet<Tbarea> Tbareas { get; set; }
+    public virtual DbSet<TbpersonalRetirado> TbpersonalRetirados { get; set; }
+    public virtual DbSet<TbDelegacion> TbDelegaciones { get; set; }
+    public virtual DbSet<TbExpediente> TbExpedientes { get; set; }
+    public virtual DbSet<TbPlantilla> TbPlantillas { get; set; }
+    public virtual DbSet<TbAuditTrail> TbAuditTrails { get; set; }
+    public virtual DbSet<TbSala> TbSalas { get; set; }
+    public virtual DbSet<TbReservaSala> TbReservasSalas { get; set; }
+    public virtual DbSet<TbAnuncio> TbAnuncios { get; set; }
 
-    protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
-        => optionsBuilder.UseSqlServer("Server=DARIANO\\SQLEXPRESS03;database=Farmacol1;integrated security=true;TrustServerCertificate=True;");
+    //protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
+    //    => optionsBuilder.UseSqlServer("Server=DARIANO\\SQLEXPRESS03;database=Farmacol1;integrated security=true;TrustServerCertificate=True;");
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -34,7 +42,7 @@ public partial class Farmacol1Context : IdentityDbContext<IdentityUser, Identity
             entity.HasKey(e => e.IdEquipo).HasName("PK__TBInvent__AB5A5EA976A52A69");
             entity.ToTable("TBInventario");
             entity.Property(e => e.IdEquipo).HasColumnName("ID_Equipo");
-            entity.Property(e => e.CC).HasColumnName("Cédula");  // ← fix
+            entity.Property(e => e.CC).HasColumnName("Cédula");  
             entity.Property(e => e.Anexo).HasMaxLength(200).IsUnicode(false);
             entity.Property(e => e.Dispositivo).HasMaxLength(200).IsUnicode(false);
             entity.Property(e => e.Imei).HasMaxLength(100).IsUnicode(false).HasColumnName("IMEI");
@@ -164,6 +172,9 @@ public partial class Farmacol1Context : IdentityDbContext<IdentityUser, Identity
             entity.Property(e => e.Paso3Aprobador).HasMaxLength(100).IsUnicode(false);
             entity.Property(e => e.Paso3Estado).HasMaxLength(20).IsUnicode(false);
             entity.Property(e => e.Paso3Obs).HasMaxLength(300).IsUnicode(false);
+            entity.Property(e => e.TipoFlujo).HasMaxLength(50);
+            entity.Property(e => e.DocumentoSolicitado).HasMaxLength(100);
+
         });
 
         modelBuilder.Entity<TbsubtiposPermiso>(entity =>
@@ -204,6 +215,83 @@ public partial class Farmacol1Context : IdentityDbContext<IdentityUser, Identity
             entity.ToTable("TBAreas");
             entity.Property(e => e.IdArea).HasColumnName("ID_Area");
             entity.Property(e => e.Nombre).HasMaxLength(100).IsUnicode(false);
+        });
+
+        modelBuilder.Entity<TbpersonalRetirado>(entity =>
+        {
+            entity.ToTable("TBPersonalRetirado");
+            entity.Property(e => e.CC).ValueGeneratedNever();
+        });
+
+        modelBuilder.Entity<TbDelegacion>(entity =>
+        {
+            entity.ToTable("TBDelegaciones");
+        });
+
+        modelBuilder.Entity<TbExpediente>(entity =>
+        {
+            entity.ToTable("TBExpedientes", schema: "dbo");
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.Id).ValueGeneratedOnAdd();
+            entity.Property(e => e.CC).IsRequired();
+            entity.Property(e => e.NombreArchivo).HasMaxLength(300).IsRequired();
+            entity.Property(e => e.TipoDocumento).HasMaxLength(100);
+            entity.Property(e => e.RutaArchivo).HasMaxLength(500).IsRequired();
+            entity.Property(e => e.Modulo).HasMaxLength(20);
+            entity.Property(e => e.SubidoPor).HasMaxLength(200);
+            entity.Property(e => e.Visible).HasDefaultValue(true);   
+            entity.Property(e => e.FechaSubida).HasDefaultValueSql("GETDATE()");
+        });
+
+
+        modelBuilder.Entity<TbPlantilla>(entity =>
+        {
+            entity.ToTable("TBPlantillas");
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.Nombre).HasMaxLength(200);
+            entity.Property(e => e.TipoDocumento).HasMaxLength(100);
+            entity.Property(e => e.Modulo).HasMaxLength(20);
+            entity.Property(e => e.RutaArchivo).HasMaxLength(500);
+            entity.Property(e => e.SubidaPor).HasMaxLength(200);
+            entity.Property(e => e.FechaSubida).HasDefaultValueSql("GETDATE()");
+        });
+
+        modelBuilder.Entity<TbAuditTrail>(entity =>
+        {
+            entity.ToTable("TBAuditTrail");
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.Fecha).HasDefaultValueSql("GETDATE()");
+            entity.Property(e => e.Usuario).HasMaxLength(200);
+            entity.Property(e => e.Modulo).HasMaxLength(100);
+            entity.Property(e => e.Accion).HasMaxLength(100);
+            entity.Property(e => e.Descripcion).HasMaxLength(500);
+            entity.Property(e => e.EntidadId).HasMaxLength(100);
+            entity.Property(e => e.Ip).HasMaxLength(50);
+        });
+
+        modelBuilder.Entity<TbSala>(entity =>
+        {
+            entity.ToTable("TBSalas");
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.Nombre).HasMaxLength(100).IsRequired();
+            entity.Property(e => e.Activa).HasDefaultValue(true);
+        });
+
+        modelBuilder.Entity<TbReservaSala>(entity =>
+        {
+            entity.ToTable("TBReservasSalas");
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.NombreSolicitante).HasMaxLength(200).IsRequired();
+            entity.Property(e => e.Cargo).HasMaxLength(200);
+            entity.Property(e => e.Area).HasMaxLength(200);
+            entity.Property(e => e.Motivo).HasMaxLength(500).IsRequired();
+            entity.Property(e => e.Estado).HasMaxLength(50).HasDefaultValue("Pendiente");
+            entity.Property(e => e.Observacion).HasMaxLength(500);
+            entity.Property(e => e.AtendidaPor).HasMaxLength(200);
+            entity.Property(e => e.FechaSolicitud).HasDefaultValueSql("GETDATE()");
+            entity.HasOne(e => e.Sala).WithMany()
+                  .HasForeignKey(e => e.SalaId)
+                  .OnDelete(DeleteBehavior.Restrict);
         });
 
         OnModelCreatingPartial(modelBuilder);

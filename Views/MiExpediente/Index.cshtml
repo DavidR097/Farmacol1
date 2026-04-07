@@ -1,0 +1,126 @@
+﻿@model IEnumerable<Farmacol.Models.TbExpediente>
+@{
+    ViewData["Title"] = "Mi Expediente";
+    var personal = ViewBag.Personal as Farmacol.Models.Tbpersonal;
+}
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h2 class="mb-0">📂 Mi Expediente</h2>
+        <small class="text-muted">Documentos vinculados a tu perfil</small>
+    </div>
+</div>
+
+@if (ViewBag.Error != null)
+{
+    <div class="alert alert-warning">⚠️ @ViewBag.Error</div>
+}
+else
+{
+    <!-- Info del empleado -->
+    <div class="card border-0 shadow-sm mb-4">
+        <div class="card-body">
+            <div class="row g-3 align-items-center">
+                <div class="col-auto">
+                    <div style="width:56px;height:56px;background:#0d6efd;border-radius:50%;
+                                    display:flex;align-items:center;justify-content:center;
+                                    color:#fff;font-size:1.5rem;font-weight:700;">
+                        @((personal?.NombreColaborador ?? "?")[..1].ToUpper())
+                    </div>
+                </div>
+                <div class="col">
+                    <div class="fw-bold fs-5">@personal?.NombreColaborador</div>
+                    <div class="text-muted small">
+                        CC: @personal?.CC &nbsp;·&nbsp; @personal?.Cargo &nbsp;·&nbsp; @personal?.Area
+                    </div>
+                </div>
+                <div class="col-auto">
+                    <span class="badge bg-primary rounded-pill fs-6 px-3">
+                        @Model.Count() documento(s)
+                    </span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    @if (!Model.Any())
+    {
+        <div class="card border-0 shadow-sm">
+            <div class="card-body text-center py-5">
+                <div style="font-size:3rem">📭</div>
+                <h5 class="mt-3 text-muted">Sin documentos disponibles</h5>
+                <p class="text-muted">Aún no tienes documentos en tu expediente.</p>
+            </div>
+        </div>
+    }
+    else
+    {
+        <!-- Agrupar por módulo -->
+        @foreach (var modulo in Model.GroupBy(d => d.Modulo ?? "General").OrderBy(g => g.Key))
+        {
+            var colorHeader = modulo.Key == "TI" ? "#0d6efd" : "#198754";
+            var iconoMod = modulo.Key == "TI" ? "🖥️" : "👥";
+
+            <div class="mb-4">
+                <h6 class="text-uppercase small fw-bold text-muted mb-2">
+                    @iconoMod Módulo @modulo.Key
+                </h6>
+                <div class="row g-3">
+                    @foreach (var grupo in modulo.GroupBy(d => d.TipoDocumento ?? "Sin categoría"))
+                    {
+                        <div class="col-12">
+                            <div class="card border-0 shadow-sm">
+                                <div class="card-header fw-semibold text-white small"
+                                     style="background:@colorHeader">
+                                    📁 @grupo.Key
+                                    <span class="badge bg-light text-dark ms-2">@grupo.Count()</span>
+                                </div>
+                                <div class="card-body p-0">
+                                    <div class="table-responsive">
+                                        <table class="table table-hover align-middle mb-0 small">
+                                            <thead class="table-light">
+                                                <tr>
+                                                    <th>Documento</th>
+                                                    <th>Fecha</th>
+                                                    <th class="text-center">Acciones</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                @foreach (var doc in grupo.OrderByDescending(d => d.FechaSubida))
+                                                {
+                                                    <tr>
+                                                        <td>
+                                                            <span style="font-size:1.1rem">📄</span>
+                                                            <strong class="ms-1">@doc.NombreArchivo</strong>
+                                                        </td>
+                                                        <td>
+                                                            <small class="text-muted">
+                                                                @doc.FechaSubida.ToString("dd/MM/yyyy")
+                                                            </small>
+                                                        </td>
+                                                        <td class="text-center">
+                                                            <a asp-action="Ver" asp-route-id="@doc.Id"
+                                                               target="_blank"
+                                                               class="btn btn-sm btn-outline-primary">
+                                                                👁️ Ver
+                                                            </a>
+                                                            <a asp-action="Ver" asp-route-id="@doc.Id"
+                                                               class="btn btn-sm btn-outline-secondary"
+                                                               download>
+                                                                ⬇️ Descargar
+                                                            </a>
+                                                        </td>
+                                                    </tr>
+                                                }
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    }
+                </div>
+            </div>
+        }
+    }
+}

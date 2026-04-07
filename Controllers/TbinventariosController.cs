@@ -1,4 +1,5 @@
 ﻿using Farmacol.Models;
+using Farmacol.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -10,10 +11,13 @@ namespace Farmacol.Controllers
     public class TbinventariosController : Controller
     {
         private readonly Farmacol1Context _context;
+        private readonly ExcelService _excel;
 
-        public TbinventariosController(Farmacol1Context context)
+        public TbinventariosController(Farmacol1Context context,
+            ExcelService excel)
         {
             _context = context;
+            _excel = excel;
         }
 
         public async Task<IActionResult> Index(
@@ -261,6 +265,34 @@ namespace Farmacol.Controllers
                 responsiva.Estado = "Activo";
                 _context.Tbresponsivas.Update(responsiva);
             }
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> ExportarExcel(
+        string? busqueda, string? dispositivo, string? marca,
+        string? serie, string? cedula, bool todo = false)
+        {
+            IQueryable<Tbinventario> query = _context.Tbinventarios;
+            if (!todo)
+            {
+                if (!string.IsNullOrEmpty(busqueda))
+                    query = query.Where(e =>
+                        (e.Dispositivo != null && e.Dispositivo.Contains(busqueda)) ||
+                        (e.Marca != null && e.Marca.Contains(busqueda)) ||
+                        (e.Serie != null && e.Serie.Contains(busqueda)));
+                if (!string.IsNullOrEmpty(dispositivo))
+                    query = query.Where(e => e.Dispositivo != null && e.Dispositivo.Contains(dispositivo));
+                if (!string.IsNullOrEmpty(marca))
+                    query = query.Where(e => e.Marca != null && e.Marca.Contains(marca));
+                if (!string.IsNullOrEmpty(serie))
+                    query = query.Where(e => e.Serie != null && e.Serie.Contains(serie));
+                if (!string.IsNullOrEmpty(cedula) && int.TryParse(cedula, out int cedNum))
+                    query = query.Where(e => e.CC == cedNum);
+            }
+            var datos = await query.OrderBy(e => e.Dispositivo).ToListAsync();
+            var bytes = _excel.ExportarInventario(datos);
+            return File(bytes, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                $"InventarioTI_{DateTime.Now:yyyyMMdd_HHmm}.xlsx");
         }
 
         private bool TbinventarioExists(int id) =>

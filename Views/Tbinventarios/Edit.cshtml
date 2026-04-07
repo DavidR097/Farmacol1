@@ -1,92 +1,129 @@
 ﻿@model Farmacol.Models.Tbinventario
 @{
-    ViewData["Title"] = "Editar Inventario";
+    ViewData["Title"] = "Editar Equipo";
 }
 
-<h1>Editar Inventario</h1>
-<hr />
-
-<div class="row">
-    <div class="col-md-5">
-        <form asp-action="Edit" enctype="multipart/form-data">
-            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
-            <input type="hidden" asp-for="IdEquipo" />
-
-            <div class="form-group mb-2">
-                <label asp-for="Ubicación" class="control-label"></label>
-                <input asp-for="Ubicación" class="form-control" />
-                <span asp-validation-for="Ubicación" class="text-danger"></span>
-            </div>
-            <div class="form-group mb-2">
-                <label asp-for="Ubicación2" class="control-label"></label>
-                <input asp-for="Ubicación2" class="form-control" />
-                <span asp-validation-for="Ubicación2" class="text-danger"></span>
-            </div>
-            <div class="form-group mb-2">
-                <label asp-for="Dispositivo" class="control-label"></label>
-                <input asp-for="Dispositivo" class="form-control" />
-                <span asp-validation-for="Dispositivo" class="text-danger"></span>
-            </div>
-            <div class="form-group mb-2">
-                <label asp-for="Modelo" class="control-label"></label>
-                <input asp-for="Modelo" class="form-control" />
-                <span asp-validation-for="Modelo" class="text-danger"></span>
-            </div>
-            <div class="form-group mb-2">
-                <label asp-for="Serie" class="control-label"></label>
-                <input asp-for="Serie" class="form-control" />
-                <span asp-validation-for="Serie" class="text-danger"></span>
-            </div>
-            <div class="form-group mb-2">
-                <label asp-for="Imei" class="control-label"></label>
-                <input asp-for="Imei" class="form-control" />
-                <span asp-validation-for="Imei" class="text-danger"></span>
-            </div>
-            <div class="form-group mb-2">
-                <label asp-for="Marca" class="control-label"></label>
-                <input asp-for="Marca" class="form-control" />
-                <span asp-validation-for="Marca" class="text-danger"></span>
-            </div>
-            <div class="form-group mb-2">
-                <label asp-for="Observación" class="control-label"></label>
-                <input asp-for="Observación" class="form-control" />
-                <span asp-validation-for="Observación" class="text-danger"></span>
-            </div>
-            <div class="form-group mb-2">
-                <label asp-for="Planta" class="control-label"></label>
-                <input asp-for="Planta" class="form-control" />
-                <span asp-validation-for="Planta" class="text-danger"></span>
-            </div>
-            <div class="form-group mb-2">
-                <label asp-for="CC" class="control-label"></label>
-                <input asp-for="CC" class="form-control" />
-                <span asp-validation-for="CC" class="text-danger"></span>
-            </div>
-
-            <!-- ANEXO / IMAGEN -->
-            <div class="form-group mb-2">
-                <label class="control-label">Anexo (imagen)</label>
-                @if (!string.IsNullOrEmpty(Model.Anexo))
-                {
-                    <div class="mb-2">
-                        <img src="@Model.Anexo" alt="Anexo actual" style="max-width:200px; max-height:150px;" class="img-thumbnail" />
-                        <p class="text-muted small">Imagen actual. Sube una nueva para reemplazarla.</p>
-                    </div>
-                }
-                <input type="file" name="archivoAnexo" accept=".jpg,.jpeg,.png" class="form-control" />
-                <span class="text-muted small">Formatos permitidos: .jpg, .jpeg, .png</span>
-            </div>
-
-            <div class="form-group mt-3">
-                <input type="submit" value="Guardar" class="btn btn-primary" />
-                <a asp-action="Index" class="btn btn-secondary">Cancelar</a>
-            </div>
-        </form>
-    </div>
+<div class="mb-3">
+    <a asp-action="Index" class="btn btn-sm btn-outline-secondary">← Volver al inventario</a>
 </div>
 
-@section Scripts {
-    @{
-        await Html.RenderPartialAsync("_ValidationScriptsPartial");
-    }
+<h2>✏️ Editar Equipo</h2>
+<hr />
+
+@if (ViewBag.Error != null)
+{
+    <div class="alert alert-danger">@ViewBag.Error</div>
 }
+
+<form asp-action="Edit" method="post" enctype="multipart/form-data">
+    @Html.AntiForgeryToken()
+    <input type="hidden" asp-for="IdEquipo" />
+
+    <div class="row g-4">
+
+        <!-- Equipo -->
+        <div class="col-md-6">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-header text-white fw-semibold" style="background:#0d6efd">
+                    💻 Datos del Equipo
+                </div>
+                <div class="card-body" style="background:#eef3ff">
+                    <div class="row g-3">
+                        <div class="col-12">
+                            <label class="form-label small fw-bold">Dispositivo</label>
+                            <input asp-for="Dispositivo" class="form-control" placeholder="Laptop, PC, Teléfono..." />
+                        </div>
+                        <div class="col-6">
+                            <label class="form-label small fw-bold">Marca</label>
+                            <input asp-for="Marca" class="form-control" />
+                        </div>
+                        <div class="col-6">
+                            <label class="form-label small fw-bold">Modelo</label>
+                            <input asp-for="Modelo" class="form-control" />
+                        </div>
+                        <div class="col-6">
+                            <label class="form-label small fw-bold">Serie</label>
+                            <input asp-for="Serie" class="form-control font-monospace" />
+                        </div>
+                        <div class="col-6">
+                            <label class="form-label small fw-bold">IMEI</label>
+                            <input asp-for="Imei" class="form-control font-monospace" />
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Ubicación -->
+        <div class="col-md-6">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-header text-white fw-semibold" style="background:#198754">
+                    📍 Ubicación y Asignación
+                </div>
+                <div class="card-body" style="background:#edfaf3">
+                    <div class="row g-3">
+                        <div class="col-6">
+                            <label class="form-label small fw-bold">Ubicación</label>
+                            <input asp-for="Ubicación" class="form-control" />
+                        </div>
+                        <div class="col-6">
+                            <label class="form-label small fw-bold">Ubicación 2</label>
+                            <input asp-for="Ubicación2" class="form-control" />
+                        </div>
+                        <div class="col-6">
+                            <label class="form-label small fw-bold">Planta</label>
+                            <input asp-for="Planta" class="form-control" />
+                        </div>
+                        <div class="col-6">
+                            <label class="form-label small fw-bold">CC Asignado</label>
+                            <input asp-for="CC" class="form-control" type="number"
+                                   placeholder="Cédula del empleado" />
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Observaciones y Anexo -->
+        <div class="col-12">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header text-white fw-semibold" style="background:#343a40">
+                    📝 Observaciones y Anexo
+                </div>
+                <div class="card-body bg-light">
+                    <div class="row g-3">
+                        <div class="col-md-8">
+                            <label class="form-label small fw-bold">Observación</label>
+                            <textarea asp-for="Observación" class="form-control" rows="3"
+                                      placeholder="Notas sobre el equipo..."></textarea>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label small fw-bold">Anexo (imagen actual)</label>
+                            @if (!string.IsNullOrEmpty(Model.Anexo))
+                            {
+                                <div class="mb-2">
+                                    <img src="@Model.Anexo" alt="Anexo actual"
+                                         class="img-thumbnail" style="max-height:100px" />
+                                </div>
+                            }
+                            else
+                            {
+                                <div class="text-muted small mb-2">Sin imagen</div>
+                            }
+                            <input type="file" name="anexoFile" accept="image/*"
+                                   class="form-control form-control-sm" />
+                            <small class="text-muted">Sube una nueva imagen para reemplazar</small>
+                            <input type="hidden" asp-for="Anexo" />
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <div class="d-flex gap-2 mt-4">
+        <button type="submit" class="btn btn-warning fw-bold">💾 Guardar cambios</button>
+        <a asp-action="Index" class="btn btn-secondary">Cancelar</a>
+    </div>
+</form>

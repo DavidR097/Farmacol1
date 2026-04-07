@@ -1,81 +1,123 @@
 ﻿@model Farmacol.Models.Tbinventario
 
 @{
-    ViewData["Title"] = "Delete";
+    ViewData["Title"] = "Eliminar Equipo del Inventario";
 }
 
-<h1>Delete</h1>
+<h1 class="mb-4 text-danger">Eliminar Equipo del Inventario</h1>
 
-<h3>Are you sure you want to delete this?</h3>
-<div>
-    <h4>Tbinventario</h4>
-    <hr />
-    <dl class="row">
-        <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.Ubicación)
-        </dt>
-        <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.Ubicación)
-        </dd>
-        <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.Ubicación2)
-        </dt>
-        <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.Ubicación2)
-        </dd>
-        <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.Dispositivo)
-        </dt>
-        <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.Dispositivo)
-        </dd>
-        <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.Modelo)
-        </dt>
-        <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.Modelo)
-        </dd>
-        <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.Serie)
-        </dt>
-        <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.Serie)
-        </dd>
-        <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.Imei)
-        </dt>
-        <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.Imei)
-        </dd>
-        <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.Marca)
-        </dt>
-        <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.Marca)
-        </dd>
-        <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.Observación)
-        </dt>
-        <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.Observación)
-        </dd>
-        <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.Planta)
-        </dt>
-        <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.Planta)
-        </dd>
-        <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.CC)
-        </dt>
-        <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.CC)
-        </dd>
-    </dl>
-    
-    <form asp-action="Delete">
-        <input type="hidden" asp-for="IdEquipo" />
-        <input type="submit" value="Delete" class="btn btn-danger" /> |
-        <a asp-action="Index">Back to List</a>
-    </form>
+<div class="row">
+    <div class="col-lg-9 mx-auto">
+        <div class="card shadow-sm border-danger">
+            <div class="card-header bg-danger text-white fw-semibold">
+                <i class="bi bi-trash3-fill"></i>
+                ¿Estás seguro de que deseas eliminar este equipo?
+            </div>
+            
+            <div class="card-body">
+                <!-- Resumen del equipo -->
+                <div class="alert alert-warning mb-4">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <strong>@Model.Dispositivo - @Model.Modelo</strong><br>
+                            <span class="text-muted">Serie: @Model.Serie</span>
+                        </div>
+                        <div class="text-end">
+                            <span class="badge bg-secondary">@Model.Marca</span><br>
+                            <small class="text-muted">@Model.Ubicación</small>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row g-4">
+                    <!-- Información del Equipo -->
+                    <div class="col-12">
+                        <div class="card border-0">
+                            <div class="card-header text-white fw-semibold" style="background:#343a40;">
+                                📱 Detalles del Equipo
+                            </div>
+                            <div class="card-body bg-light">
+                                <div class="row row-cols-2 row-cols-md-4 g-3 small">
+                                    <div class="col">
+                                        <span class="text-muted">Dispositivo:</span><br>
+                                        <strong>@Model.Dispositivo</strong>
+                                    </div>
+                                    <div class="col">
+                                        <span class="text-muted">Modelo:</span><br>
+                                        @Model.Modelo
+                                    </div>
+                                    <div class="col">
+                                        <span class="text-muted">Marca:</span><br>
+                                        @Model.Marca
+                                    </div>
+                                    <div class="col">
+                                        <span class="text-muted">Serie:</span><br>
+                                        <strong>@Model.Serie</strong>
+                                    </div>
+                                    <div class="col">
+                                        <span class="text-muted">IMEI:</span><br>
+                                        @Model.Imei
+                                    </div>
+                                    <div class="col">
+                                        <span class="text-muted">Ubicación:</span><br>
+                                        @Model.Ubicación
+                                    </div>
+                                    <div class="col">
+                                        <span class="text-muted">Ubicación 2:</span><br>
+                                        @Model.Ubicación2
+                                    </div>
+                                    <div class="col">
+                                        <span class="text-muted">Planta:</span><br>
+                                        @Model.Planta
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Observación -->
+                    @if (!string.IsNullOrWhiteSpace(Model.Observación))
+                    {
+                        <div class="col-12">
+                            <div class="card border-0">
+                                <div class="card-header fw-semibold" style="background:#fd7e14; color:white;">
+                                    📝 Observación
+                                </div>
+                                <div class="card-body bg-light">
+                                    @Model.Observación
+                                </div>
+                            </div>
+                        </div>
+                    }
+
+                    <!-- Persona asignada -->
+                    <div class="col-12">
+                        <div class="card border-0">
+                            <div class="card-header text-white fw-semibold" style="background:#0d6efd;">
+                                👤 Asignado a
+                            </div>
+                            <div class="card-body" style="background:#eef3ff;">
+                                <strong>Cédula:</strong> @Model.CC
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Formulario de Confirmación -->
+            <div class="card-footer bg-light">
+                <form asp-action="Delete" method="post">
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" asp-for="IdEquipo" />
+
+                    <div class="d-flex gap-2 justify-content-end">
+                        <a asp-action="Index" class="btn btn-secondary">Cancelar</a>
+                        <button type="submit" class="btn btn-danger">
+                            <i class="bi bi-trash3"></i> Confirmar Eliminación
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
 </div>

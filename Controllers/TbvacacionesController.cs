@@ -9,10 +9,12 @@ namespace Farmacol.Controllers
     public class TbvacacionesController : Controller
     {
         private readonly Farmacol1Context _context;
+        private readonly IWebHostEnvironment _env;
 
-        public TbvacacionesController(Farmacol1Context context)
+        public TbvacacionesController(Farmacol1Context context, IWebHostEnvironment env)
         {
             _context = context;
+            _env = env;
         }
 
         public async Task<IActionResult> Index(string busqueda, string cedula, string nombre, string cargo, string fechaInicio, string fechaFin)
@@ -165,6 +167,28 @@ namespace Farmacol.Controllers
             if (tbvacacione != null) _context.Tbvacaciones.Remove(tbvacacione);
             await _context.SaveChangesAsync();
             return RedirectToAction(nameof(Index));
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> DescargarAnexo(int id)
+        {
+            var tb = await _context.Tbvacaciones.FindAsync(id);
+            if (tb == null || string.IsNullOrEmpty(tb.Anexos)) return NotFound();
+
+            Tbpersonal? personal = null;
+            if (int.TryParse(tb.CC, out int cc))
+                personal = await _context.Tbpersonals.FirstOrDefaultAsync(p => p.CC == cc);
+
+            bool esAdmin = User.IsInRole("Administrador");
+            bool esRRHH = User.IsInRole("RRHH");
+            bool esSolicitante = personal != null && (User.Identity?.Name == personal.CorreoCorporativo || User.Identity?.Name == personal.UsuarioCorporativo);
+
+            if (!esAdmin && !esRRHH && !esSolicitante) return Forbid();
+
+            var fullPath = Path.Combine(_env.WebRootPath ?? "wwwroot", tb.Anexos.TrimStart('/').Replace('/', Path.DirectorySeparatorChar));
+            if (!System.IO.File.Exists(fullPath)) return NotFound();
+
+            return PhysicalFile(fullPath, "application/pdf", Path.GetFileName(fullPath));
         }
 
         private bool TbvacacioneExists(int id) =>

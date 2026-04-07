@@ -66,4 +66,6 @@ public partial class Tbsolicitude
     public int? PasoActual { get; set; }
     public string? NivelSolicitante { get; set; }
     public DateTime? FechaDevolucion { get; set; }
+    public string? TipoFlujo { get; set; }
+    public string? DocumentoSolicitado { get; set; }
 }

@@ -1,0 +1,98 @@
+﻿@model Farmacol.Models.PerfilViewModel
+@{
+    ViewData["Title"] = "Mi Perfil";
+}
+
+<div class="row justify-content-center">
+    <div class="col-lg-8">
+        <div class="card shadow-sm">
+            <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+                <h4 class="mb-0">👤 Mi Perfil</h4>
+                <a asp-action="Vacaciones" class="btn btn-light btn-sm">📅 Ver mis vacaciones completas</a>
+            </div>
+            <div class="card-body">
+
+                <!-- Foto de Perfil -->
+                <div class="text-center mb-4">
+                    @if (!string.IsNullOrEmpty(Model.FotoPerfil))
+                    {
+                        <img src="@Model.FotoPerfil" alt="Foto de perfil"
+                             class="rounded-circle border border-3 border-primary"
+                             style="width:180px;height:180px;object-fit:cover;" />
+                    }
+                    else
+                    {
+                        <div class="rounded-circle bg-light d-flex align-items-center justify-content-center mx-auto border border-3 border-primary"
+                             style="width:180px;height:180px;">
+                            <span class="display-1 text-muted">👤</span>
+                        </div>
+                    }
+                </div>
+
+                <!-- Subir Foto -->
+                <form asp-action="SubirFoto" method="post" enctype="multipart/form-data" class="mb-4">
+                    @Html.AntiForgeryToken()
+                    <div class="input-group">
+                        <input type="file" name="foto" class="form-control" accept="image/*" />
+                        <button type="submit" class="btn btn-primary">📸 Subir foto</button>
+                    </div>
+                    <small class="text-muted">JPG, PNG o GIF (máx. 5 MB)</small>
+                </form>
+
+                <!-- Subir Firma -->
+                <div class="mt-4">
+                    <h5>Firma Corporativa</h5>
+                    @if (!string.IsNullOrEmpty(Model.Personal.FirmaPath))
+                    {
+                        <img src="@Model.Personal.FirmaPath" alt="Firma"
+                             class="img-fluid border p-2 mb-2" style="max-height: 140px;" />
+                    }
+                    else
+                    {
+                        <p class="text-muted">No has subido tu firma aún.</p>
+                    }
+
+                    <form asp-action="SubirFirma" method="post" enctype="multipart/form-data">
+                        @Html.AntiForgeryToken()
+                        <div class="input-group">
+                            <input type="file" name="firma" class="form-control" accept=".png,.jpg,.jpeg" />
+                            <button type="submit" class="btn btn-outline-primary">Subir Firma</button>
+                        </div>
+                        <small class="text-muted">PNG o JPG (recomendado con fondo transparente)</small>
+                    </form>
+                </div>
+
+                <hr>
+
+                <!-- Información del colaborador -->
+                <h5 class="text-primary">Información del colaborador</h5>
+                <div class="row g-3">
+                    <div class="col-md-6"><strong>Nombre:</strong> @Model.Personal.NombreColaborador</div>
+                    <div class="col-md-6"><strong>CC:</strong> @Model.Personal.CC</div>
+                    <div class="col-md-6"><strong>Cargo:</strong> @Model.Personal.Cargo</div>
+                    <div class="col-md-6"><strong>Área:</strong> @Model.Personal.Area</div>
+                    <div class="col-md-6"><strong>Fecha de ingreso:</strong> @Model.Personal.FechaIngreso?.ToString("dd/MM/yyyy")</div>
+                    <div class="col-md-6"><strong>Correo corporativo:</strong> @Model.Personal.CorreoCorporativo</div>
+                </div>
+
+                <hr>
+
+                <!-- Vacaciones -->
+                <div class="card border-success mb-3">
+                    <div class="card-body text-center">
+                        <h5 class="text-success">📅 Días de vacaciones disponibles</h5>
+                        <div class="display-3 fw-bold text-success mb-2">@Model.Vacaciones.DiasDisponibles</div>
+                        <p class="text-muted">@Model.Vacaciones.Mensaje</p>
+                        <small>
+                            Acumulados: @Model.Vacaciones.DiasAcumulados |
+                            Disfrutados: @Model.Vacaciones.DiasDisfrutados
+                        </small>
+                        <div class="mt-3">
+                            <a asp-controller="Tbsolicitudes" asp-action="Create" class="btn btn-success">Solicitar vacaciones ahora</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

@@ -1,0 +1,80 @@
+﻿@{
+    ViewData["Title"] = "Generar documento TI";
+    var personal = ViewBag.Personal as Farmacol.Models.Tbpersonal;
+    var tipoDoc = ViewBag.TipoDocumento as string ?? "";
+    var equipos = ViewBag.Equipos as List<Farmacol.Models.Tbinventario>
+                        ?? new List<Farmacol.Models.Tbinventario>();
+}
+
+<div class="mb-3">
+    <a asp-action="Index" class="btn btn-sm btn-outline-secondary">← Volver</a>
+</div>
+
+<h2>📄 Generar: @tipoDoc</h2>
+<div class="mb-3">
+    <span class="badge bg-secondary">CC: @personal?.CC</span>
+    <strong class="ms-2">@personal?.NombreColaborador</strong>
+    <span class="text-muted ms-2">— @personal?.Cargo · @personal?.Area</span>
+</div>
+
+<form asp-action="Generar" method="post">
+    @Html.AntiForgeryToken()
+    <input type="hidden" name="cc" value="@personal?.CC" />
+    <input type="hidden" name="tipoDocumento" value="@tipoDoc" />
+
+    @if (!equipos.Any())
+    {
+        <div class="alert alert-warning">
+            ⚠️ Este empleado no tiene equipos asignados en TBInventario.
+            El documento se generará sin tabla de equipos.
+        </div>
+    }
+    else
+    {
+        <div class="card border-0 shadow-sm mb-4">
+            <div class="card-header fw-semibold text-white" style="background:#6c757d">
+                🖥️ Equipos asignados — Observaciones opcionales
+            </div>
+            <div class="card-body bg-light">
+                <p class="small text-muted mb-3">
+                    Escribe una observación para cada equipo si lo requieres.
+                    Solo quedará en el documento generado, no se guarda en el sistema.
+                </p>
+                <div class="d-flex flex-column gap-3">
+                    @foreach (var eq in equipos)
+                    {
+                        <div class="card border-0 shadow-sm">
+                            <div class="card-body py-2">
+                                <div class="row align-items-center g-2">
+                                    <div class="col-md-5">
+                                        <div class="fw-bold small">@eq.Dispositivo</div>
+                                        <div class="text-muted" style="font-size:.8rem">
+                                            @eq.Marca @eq.Modelo
+                                            @if (!string.IsNullOrEmpty(eq.Serie))
+                                            {
+                                                <span class="font-monospace"> · @eq.Serie</span>
+                                            }
+                                        </div>
+                                    </div>
+                                    <div class="col-md-7">
+                                        <input type="text"
+                                               name="observaciones[@eq.IdEquipo]"
+                                               class="form-control form-control-sm"
+                                               placeholder="Observación (opcional)..." />
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    }
+
+    <div class="d-flex gap-2">
+        <button type="submit" class="btn btn-primary fw-bold">
+            📄 Generar y descargar
+        </button>
+        <a asp-action="Index" class="btn btn-outline-secondary">Cancelar</a>
+    </div>
+</form>

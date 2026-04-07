@@ -1,0 +1,189 @@
+﻿@model IEnumerable<Farmacol.Models.TbExpediente>
+@{
+    ViewData["Title"] = "Expediente del empleado";
+    var personal = ViewBag.Personal as Farmacol.Models.Tbpersonal;
+    var equipos = ViewBag.Equipos as List<Farmacol.Models.Tbinventario>
+                   ?? new List<Farmacol.Models.Tbinventario>();
+}
+
+<div class="mb-3">
+    <a asp-controller="ExpedientesRRHH" asp-action="Index"
+       class="btn btn-sm btn-outline-secondary">← Volver a Expedientes RRHH</a>
+</div>
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <div>
+        <h2 class="mb-0">📂 Expediente: @personal?.NombreColaborador</h2>
+        <small class="text-muted">
+            CC: @personal?.CC &nbsp;·&nbsp; @personal?.Cargo &nbsp;·&nbsp; @personal?.Area
+        </small>
+    </div>
+    <div class="d-flex gap-2">
+        <span class="badge bg-success fs-6">@Model.Count(d => d.Visible) visible(s)</span>
+        <span class="badge bg-secondary fs-6">@Model.Count(d => !d.Visible) oculto(s)</span>
+    </div>
+</div>
+
+@if (TempData["Exito"] != null)
+{
+    <div class="alert alert-success alert-dismissible fade show">@TempData["Exito"]<button type="button" class="btn-close" data-bs-dismiss="alert"></button></div>
+}
+@if (TempData["Error"] != null)
+{
+    <div class="alert alert-danger alert-dismissible fade show">@TempData["Error"]<button type="button" class="btn-close" data-bs-dismiss="alert"></button></div>
+}
+
+<!-- Subir nuevo documento -->
+<div class="card border-0 shadow-sm mb-4">
+    <div class="card-header fw-semibold text-white" style="background:#0d6efd">
+        ➕ Agregar documento
+    </div>
+    <div class="card-body" style="background:#eef3ff">
+        <form asp-action="Subir" method="post" enctype="multipart/form-data">
+            @Html.AntiForgeryToken()
+            <input type="hidden" name="cc" value="@personal?.CC" />
+            <div class="row g-2 align-items-end">
+                <div class="col-md-2">
+                    <label class="form-label small fw-bold mb-1">Módulo</label>
+                    <select name="modulo" class="form-select form-select-sm">
+                        <option value="RRHH">RRHH</option>
+                        <option value="TI">TI</option>
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label small fw-bold mb-1">Tipo</label>
+                    <select name="tipoDocumento" class="form-select form-select-sm">
+                        <option value="">Sin categoría</option>
+                        <option>Contrato</option>
+                        <option>Hoja de vida</option>
+                        <option>Certificado</option>
+                        <option>Paz y salvo</option>
+                        <option>Constancia laboral</option>
+                        <option>Responsiva TI</option>
+                        <option>Entrega de equipo</option>
+                        <option>Otros</option>
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label small fw-bold mb-1">Nombre</label>
+                    <input type="text" name="nombrePersonalizado"
+                           class="form-control form-control-sm" placeholder="Nombre del doc..." />
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label small fw-bold mb-1">Archivo PDF</label>
+                    <input type="file" name="archivo" accept=".pdf"
+                           class="form-control form-control-sm" required />
+                </div>
+                <div class="col-md-1">
+                    <button type="submit" class="btn btn-sm btn-primary w-100">📤</button>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Equipos TI vinculados -->
+@if (equipos.Any())
+{
+    <div class="card border-0 shadow-sm mb-4">
+        <div class="card-header fw-semibold text-white small" style="background:#6c757d">
+            🖥️ Equipos asignados (@equipos.Count)
+        </div>
+        <div class="card-body bg-light p-2">
+            <div class="table-responsive">
+                <table class="table table-sm table-hover mb-0 small">
+                    <thead class="table-dark">
+                        <tr><th>Dispositivo</th><th>Marca/Modelo</th><th>Serie</th><th>Ubicación</th></tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var eq in equipos)
+                        {
+                            <tr>
+                                <td>@eq.Dispositivo</td>
+                                <td>@eq.Marca @eq.Modelo</td>
+                                <td><small class="font-monospace">@eq.Serie</small></td>
+                                <td>@eq.Ubicación</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+}
+
+<!-- Todos los documentos -->
+@if (!Model.Any())
+{
+    <div class="alert alert-info">Sin documentos en el expediente.</div>
+}
+else
+{
+    @foreach (var grupo in Model.GroupBy(d => d.Modulo ?? "General").OrderBy(g => g.Key))
+    {
+        var colorH = grupo.Key == "TI" ? "#0d6efd" : "#198754";
+        <div class="mb-4">
+            <h6 class="text-uppercase small fw-bold text-muted mb-2">
+                @(grupo.Key == "TI" ? "🖥️" : "👥") Módulo @grupo.Key
+            </h6>
+            <div class="card border-0 shadow-sm">
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0 small">
+                        <thead class="table-dark">
+                            <tr>
+                                <th>Nombre</th>
+                                <th>Tipo</th>
+                                <th>Subido por</th>
+                                <th>Fecha</th>
+                                <th class="text-center">Visible usuario</th>
+                                <th class="text-center">Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var doc in grupo.OrderByDescending(d => d.FechaSubida))
+                            {
+                                <tr class="@(!doc.Visible ? "table-secondary" : "")">
+                                    <td>
+                                        <span>📄</span>
+                                        <strong class="ms-1">@doc.NombreArchivo</strong>
+                                        @if (!doc.Visible)
+                                        {
+                                            <span class="badge bg-secondary ms-1">Oculto</span>
+                                        }
+                                    </td>
+                                    <td><small class="text-muted">@doc.TipoDocumento</small></td>
+                                    <td><small class="text-muted">@doc.SubidoPor</small></td>
+                                    <td><small>@doc.FechaSubida.ToString("dd/MM/yyyy")</small></td>
+                                    <td class="text-center">
+                                        <form asp-action="ToggleVisible" method="post" class="d-inline">
+                                            @Html.AntiForgeryToken()
+                                            <input type="hidden" name="id" value="@doc.Id" />
+                                            <button type="submit"
+                                                    class="btn btn-sm @(doc.Visible ? "btn-success" : "btn-outline-secondary")"
+                                                    title="@(doc.Visible ? "Visible para el usuario — clic para ocultar" : "Oculto — clic para mostrar")">
+                                                @(doc.Visible ? "👁️ Visible" : "🙈 Oculto")
+                                            </button>
+                                        </form>
+                                    </td>
+                                    <td class="text-center">
+                                        <a asp-action="Ver" asp-route-id="@doc.Id"
+                                           target="_blank"
+                                           class="btn btn-sm btn-outline-primary">👁️</a>
+                                        <form asp-action="Eliminar" method="post" class="d-inline">
+                                            @Html.AntiForgeryToken()
+                                            <input type="hidden" name="id" value="@doc.Id" />
+                                            <button type="submit" class="btn btn-sm btn-outline-danger"
+                                                    onclick="return confirm('¿Eliminar este documento?')">
+                                                🗑️
+                                            </button>
+                                        </form>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    }
+}

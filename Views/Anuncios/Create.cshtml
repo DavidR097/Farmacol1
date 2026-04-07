@@ -1,0 +1,40 @@
+@model Farmacol.Models.TbAnuncio
+
+@{
+    ViewData["Title"] = "Crear Anuncio";
+}
+
+<h2>Crear Anuncio</h2>
+
+<form asp-action="Create" method="post" enctype="multipart/form-data">
+    <div class="mb-3">
+        <label asp-for="Titulo" class="form-label"></label>
+        <input asp-for="Titulo" class="form-control" />
+        <span asp-validation-for="Titulo" class="text-danger"></span>
+    </div>
+
+    <div class="mb-3">
+        <label asp-for="Mensaje" class="form-label"></label>
+        <textarea asp-for="Mensaje" class="form-control"></textarea>
+        <span asp-validation-for="Mensaje" class="text-danger"></span>
+    </div>
+
+    <div class="mb-3">
+        <label asp-for="Tipo" class="form-label"></label>
+        <input asp-for="Tipo" class="form-control" />
+    </div>
+
+    <div class="mb-3">
+        <label class="form-label">Imagen (jpg, png, gif)</label>
+        <input type="file" name="imagen" accept="image/*" class="form-control" />
+    </div>
+
+    <div>
+        <button type="submit" class="btn btn-primary">Crear</button>
+        <a asp-action="Index" class="btn btn-secondary">Cancelar</a>
+    </div>
+</form>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

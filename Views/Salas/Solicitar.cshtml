@@ -1,0 +1,58 @@
+﻿@{
+    ViewData["Title"] = "Solicitar reserva de sala";
+
+    var salas = ViewBag.Salas as List<Farmacol.Models.TbSala> ?? new List<Farmacol.Models.TbSala>();
+    var fecha = (DateOnly)(ViewBag.Fecha ?? DateOnly.FromDateTime(DateTime.Today.AddDays(1)));
+    var salaSeleccionada = (int)(ViewBag.SalaSeleccionada ?? 0);
+}
+
+<h2 class="mb-4">Solicitar reserva de sala</h2>
+
+<form asp-action="Solicitar" method="post">
+    @Html.AntiForgeryToken()
+
+    <input type="hidden" name="fecha" value="@fecha.ToString("yyyy-MM-dd")" />
+
+    <div class="row g-3">
+        <!-- Sala -->
+        <div class="col-12">
+            <label class="form-label fw-bold">Sala <span class="text-danger">*</span></label>
+            <select name="salaId" class="form-select" required>
+                <option value="">-- Selecciona una sala...</option>
+                @foreach (var sala in salas)
+                {
+                    var isSelected = sala.Id == salaSeleccionada ? "selected" : "";
+                    <option value="@sala.Id" Selected>@sala.Nombre</option>
+                }
+            </select>
+        </div>
+
+        <!-- Fecha -->
+        <div class="col-md-6">
+            <label class="form-label fw-bold">Fecha</label>
+            <input type="date" class="form-control" value="@fecha.ToString("yyyy-MM-dd")" readonly />
+        </div>
+
+        <!-- Horas -->
+        <div class="col-md-6">
+            <label class="form-label fw-bold">Hora Inicio <span class="text-danger">*</span></label>
+            <input type="time" name="horaInicio" class="form-control" value="@ViewBag.HoraInicio" required />
+        </div>
+        <div class="col-md-6">
+            <label class="form-label fw-bold">Hora Fin <span class="text-danger">*</span></label>
+            <input type="time" name="horaFin" class="form-control" value="@ViewBag.HoraFin" required />
+        </div>
+
+        <!-- Motivo -->
+        <div class="col-12">
+            <label class="form-label fw-bold">Motivo<span class="text-danger">*</span></label>
+            <textarea name="motivo" class="form-control" rows="3"
+                      placeholder="Reunión de equipo, capacitación, entrevista..." required></textarea>
+        </div>
+    </div>
+
+    <div class="mt-4">
+        <button type="submit" class="btn btn-success">✅ Confirmar Reserva</button>
+        <a asp-action="Index" class="btn btn-secondary">Cancelar</a>
+    </div>
+</form>|

@@ -1,48 +1,105 @@
-﻿@model Farmacol.Models.Tbresponsiva
+﻿@model Farmacol.Models.TbresponsivaDetailsViewModel
 
 @{
-    ViewData["Title"] = "Details";
+    ViewData["Title"] = "Detalles de Responsiva";
 }
 
-<h1>Details</h1>
+<h1 class="mb-4">Detalles de la Responsiva</h1>
 
-<div>
-    <h4>Tbresponsiva</h4>
-    <hr />
-    <dl class="row">
-        <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.Equipo)
-        </dt>
-        <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.Equipo)
-        </dd>
-        <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.Marca)
-        </dt>
-        <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.Marca)
-        </dd>
-        <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.Serie)
-        </dt>
-        <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.Serie)
-        </dd>
-        <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.Observación)
-        </dt>
-        <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.Observación)
-        </dd>
-        <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.Estado)
-        </dt>
-        <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.Estado)
-        </dd>
-    </dl>
-</div>
-<div>
-    <a asp-action="Edit" asp-route-id="@Model?.CC">Edit</a> |
-    <a asp-action="Index">Back to List</a>
+<div class="row">
+    <div class="col-lg-10 mx-auto">
+        <div class="card shadow-sm">
+            <div class="card-header bg-primary text-white fw-semibold">
+                <i class="bi bi-clipboard-check"></i>
+                Información de la Responsiva
+            </div>
+            
+            <div class="card-body">
+                <div class="row g-4">
+                    <!-- Información Principal del Equipo -->
+                    <div class="col-md-8">
+                        <div class="card border-0 h-100">
+                            <div class="card-header fw-semibold" style="background:#343a40; color:white;">
+                                📱 Equipo Entregado
+                            </div>
+                            <div class="card-body bg-light">
+                                <div class="row g-3">
+                                    <div class="col-md-6">
+                                        <span class="text-muted small">Equipo:</span><br>
+                                        <strong>@Model.Responsiva.Equipo</strong>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <span class="text-muted small">Marca:</span><br>
+                                        <strong>@Model.Responsiva.Marca</strong>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <span class="text-muted small">Serie:</span><br>
+                                        <strong>@Model.Responsiva.Serie</strong>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <span class="text-muted small">Estado:</span><br>
+                                        <span class="badge @(Model.Responsiva.Estado?.ToLower() == "activo" ? "bg-success" : "bg-warning")">
+                                            @Model.Responsiva.Estado
+                                        </span>
+                                    </div>
+                                </div>
+                @if (Model.Equipos != null && Model.Equipos.Any())
+                {
+                    <div class="list-group">
+                        @foreach (var e in Model.Equipos)
+                        {
+                            <div class="list-group-item">
+                                <div class="row">
+                                    <div class="col-md-5">
+                                        <strong>@(e.Dispositivo ?? e.Modelo ?? "Equipo")</strong>
+                                        <div class="text-muted small">Marca: @e.Marca</div>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <div class="text-muted small">Serie: @e.Serie</div>
+                                        <div class="text-muted small">IMEI: @e.Imei</div>
+                                    </div>
+                                    <div class="col-md-3 text-end">
+                                        <span class="badge @(e.CC.HasValue ? "bg-primary" : "bg-secondary")">Asignado</span>
+                                    </div>
+                                </div>
+                            </div>
+                        }
+                    </div>
+                }
+                else
+                {
+                    <div class="text-muted">No hay equipos asignados a este colaborador.</div>
+                }
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Observación -->
+                    <div class="col-md-4">
+                        <div class="card border-0 h-100">
+                            <div class="card-header fw-semibold text-white" style="background:#fd7e14;">
+                                📝 Observación
+                            </div>
+                            <div class="card-body bg-light">
+                                <p class="mb-0">
+                                    @(string.IsNullOrWhiteSpace(Model.Responsiva.Observación) ? "Sin observaciones registradas." : Model.Responsiva.Observación)
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Botones de acción -->
+            <div class="card-footer bg-light d-flex gap-2">
+                <a asp-action="Edit" asp-route-id="@Model?.Responsiva?.CC"
+                       class="btn btn-warning">
+                    ✏️ Editar Responsiva
+                </a>
+                <a asp-action="Index" class="btn btn-secondary">
+                    ← Volver al Listado
+                </a>
+            </div>
+        </div>
+    </div>
 </div>

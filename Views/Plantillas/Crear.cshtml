@@ -1,0 +1,79 @@
+﻿@{
+    ViewData["Title"] = "Nueva Plantilla";
+    var tiposRRHH = ViewBag.TiposRRHH as string[] ?? Array.Empty<string>();
+    var tiposTI = ViewBag.TiposTI as string[] ?? Array.Empty<string>();
+}
+
+<h2>➕ Nueva Plantilla de Documento</h2>
+<hr />
+
+@if (TempData["Error"] != null)
+{
+    <div class="alert alert-danger">@TempData["Error"]</div>
+}
+
+<div class="card shadow-sm" style="max-width:600px">
+    <div class="card-body">
+        <form asp-action="Crear" method="post" enctype="multipart/form-data">
+            @Html.AntiForgeryToken()
+
+            <div class="mb-3">
+                <label class="form-label fw-bold">Nombre de la plantilla</label>
+                <input type="text" name="nombre" class="form-control"
+                       placeholder="Ej: Constancia laboral 2025" required />
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label fw-bold">Módulo</label>
+                <select name="modulo" id="selModulo" class="form-select" required
+                        onchange="actualizarTipos(this.value)">
+                    <option value="">-- Selecciona --</option>
+                    <option value="RRHH">👥 RRHH</option>
+                    <option value="TI">🖥️ TI</option>
+                </select>
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label fw-bold">Tipo de documento</label>
+                <select name="tipoDocumento" id="selTipo" class="form-select" required>
+                    <option value="">-- Selecciona primero el módulo --</option>
+                </select>
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label fw-bold">Archivo Word (.docx)</label>
+                <input type="file" name="archivo" accept=".docx" class="form-control" required />
+                <small class="text-muted">Solo archivos .docx con marcadores como <code>
+
+                </code></small>
+            </div>
+
+            <div class="alert alert-warning small">
+                ⚠️ Subir una nueva plantilla para el mismo tipo desactivará la plantilla anterior automáticamente.
+            </div>
+
+            <div class="d-flex gap-2">
+                <button type="submit" class="btn btn-primary fw-bold">💾 Guardar plantilla</button>
+                <a asp-action="Index" class="btn btn-secondary">Cancelar</a>
+            </div>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        var tiposRRHH = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(tiposRRHH));
+        var tiposTI   = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(tiposTI));
+
+        function actualizarTipos(modulo) {
+            var sel   = document.getElementById('selTipo');
+            var tipos = modulo === 'RRHH' ? tiposRRHH : modulo === 'TI' ? tiposTI : [];
+            sel.innerHTML = '<option value="">-- Selecciona --</option>';
+            tipos.forEach(function(t) {
+                var o = document.createElement('option');
+                o.value = t; o.textContent = t;
+                sel.appendChild(o);
+            });
+        }
+    </script>
+}

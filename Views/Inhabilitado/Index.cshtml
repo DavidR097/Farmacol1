@@ -1,0 +1,133 @@
+﻿@{
+    Layout = null;
+    var hasta = ViewBag.Hasta as string ?? "pronto";
+    var motivo = ViewBag.Motivo as string ?? "";
+}
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Farmacol — Descansando</title>
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+    <style>
+        body {
+            min-height: 100vh;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: system-ui, sans-serif;
+        }
+
+        .card-vac {
+            background: white;
+            border-radius: 24px;
+            padding: 3rem 2.5rem;
+            max-width: 460px;
+            width: 100%;
+            text-align: center;
+            box-shadow: 0 20px 60px rgba(0,0,0,.2);
+        }
+
+        .emoji-grande {
+            font-size: 5rem;
+            line-height: 1;
+            margin-bottom: 1rem;
+            display: inline-block;
+            animation: balanceo 2s ease-in-out infinite;
+        }
+        @@keyframes balanceo {
+            0%, 100% {
+                transform: rotate(-5deg);
+            }
+
+            50% {
+                transform: rotate(5deg);
+            }
+        }
+
+        .titulo {
+            font-size: 1.6rem;
+            font-weight: 700;
+            color: #1a1d23;
+            margin-bottom: .4rem;
+        }
+
+        .subtitulo {
+            font-size: 1rem;
+            color: #6c757d;
+            margin-bottom: 1.5rem;
+        }
+
+        .fecha-badge {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            border-radius: 50px;
+            padding: .5rem 1.5rem;
+            font-size: 1.1rem;
+            font-weight: 600;
+            display: inline-block;
+            margin-bottom: 1.5rem;
+        }
+
+        .motivo-box {
+            background: #f8f9fa;
+            border-radius: 12px;
+            padding: .75rem 1rem;
+            font-size: .9rem;
+            color: #495057;
+            margin-bottom: 1.5rem;
+        }
+
+        .mensajes {
+            font-size: .95rem;
+            color: #495057;
+            margin-bottom: 2rem;
+            line-height: 1.6;
+        }
+
+        .btn-salir {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            border: none;
+            color: white;
+            border-radius: 50px;
+            padding: .6rem 2rem;
+            font-size: .95rem;
+            text-decoration: none;
+            display: inline-block;
+            cursor: pointer;
+            transition: opacity .2s;
+        }
+
+            .btn-salir:hover {
+                opacity: .85;
+                color: white;
+            }
+    </style>
+</head>
+<body>
+    <div class="card-vac">
+        <span class="emoji-grande">🌴</span>
+        <div class="titulo">¡Estás de descanso!</div>
+        <div class="subtitulo">Tu acceso está temporalmente inhabilitado</div>
+
+        <div class="fecha-badge">📅 Vuelves el @hasta</div>
+
+        @if (!string.IsNullOrEmpty(motivo))
+        {
+            <div class="motivo-box">📋 Motivo: <strong>@motivo</strong></div>
+        }
+
+        <div class="mensajes">
+            Aprovecha este tiempo para descansar y recargar energías. 💪<br />
+            El sistema estará listo para recibirte cuando regreses.
+        </div>
+
+        <form asp-controller="Login" asp-action="Logout" method="post" class="d-inline">
+            @Html.AntiForgeryToken()
+            <button type="submit" class="btn-salir">🚪 Cerrar sesión</button>
+        </form>
+    </div>
+</body>
+</html>

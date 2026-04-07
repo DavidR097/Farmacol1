@@ -1,0 +1,118 @@
+﻿@model IEnumerable<Farmacol.Models.TbPlantilla>
+@{
+    ViewData["Title"] = "Plantillas de documentos";
+}
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h2 class="mb-0">📋 Plantillas de Documentos</h2>
+        <small class="text-muted">Sube plantillas Word (.docx) con marcadores para generación automática</small>
+    </div>
+    <a asp-action="Crear" class="btn btn-primary">➕ Nueva Plantilla</a>
+</div>
+
+@if (TempData["Exito"] != null)
+{
+    <div class="alert alert-success alert-dismissible fade show">@TempData["Exito"]<button type="button" class="btn-close" data-bs-dismiss="alert"></button></div>
+}
+
+<!-- Guía de marcadores -->
+<div class="card border-0 shadow-sm mb-4">
+    <div class="card-header fw-semibold bg-light">📖 Marcadores disponibles para las plantillas</div>
+    <div class="card-body">
+        <div class="row g-3 small">
+            <div class="col-md-4">
+                <strong class="text-primary">Datos del empleado</strong>
+                <ul class="mt-1 mb-0">
+                    <li><code>{{NOMBRE}}</code> — Nombre completo</li>
+                    <li><code>{{CC}}</code> — Cédula</li>
+                    <li><code>{{CARGO}}</code> — Cargo</li>
+                    <li><code>{{AREA}}</code> — Área</li>
+                    <li><code>{{CIUDAD}}</code> — Ciudad de trabajo</li>
+                    <li><code>{{FECHA_INGRESO}}</code> — Fecha de ingreso</li>
+                    <li><code>{{TIPO_CONTRATO}}</code> — Tipo de contrato</li>
+                    <li><code>{{EPS}}</code> — EPS</li>
+                    <li><code>{{FONDO_PENSIONES}}</code> — Fondo de pensiones</li>
+                    <li><code>{{FECHA}}</code> — Fecha actual</li>
+                </ul>
+            </div>
+            <div class="col-md-4">
+                <strong class="text-success">Solo para plantillas TI</strong>
+                <ul class="mt-1 mb-0">
+                    <li><code>{{EQUIPOS}}</code> — Lista de todos los equipos</li>
+                    <li><code>{{MARCAS}}</code> — Lista de todas las marcas</li>
+                    <li><code>{{MODELOS}}</code> — Lista de todos los modelos</li>
+                    <li><code>{{SERIES}}</code> — Lista de todas las series/email</li>
+                </ul>
+            </div>
+            <div class="col-md-4">
+                <strong class="text-warning">Cómo crear la plantilla</strong>
+                <ol class="mt-1 mb-0 small">
+                    <li>Crea un documento Word normal</li>
+                    <li>Escribe el texto con los marcadores donde quieras los datos</li>
+                    <li>Ej: <em>"Certifico que <strong>{{NOMBRE}}</strong>, CC <strong>{{CC}}</strong>..."</em></li>
+                    <li>Guarda como .docx y súbelo aquí</li>
+                </ol>
+            </div>
+        </div>
+    </div>
+</div>
+
+@if (!Model.Any())
+{
+    <div class="alert alert-info">No hay plantillas registradas.</div>
+}
+else
+{
+    <div class="row g-3">
+        @foreach (var p in Model.GroupBy(x => x.Modulo))
+        {
+            <div class="col-12">
+                <h5 class="text-muted text-uppercase small fw-bold mb-2">
+                    @(p.Key == "RRHH" ? "👥 Módulo RRHH" : "🖥️ Módulo TI")
+                </h5>
+                <div class="card border-0 shadow-sm">
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle mb-0">
+                            <thead class="table-dark">
+                                <tr><th>Nombre</th><th>Tipo documento</th><th>Estado</th><th>Subida por</th><th>Fecha</th><th></th></tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var plt in p.OrderByDescending(x => x.FechaSubida))
+                                {
+                                    <tr>
+                                        <td><strong>@plt.Nombre</strong></td>
+                                        <td><span class="badge bg-secondary">@plt.TipoDocumento</span></td>
+                                        <td>
+                                            @if (plt.Activa)
+                                            {
+                                                <span class="badge bg-success">✅ Activa</span>
+                                            }
+                                            else
+                                            {
+
+                                                <span class="badge bg-secondary">Inactiva</span>
+                                            }
+                                        </td>
+                                        <td><small class="text-muted">@plt.SubidaPor</small></td>
+                                        <td><small>@plt.FechaSubida.ToString("dd/MM/yyyy")</small></td>
+                                        <td>
+                                            <form asp-action="Eliminar" method="post" class="d-inline">
+                                                @Html.AntiForgeryToken()
+                                                <input type="hidden" name="id" value="@plt.Id" />
+                                                <button type="submit" class="btn btn-sm btn-outline-danger"
+                                                        onclick="return confirm('¿Eliminar esta plantilla?')">
+                                                    🗑️
+                                                </button>
+                                            </form>
+                                        </td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+}

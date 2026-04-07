@@ -1,0 +1,322 @@
+﻿@{
+    ViewData["Title"] = "Expedientes TI";
+    var personal = ViewBag.Personal as IEnumerable<dynamic> ?? new List<dynamic>();
+    var conteo = ViewBag.Conteo as Dictionary<int, int> ?? new Dictionary<int, int>();
+    var areas = ViewBag.Areas as List<string> ?? new List<string>();
+}
+
+<h1>📁 Expedientes de Personal</h1>
+
+<div class="d-flex gap-2 mb-3">
+    <!-- Exportar con filtros -->
+    <a asp-action="ExportarExcel"
+       asp-route-busqueda="@ViewBag.Busqueda"
+       asp-route-estado="@ViewBag.Estado"
+       class="btn btn-success btn-sm">
+        📥 Exportar filtrado
+    </a>
+    <!-- Exportar todo -->
+    <a asp-action="ExportarExcel" asp-route-todo="true"
+       class="btn btn-outline-success btn-sm">
+        📥 Exportar todo
+    </a>
+</div>
+
+@if (TempData["Exito"] != null)
+{
+    <div class="alert alert-success alert-dismissible fade show">
+        @TempData["Exito"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+}
+@if (TempData["Error"] != null)
+{
+    <div class="alert alert-danger alert-dismissible fade show">
+        @TempData["Error"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+}
+
+<!-- Subida masiva -->
+<div class="card border-0 shadow-sm mb-3">
+    <div class="card-header fw-semibold" style="background:#0d6efd;color:white;">
+        📤 Subida masiva de documentos
+    </div>
+    <div class="card-body" style="background:#eef3ff">
+        <form asp-action="SubirMasivo" method="post" enctype="multipart/form-data">
+            @Html.AntiForgeryToken()
+            <input type="hidden" name="ccs" id="ccsSeleccionados" />
+            <div class="row g-2 align-items-end">
+                <div class="col-md-3">
+                    <label class="form-label small fw-bold mb-1">Tipo de documento</label>
+                    <select name="tipoDocumento" class="form-select form-select-sm">
+                        <option value="">Sin categoría</option>
+                        <option>Contrato</option>
+                        <option>Hoja de vida</option>
+                        <option>Responsiva TI</option>
+                        <option>Certificado</option>
+                        <option>Paz y salvo</option>
+                        <option>Carnet</option>
+                        <option>Otros</option>
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label small fw-bold mb-1">Nombre del documento</label>
+                    <input type="text" name="nombrePersonalizado" class="form-control form-control-sm"
+                           placeholder="Ej: Contrato 2025" />
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label small fw-bold mb-1">Archivo PDF</label>
+                    <input type="file" name="archivo" accept=".pdf" class="form-control form-control-sm" required />
+                </div>
+                <div class="col-md-2">
+                    <button type="submit" class="btn btn-sm btn-success w-100"
+                            id="btnSubirMasivo" disabled>
+                        📤 Subir a seleccionados (<span id="lblSeleccionados">0</span>)
+                    </button>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Filtros -->
+<form method="get" class="mb-3">
+    <div class="row g-2">
+        <div class="col-md-3">
+            <input type="text" name="busqueda" value="@ViewBag.Busqueda"
+                   class="form-control" placeholder="🔍 Nombre o cargo..." />
+        </div>
+        <div class="col-md-3">
+            <select name="area" class="form-select">
+                <option value="">Todas las áreas</option>
+                @foreach (var a in areas)
+                {
+                    <option value="@a" selected="@(ViewBag.Area == a)">@a</option>
+                }
+            </select>
+        </div>
+        <div class="col-md-2">
+            <button type="submit" class="btn btn-secondary w-100">Filtrar</button>
+        </div>
+        <div class="col-md-1">
+            <a asp-action="Index" class="btn btn-outline-secondary w-100">✕</a>
+        </div>
+        <div class="col-md-3 d-flex align-items-center justify-content-end gap-2">
+            <input type="checkbox" id="chkTodos" class="form-check-input" style="width:18px;height:18px" />
+            <label for="chkTodos" class="form-check-label small text-muted">Seleccionar todos</label>
+        </div>
+    </div>
+</form>
+
+@if (!personal.Any())
+{
+    <div class="alert alert-info">No hay personal registrado.</div>
+}
+else
+{
+    <div class="accordion" id="acordeonExpedientes">
+        @foreach (var p in personal)
+        {
+            var cc = (int)p.CC;
+            var totalDocs = conteo.ContainsKey(cc) ? conteo[cc] : 0;
+            var colId = $"exp{cc}";
+
+            <div class="accordion-item border-0 mb-2 shadow-sm">
+                <h2 class="accordion-header">
+                    <button class="accordion-button collapsed py-2"
+                            type="button"
+                            data-bs-toggle="collapse"
+                            data-bs-target="#@colId">
+                        <div class="d-flex flex-wrap gap-3 align-items-center w-100 small">
+                            <!-- Checkbox selección masiva -->
+                            <span onclick="event.stopPropagation()">
+                                <input type="checkbox" class="chk-empleado form-check-input"
+                                       value="@cc" style="width:16px;height:16px" />
+                            </span>
+                            <span class="badge bg-secondary">@cc</span>
+                            <span class="fw-bold" style="min-width:200px">@p.NombreColaborador</span>
+                            <span class="text-muted" style="min-width:160px">@p.Cargo</span>
+                            <span class="badge bg-primary">@p.Area</span>
+                            @if (totalDocs > 0)
+                            {
+                                <span class="badge bg-success rounded-pill">@totalDocs doc(s)</span>
+                            }
+                            else
+                            {
+                                <span class="badge bg-light text-muted border">Sin docs</span>
+                            }
+                        </div>
+                    </button>
+                </h2>
+                <div id="@colId" class="accordion-collapse collapse">
+                    <div class="accordion-body pt-2 pb-3">
+                        <div class="d-flex gap-2 mb-3 flex-wrap">
+                            <a asp-controller="ExpedientesAdmin" asp-action="Detalle" asp-route-cc="@cc"
+                               class="btn btn-sm btn-outline-dark">⚙️ Gestionar todos los documentos</a>
+                            <a asp-action="Expediente" asp-route-cc="@cc"
+                               class="btn btn-sm btn-outline-primary">📂 Ver expediente completo</a>
+                            <a asp-action="GenerarDocumento" asp-route-cc="@cc"
+                               asp-route-plantilla="responsiva"
+                               class="btn btn-sm btn-outline-info">📄 Generar documento</a>
+                        </div>
+
+                        <div class="row g-3">
+                            <!-- Identificación -->
+                            <div class="col-md-6">
+                                <div class="card border-0 h-100">
+                                    <div class="card-header text-white fw-semibold"
+                                         style="background:#343a40">
+                                        🪪 Identificación
+                                    </div>
+                                    <div class="card-body bg-light">
+                                        <div class="row row-cols-1 row-cols-md-2 g-2 small">
+                                            <div class="col">
+                                                <span class="text-muted">CC:</span>
+                                                <strong>@cc</strong>
+                                            </div>
+                                            <div class="col">
+                                                <span class="text-muted">Nombre:</span>
+                                                <strong>@p.NombreColaborador</strong>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Cargo -->
+                            <div class="col-md-6">
+                                <div class="card border-0 h-100">
+                                    <div class="card-header text-white fw-semibold"
+                                         style="background:#0d6efd">
+                                        💼 Cargo / Área
+                                    </div>
+                                    <div class="card-body" style="background:#eef3ff">
+                                        <div class="row row-cols-1 row-cols-md-2 g-2 small">
+                                            <div class="col">
+                                                <span class="text-muted">Cargo:</span>
+                                                @p.Cargo
+                                            </div>
+                                            <div class="col">
+                                                <span class="text-muted">Área:</span>
+                                                @p.Area
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Documentos recientes -->
+                            <div class="col-12">
+                                <div class="card border-0">
+                                    <div class="card-header text-white fw-semibold"
+                                         style="background:#198754">
+                                        📄 Documentos recientes
+                                    </div>
+                                    <div class="card-body" style="background:#edfaf3">
+                                        @{
+                                            var docsRecientes = ViewBag.DocsRecientes as Dictionary<int, List<Farmacol.Models.TbExpediente>>;
+                                            var docs = docsRecientes != null && docsRecientes.ContainsKey(cc)
+                                            ? docsRecientes[cc] : new List<Farmacol.Models.TbExpediente>();
+                                        }
+                                        @if (!docs.Any())
+                                        {
+                                            <small class="text-muted">Sin documentos subidos aún.</small>
+                                        }
+                                        else
+                                        {
+                                            <div class="d-flex flex-wrap gap-2">
+                                                @foreach (var doc in docs)
+                                                {
+                                                    <a asp-action="Ver" asp-route-id="@doc.Id"
+                                                       target="_blank"
+                                                       class="btn btn-sm btn-outline-secondary"
+                                                       title="@doc.TipoDocumento — @doc.FechaSubida.ToString("dd/MM/yyyy")">
+                                                        📄 @doc.NombreArchivo
+                                                    </a>
+                                                }
+                                            </div>
+                                        }
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Subir documento individual -->
+                            <div class="col-12">
+                                <div class="card border-0">
+                                    <div class="card-header fw-semibold" style="background:#6f42c1;color:white">
+                                        📤 Subir documento individual
+                                    </div>
+                                    <div class="card-body" style="background:#f3eeff">
+                                        <form asp-action="Subir" method="post" enctype="multipart/form-data">
+                                            @Html.AntiForgeryToken()
+                                            <input type="hidden" name="cc" value="@cc" />
+                                            <div class="row g-2 align-items-end">
+                                                <div class="col-md-3">
+                                                    <select name="tipoDocumento" class="form-select form-select-sm">
+                                                        <option value="">Sin categoría</option>
+                                                        <option>Contrato</option>
+                                                        <option>Hoja de vida</option>
+                                                        <option>Responsiva TI</option>
+                                                        <option>Certificado</option>
+                                                        <option>Paz y salvo</option>
+                                                        <option>Carnet</option>
+                                                        <option>Otros</option>
+                                                    </select>
+                                                </div>
+                                                <div class="col-md-3">
+                                                    <input type="text" name="nombrePersonalizado"
+                                                           class="form-control form-control-sm"
+                                                           placeholder="Nombre del documento" />
+                                                </div>
+                                                <div class="col-md-4">
+                                                    <input type="file" name="archivo" accept=".pdf"
+                                                           class="form-control form-control-sm" required />
+                                                </div>
+                                                <div class="col-md-2">
+                                                    <button type="submit" class="btn btn-sm btn-primary w-100">
+                                                        📤 Subir
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        </form>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+}
+
+@section Scripts {
+    <script>
+        var chkTodos  = document.getElementById('chkTodos');
+        var ccsInput  = document.getElementById('ccsSeleccionados');
+        var lblSel    = document.getElementById('lblSeleccionados');
+        var btnMasivo = document.getElementById('btnSubirMasivo');
+
+        function actualizarSeleccion() {
+            var sel = Array.from(document.querySelectorAll('.chk-empleado:checked'))
+                          .map(function (c) { return c.value; });
+            ccsInput.value    = sel.join(',');
+            lblSel.textContent = sel.length;
+            btnMasivo.disabled = sel.length === 0;
+        }
+
+        if (chkTodos) {
+            chkTodos.addEventListener('change', function () {
+                document.querySelectorAll('.chk-empleado').forEach(function (c) {
+                    c.checked = chkTodos.checked;
+                });
+                actualizarSeleccion();
+            });
+        }
+
+        document.querySelectorAll('.chk-empleado').forEach(function (c) {
+            c.addEventListener('change', actualizarSeleccion);
+        });
+    </script>
+}

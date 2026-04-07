@@ -1,0 +1,81 @@
+﻿@model IEnumerable<Farmacol.Models.TbpersonalRetirado>
+@{
+    ViewData["Title"] = "Personal Retirado";
+}
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h2>🗂️ Personal Retirado</h2>
+    <a asp-controller="Tbpersonals" asp-action="Index"
+       class="btn btn-secondary btn-sm">← Volver a Personal</a>
+</div>
+
+<form method="get" class="row g-2 mb-4">
+    <div class="col-md-4">
+        <input type="text" name="busqueda" class="form-control"
+               placeholder="Buscar por nombre, cargo o área..."
+               value="@ViewBag.Busqueda" />
+    </div>
+    <div class="col-auto">
+        <button type="submit" class="btn btn-outline-secondary">🔍 Buscar</button>
+        <a asp-action="Index" class="btn btn-outline-danger">✕ Limpiar</a>
+    </div>
+</form>
+
+@if (!Model.Any())
+{
+    <div class="alert alert-info">No hay personal retirado registrado.</div>
+}
+else
+{
+    <div class="accordion" id="acordeonRetirado">
+        @foreach (var r in Model)
+        {
+            <div class="accordion-item border-0 shadow-sm mb-2">
+                <h2 class="accordion-header">
+                    <button class="accordion-button collapsed fw-semibold"
+                            type="button" data-bs-toggle="collapse"
+                            data-bs-target="#ret-@r.CC">
+                        <span class="me-3">👤 @r.NombreColaborador</span>
+                        <span class="text-muted small me-3">@r.Cargo — @r.Area</span>
+                        <span class="badge bg-secondary ms-auto me-3">
+                            Retirado @r.FechaRetiro.ToString("dd/MM/yyyy")
+                        </span>
+                    </button>
+                </h2>
+                <div id="ret-@r.CC" class="accordion-collapse collapse"
+                     data-bs-parent="#acordeonRetirado">
+                    <div class="accordion-body" style="background:#f8f9fa">
+                        <div class="row g-3 small">
+                            <div class="col-md-3">
+                                <span class="text-muted">CC:</span>
+                                <strong class="d-block">@r.CC</strong>
+                            </div>
+                            <div class="col-md-3">
+                                <span class="text-muted">Cargo:</span>
+                                <span class="d-block">@r.Cargo</span>
+                            </div>
+                            <div class="col-md-3">
+                                <span class="text-muted">Área:</span>
+                                <span class="d-block">@r.Area</span>
+                            </div>
+                            <div class="col-md-3">
+                                <span class="text-muted">Correo:</span>
+                                <span class="d-block">@r.CorreoCorporativo</span>
+                            </div>
+                            <div class="col-md-6">
+                                <span class="text-muted">Motivo de retiro:</span>
+                                <span class="d-block">@r.MotivoRetiro</span>
+                            </div>
+                            <div class="col-md-6">
+                                <span class="text-muted">Fecha de retiro:</span>
+                                <span class="d-block">
+                                    @r.FechaRetiro.ToString("dd/MM/yyyy HH:mm")
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+}

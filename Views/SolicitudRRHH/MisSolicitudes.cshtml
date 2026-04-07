@@ -1,0 +1,65 @@
+﻿@model IEnumerable<Farmacol.Models.Tbsolicitude>
+@{
+    ViewData["Title"] = "Mis solicitudes RRHH";
+}
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2 class="mb-0">📄 Mis Solicitudes de Documentos</h2>
+    <a asp-action="Create" class="btn btn-success btn-sm fw-bold">➕ Nueva solicitud</a>
+</div>
+
+@if (TempData["Exito"] != null)
+{
+    <div class="alert alert-success alert-dismissible fade show">@TempData["Exito"]<button type="button" class="btn-close" data-bs-dismiss="alert"></button></div>
+}
+
+@if (!Model.Any())
+{
+    <div class="card border-0 shadow-sm">
+        <div class="card-body text-center py-5">
+            <div style="font-size:3rem">📭</div>
+            <h5 class="mt-3 text-muted">Sin solicitudes registradas</h5>
+            <a asp-action="Create" class="btn btn-success mt-2">➕ Solicitar un documento</a>
+        </div>
+    </div>
+}
+else
+{
+    <div class="card border-0 shadow-sm">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0 small">
+                <thead class="table-dark">
+                    <tr>
+                        <th>Documento</th>
+                        <th>Motivo</th>
+                        <th>Fecha solicitud</th>
+                        <th>Estado</th>
+                        <th>Detalle</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var s in Model)
+                    {
+                        var badge = s.Estado switch
+                        {
+                                    "Aprobada" => "success",
+                                    "Rechazada" => "danger",
+                            _ => "secondary"
+                        };
+                        <tr>
+                            <td>
+                                <strong>@s.DocumentoSolicitado</strong>
+                            </td>
+                            <td class="text-muted">@s.Motivo</td>
+                            <td><small>@s.FechaSolicitud?.ToString("dd/MM/yyyy")</small></td>
+                            <td><span class="badge bg-@badge">@s.Estado</span></td>
+                            <td>
+                                <small class="text-muted">@s.EtapaAprobacion</small>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+}

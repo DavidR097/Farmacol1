@@ -20,45 +20,90 @@ namespace Farmacol.Controllers
             _context = context;
         }
 
-        public async Task<IActionResult> Index(string busqueda, string cedula, string equipo, string marca, string serie, string estado)
+        public async Task<IActionResult> Index(string mode = "equipo", string busqueda = null, string cedula = null, string equipo = null, string marca = null, string serie = null)
         {
-            var query = _context.Tbresponsivas.AsQueryable();
+            // mode: "equipo" = vista por equipo (por defecto), "cc" = vista agrupada por CC
+            if (string.Equals(mode, "cc", StringComparison.OrdinalIgnoreCase))
+            {
+                // Agrupar por CC desde Tbinventarios
+                var groups = await (from t in _context.Tbinventarios
+                                    where t.CC != null
+                                    group t by t.CC into g
+                                    join p in _context.Tbpersonals on g.Key equals p.CC into pg
+                                    from p in pg.DefaultIfEmpty()
+                                    select new Farmacol.Models.TbresponsivaGroup
+                                    {
+                                        CC = g.Key!.Value,
+                                        Nombre = p != null ? p.NombreColaborador : null,
+                                        Count = g.Count(),
+                                        PrimerEquipo = g.OrderBy(ti => ti.IdEquipo).Select(ti => ti.Dispositivo).FirstOrDefault(),
+                                        PrimeraMarca = g.OrderBy(ti => ti.IdEquipo).Select(ti => ti.Marca).FirstOrDefault()
+                                    }).ToListAsync();
 
+                var vm = new Farmacol.Models.TbresponsivaIndexViewModel
+                {
+                    Mode = "cc",
+                    Grupos = groups
+                };
+                return View(vm);
+            }
+
+            // Vista por equipo (default)
+            var query = _context.Tbinventarios.AsQueryable().Where(t => t.CC != null);
             if (!string.IsNullOrEmpty(busqueda))
-                query = query.Where(r =>
-                    (r.Equipo != null && r.Equipo.Contains(busqueda)) ||
-                    (r.Marca != null && r.Marca.Contains(busqueda)) ||
-                    (r.Serie != null && r.Serie.Contains(busqueda)) ||
-                    (r.Estado != null && r.Estado.Contains(busqueda))
+                query = query.Where(i =>
+                    (i.Dispositivo != null && i.Dispositivo.Contains(busqueda)) ||
+                    (i.Marca != null && i.Marca.Contains(busqueda)) ||
+                    (i.Serie != null && i.Serie.Contains(busqueda)) ||
+                    (i.Observación != null && i.Observación.Contains(busqueda))
                 );
 
             if (!string.IsNullOrEmpty(cedula) && int.TryParse(cedula, out int cedNum))
-                query = query.Where(r => r.CC == cedNum);
+                query = query.Where(i => i.CC == cedNum);
             if (!string.IsNullOrEmpty(equipo))
-                query = query.Where(r => r.Equipo != null && r.Equipo.Contains(equipo));
+                query = query.Where(i => i.Dispositivo != null && i.Dispositivo.Contains(equipo));
             if (!string.IsNullOrEmpty(marca))
-                query = query.Where(r => r.Marca != null && r.Marca.Contains(marca));
+                query = query.Where(i => i.Marca != null && i.Marca.Contains(marca));
             if (!string.IsNullOrEmpty(serie))
-                query = query.Where(r => r.Serie != null && r.Serie.Contains(serie));
-            if (!string.IsNullOrEmpty(estado))
-                query = query.Where(r => r.Estado != null && r.Estado.Contains(estado));
+                query = query.Where(i => i.Serie != null && i.Serie.Contains(serie));
 
-            ViewBag.Busqueda = busqueda;
-            ViewBag.Cedula = cedula;
-            ViewBag.Equipo = equipo;
-            ViewBag.Marca = marca;
-            ViewBag.Serie = serie;
-            ViewBag.Estado = estado;
+            var vmEquipo = new Farmacol.Models.TbresponsivaIndexViewModel
+            {
+                Mode = "equipo",
+                Equipos = await query.ToListAsync()
+            };
 
-            return View(await query.ToListAsync());
+            return View(vmEquipo);
         }
 
         public async Task<IActionResult> Details(int? id)
         {
             if (id == null) return NotFound();
             var tbresponsiva = await _context.Tbresponsivas.FirstOrDefaultAsync(m => m.CC == id);
-            if (tbresponsiva == null) return NotFound();
-            return View(tbresponsiva);
+            if (tbresponsiva == null)
+            {
+                // Si no existe una entrada en Tbresponsivas para este CC, crear una vista mínima con equipos
+                var equiposSolo = await _context.Tbinventarios.Where(t => t.CC == id).ToListAsync();
+                if (!equiposSolo.Any()) return NotFound();
+
+                var vmEmpty = new Farmacol.Models.TbresponsivaDetailsViewModel
+                {
+                    Responsiva = new Tbresponsiva { CC = id ?? 0, Equipo = equiposSolo.FirstOrDefault()?.Dispositivo, Marca = equiposSolo.FirstOrDefault()?.Marca, Serie = equiposSolo.FirstOrDefault()?.Serie, Observación = "(Generada automáticamente)" },
+                    Equipos = equiposSolo
+                };
+                return View(vmEmpty);
+            }
+
+            // Obtener todos los equipos asignados a este CC desde Tbinventario
+            var equipos = await _context.Tbinventarios.Where(t => t.CC == id).ToListAsync();
+
+            var vm = new Farmacol.Models.TbresponsivaDetailsViewModel
+            {
+                Responsiva = tbresponsiva,
+                Equipos = equipos
+            };
+
+            return View(vm);
         }
 
         public IActionResult Create() => View();

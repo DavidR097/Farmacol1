@@ -32,6 +32,21 @@
 
 <h1>Solicitudes</h1>
 
+<div class="d-flex gap-2 mb-3">
+    <!-- Exportar con filtros -->
+    <a asp-action="ExportarExcel"
+       asp-route-busqueda="@ViewBag.Busqueda"
+       asp-route-estado="@ViewBag.Estado"
+       class="btn btn-success btn-sm">
+        📥 Exportar filtrado
+    </a>
+    <!-- Exportar todo -->
+    <a asp-action="ExportarExcel" asp-route-todo="true"
+       class="btn btn-outline-success btn-sm">
+        📥 Exportar todo
+    </a>
+</div>
+
 @if (TempData["Exito"] != null)
 {
     <div class="alert alert-success">@TempData["Exito"]</div>
@@ -156,6 +171,10 @@ else
                         </td>
                         <td>
                             <div class="d-flex gap-1 flex-wrap">
+
+                                @* Ver: todos los roles siempre *@
+                                <a asp-action="Detalle" asp-route-id="@item.IdSolicitud"
+                                   class="btn btn-sm btn-outline-secondary">👁️ Ver</a>
 
                                 @* Revisar: solo aprobadores, solo En proceso *@
                                 @if (puedeRevisar && item.Estado == "En proceso")

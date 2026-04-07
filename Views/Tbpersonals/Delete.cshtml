@@ -1,141 +1,180 @@
 ﻿@model Farmacol.Models.Tbpersonal
 
 @{
-    ViewData["Title"] = "Delete";
+    ViewData["Title"] = "Eliminar Personal";
 }
 
-<h1>Delete</h1>
+<h1 class="mb-4">Confirmar Retiro de Personal</h1>
 
-<h3>Are you sure you want to delete this?</h3>
-<div>
-    <h4>Tbpersonal</h4>
-    <hr />
-    <dl class="row">
-        <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.ExpediciónCiudad)
-        </dt>
-        <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.ExpediciónCiudad)
-        </dd>
-        <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.CiudadTrabajo)
-        </dt>
-        <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.CiudadTrabajo)
-        </dd>
-        <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.Nombre)
-        </dt>
-        <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.Nombre)
-        </dd>
-        <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.Barrio)
-        </dt>
-        <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.Barrio)
-        </dd>
-        <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.Rh)
-        </dt>
-        <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.Rh)
-        </dd>
-        <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.Cargo)
-        </dt>
-        <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.Cargo)
-        </dd>
-        <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.ContactoEmergencia)
-        </dt>
-        <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.ContactoEmergencia)
-        </dd>
-        <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.Parentesco)
-        </dt>
-        <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.Parentesco)
-        </dd>
-        <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.CelularEmergencia)
-        </dt>
-        <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.CelularEmergencia)
-        </dd>
-        <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.TipoContrato)
-        </dt>
-        <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.TipoContrato)
-        </dd>
-        <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.Eps)
-        </dt>
-        <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.Eps)
-        </dd>
-        <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.FondoPensiones)
-        </dt>
-        <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.FondoPensiones)
-        </dd>
-        <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.FondoCesantias)
-        </dt>
-        <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.FondoCesantias)
-        </dd>
-        <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.CajaCompensación)
-        </dt>
-        <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.CajaCompensación)
-        </dd>
-        <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.Arl)
-        </dt>
-        <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.Arl)
-        </dd>
-        <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.Tpcuenta)
-        </dt>
-        <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.Tpcuenta)
-        </dd>
-        <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.NoCuenta)
-        </dt>
-        <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.NoCuenta)
-        </dd>
-        <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.Banco)
-        </dt>
-        <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.Banco)
-        </dd>
-        <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.TallaCamisa)
-        </dt>
-        <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.TallaCamisa)
-        </dd>
-        <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.NúmeroCel)
-        </dt>
-        <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.NúmeroCel)
-        </dd>
-    </dl>
-    
-    <form asp-action="Delete">
-        <input type="hidden" asp-for="CC" />
-        <input type="submit" value="Delete" class="btn btn-danger" /> |
-        <a asp-action="Index">Back to List</a>
-    </form>
+<div class="row">
+    <div class="col-lg-8 mx-auto">
+        <div class="card shadow-sm">
+            <div class="card-header bg-danger text-white fw-semibold">
+                <i class="bi bi-exclamation-triangle-fill"></i>
+                ¿Estás seguro de que deseas retirar a esta persona?
+            </div>
+            
+            <div class="card-body">
+                <!-- Información resumida del colaborador -->
+                <div class="alert alert-warning">
+                    <div class="d-flex align-items-center gap-3">
+                        <div>
+                            <strong>@Model.Nombre</strong><br>
+                            <span class="text-muted">@Model.CC</span>
+                        </div>
+                        <div class="ms-auto text-end">
+                            <span class="badge bg-secondary">@Model.Cargo</span><br>
+                            <small class="text-muted">@Model.CiudadTrabajo</small>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Detalles completos en tarjetas (similar al Index) -->
+                <div class="row g-3">
+                    <!-- Identificación -->
+                    <div class="col-12">
+                        <div class="card border-0">
+                            <div class="card-header text-white fw-semibold" style="background:#343a40">
+                                🪪 Identificación
+                            </div>
+                            <div class="card-body bg-light">
+                                <div class="row row-cols-2 row-cols-md-4 g-2 small">
+                                    <div class="col">
+                                        <span class="text-muted">Cédula:</span><br>
+                                        <strong>@Model.CC</strong>
+                                    </div>
+                                    <div class="col">
+                                        <span class="text-muted">Expedida en:</span><br>
+                                        @Model.ExpediciónCiudad
+                                    </div>
+                                    <div class="col">
+                                        <span class="text-muted">Ciudad Trabajo:</span><br>
+                                        @Model.CiudadTrabajo
+                                    </div>
+                                    <div class="col">
+                                        <span class="text-muted">RH:</span><br>
+                                        @Model.Rh
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Información Laboral -->
+                    <div class="col-12">
+                        <div class="card border-0">
+                            <div class="card-header text-white fw-semibold" style="background:#0d6efd">
+                                💼 Información Laboral
+                            </div>
+                            <div class="card-body" style="background:#eef3ff">
+                                <div class="row g-2 small">
+                                    <div class="col-md-6">
+                                        <span class="text-muted">Nombre:</span><br>
+                                        <strong>@Model.Nombre</strong>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <span class="text-muted">Cargo:</span><br>
+                                        @Model.Cargo
+                                    </div>
+                                    <div class="col-md-6">
+                                        <span class="text-muted">Tipo Contrato:</span><br>
+                                        @Model.TipoContrato
+                                    </div>
+                                    <div class="col-md-6">
+                                        <span class="text-muted">Barrio:</span><br>
+                                        @Model.Barrio
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Contacto de Emergencia -->
+                    <div class="col-md-6">
+                        <div class="card border-0 h-100">
+                            <div class="card-header text-white fw-semibold" style="background:#198754">
+                                📞 Contacto de Emergencia
+                            </div>
+                            <div class="card-body" style="background:#edfaf3">
+                                <div class="small">
+                                    <div><span class="text-muted">Nombre:</span> @Model.ContactoEmergencia</div>
+                                    <div><span class="text-muted">Parentesco:</span> @Model.Parentesco</div>
+                                    <div><span class="text-muted">Celular:</span> @Model.CelularEmergencia</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Seguridad Social -->
+                    <div class="col-md-6">
+                        <div class="card border-0 h-100">
+                            <div class="card-header text-white fw-semibold" style="background:#dc3545">
+                                🏥 Seguridad Social
+                            </div>
+                            <div class="card-body" style="background:#fff0f0">
+                                <div class="small">
+                                    <div><span class="text-muted">EPS:</span> @Model.Eps</div>
+                                    <div><span class="text-muted">Pensiones:</span> @Model.FondoPensiones</div>
+                                    <div><span class="text-muted">Cesantías:</span> @Model.FondoCesantias</div>
+                                    <div><span class="text-muted">Caja de Compensación:</span> @Model.CajaCompensación</div>
+                                    <div><span class="text-muted">ARL:</span> @Model.Arl</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Datos Bancarios -->
+                    <div class="col-12">
+                        <div class="card border-0">
+                            <div class="card-header text-white fw-semibold" style="background:#6f42c1">
+                                🏦 Datos Bancarios
+                            </div>
+                            <div class="card-body" style="background:#f3eeff">
+                                <div class="row g-2 small">
+                                    <div class="col-md-4">
+                                        <span class="text-muted">Banco:</span><br>
+                                        @Model.Banco
+                                    </div>
+                                    <div class="col-md-4">
+                                        <span class="text-muted">Tipo Cuenta:</span><br>
+                                        @Model.Tpcuenta
+                                    </div>
+                                    <div class="col-md-4">
+                                        <span class="text-muted">Número Cuenta:</span><br>
+                                        @Model.NoCuenta
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Formulario de Confirmación -->
+            <div class="card-footer bg-light">
+                <form asp-action="Delete" method="post" class="mb-0">
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" name="id" value="@Model.CC" />
+
+                    <div class="mb-3">
+                        <label class="form-label fw-bold text-danger">Motivo de retiro <span class="text-danger">*</span></label>
+                        <select name="motivoRetiro" class="form-select" required>
+                            <option value="">-- Seleccione el motivo --</option>
+                            <option value="Renuncia voluntaria">Renuncia voluntaria</option>
+                            <option value="Terminación de contrato">Terminación de contrato</option>
+                            <option value="Jubilación">Jubilación</option>
+                            <option value="Otro">Otro</option>
+                        </select>
+                    </div>
+
+                    <div class="d-flex gap-2 justify-content-end">
+                        <a asp-action="Index" class="btn btn-secondary">Cancelar</a>
+                        <button type="submit" class="btn btn-danger">
+                            <i class="bi bi-trash3"></i> Confirmar Retiro
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
 </div>

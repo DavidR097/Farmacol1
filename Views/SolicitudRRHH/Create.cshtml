@@ -1,0 +1,88 @@
+﻿@{
+    ViewData["Title"] = "Solicitar documento RRHH";
+    var personal       = ViewBag.Personal       as Farmacol.Models.Tbpersonal;
+    var tiposDocumento = ViewBag.TiposDocumento  as string[] ?? Array.Empty<string>();
+}
+
+<div class="mb-3">
+    <a asp-controller="Home" asp-action="Index" class="btn btn-sm btn-outline-secondary">← Inicio</a>
+</div>
+
+<h2>📄 Solicitar documento a Capital Humano</h2>
+<p class="text-muted">Tu solicitud llegará directamente al Gerente de Capital Humano.</p>
+<hr />
+
+@if (TempData["Error"] != null)
+{<div class="alert alert-danger">@TempData["Error"]</div>}
+
+<form asp-action="Create" method="post" style="max-width:560px">
+    @Html.AntiForgeryToken()
+    <div class="card border-0 shadow-sm">
+        <div class="card-header fw-semibold text-white" style="background:#198754">
+            📄 Nueva solicitud de documento
+        </div>
+        <div class="card-body">
+            <div class="row g-3">
+
+                <!-- Solicitante (solo lectura) -->
+                <div class="col-12">
+                    <div class="alert alert-light border small py-2 mb-0">
+                        <strong>Solicitante:</strong> @personal?.NombreColaborador
+                        <span class="text-muted"> — @personal?.Cargo · @personal?.Area</span>
+                        <span class="badge bg-secondary ms-2">CC: @personal?.CC</span>
+                    </div>
+                </div>
+
+                <!-- Tipo de documento -->
+                <div class="col-12">
+                    <label class="form-label fw-bold">
+                        Documento solicitado <span class="text-danger">*</span>
+                    </label>
+                    <div class="row g-2 mt-1">
+                        @foreach (var tipo in tiposDocumento)
+                        {
+                            <div class="col-md-6">
+                                <label class="d-flex align-items-center gap-2 p-3 border rounded cursor-pointer"
+                                       style="cursor:pointer;transition:background .15s"
+                                       onmouseover="this.style.background='#f0fdf4'"
+                                       onmouseout="this.style.background=''"
+                                       onclick="this.querySelector('input').click()">
+                                    <input type="radio" name="documentoSolicitado"
+                                           value="@tipo" required class="form-check-input mt-0" />
+                                    <span>
+                                        @(tipo switch {
+                                            "Constancia laboral"      => "📋 Constancia laboral",
+                                            "Paz y salvo"             => "✅ Paz y salvo",
+                                            "Certificado de ingresos" => "💰 Certificado de ingresos",
+                                            "Carta de retiro"         => "📤 Carta de retiro",
+                                            _                         => tipo
+                                        })
+                                    </span>
+                                </label>
+                            </div>
+                        }
+                    </div>
+                </div>
+
+                <!-- Motivo (opcional) -->
+                <div class="col-12">
+                    <label class="form-label fw-bold">
+                        Motivo / Destino <small class="text-muted fw-normal">(opcional)</small>
+                    </label>
+                    <textarea name="motivo" class="form-control" rows="2"
+                              placeholder="Ej: Para trámite bancario, proceso de visa, etc."
+                              maxlength="500"></textarea>
+                </div>
+
+            </div>
+        </div>
+        <div class="card-footer d-flex gap-2">
+            <button type="submit" class="btn btn-success fw-bold">
+                📤 Enviar solicitud
+            </button>
+            <a asp-action="MisSolicitudes" class="btn btn-outline-secondary">
+                Ver mis solicitudes
+            </a>
+        </div>
+    </div>
+</form>

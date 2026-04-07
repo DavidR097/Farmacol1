@@ -1,0 +1,203 @@
+﻿@using Farmacol.Models
+@model IEnumerable<TbReservaSala>
+@{
+    ViewData["Title"] = "Gestión de Salas";
+    var salas = ViewBag.Salas as List<TbSala> ?? new List<TbSala>();
+    var pendientes = (int)(ViewBag.Pendientes ?? 0);
+}
+
+<div class="mb-3">
+    <a asp-action="Index" class="btn btn-sm btn-outline-secondary">← Volver al calendario</a>
+</div>
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <div>
+        <h2 class="mb-0">⚙️ Gestión de Reservas</h2>
+        @if (pendientes > 0)
+        {
+            <span class="badge bg-warning text-dark ms-2 fs-6">@pendientes pendiente(s)</span>
+        }
+    </div>
+    <div class="d-flex gap-2">
+        <a asp-action="ExportarExcel"
+           asp-route-estado="@ViewBag.Estado"
+           asp-route-salaId="@ViewBag.SalaId"
+           asp-route-fecha="@ViewBag.Fecha"
+           class="btn btn-success btn-sm">📥 Exportar filtrado</a>
+        <a asp-action="ExportarExcel" asp-route-todo="true"
+           class="btn btn-outline-success btn-sm">📥 Exportar todo</a>
+    </div>
+</div>
+
+@if (TempData["Exito"] != null)
+{
+    <div class="alert alert-success alert-dismissible fade show">@TempData["Exito"]<button type="button" class="btn-close" data-bs-dismiss="alert"></button></div>
+}
+@if (TempData["Error"] != null)
+{
+    <div class="alert alert-danger alert-dismissible fade show">@TempData["Error"]<button type="button" class="btn-close" data-bs-dismiss="alert"></button></div>
+}
+
+<!-- Filtros -->
+<form method="get" class="mb-4">
+    <div class="row g-2 align-items-end">
+        <div class="col-md-2">
+            <label class="form-label small text-muted mb-1">Estado</label>
+            <select name="estado" class="form-select form-select-sm">
+                <option value="">Todos</option>
+                <option value="Pendiente" selected="@(ViewBag.Estado == "Pendiente")">⏳ Pendiente</option>
+                <option value="Aprobada" selected="@(ViewBag.Estado == "Aprobada")">✅ Aprobada</option>
+                <option value="Rechazada" selected="@(ViewBag.Estado == "Rechazada")">❌ Rechazada</option>
+                <option value="Devuelta" selected="@(ViewBag.Estado == "Devuelta")">↩️ Devuelta</option>
+            </select>
+        </div>
+        <div class="col-md-3">
+            <label class="form-label small text-muted mb-1">Sala</label>
+            <select name="salaId" class="form-select form-select-sm">
+                <option value="">Todas</option>
+                @foreach (var s in salas)
+                {
+                    <option value="@s.Id" selected="@(ViewBag.SalaId == s.Id.ToString())">@s.Nombre</option>
+                }
+            </select>
+        </div>
+        <div class="col-md-3">
+            <label class="form-label small text-muted mb-1">Fecha</label>
+            <input type="date" name="fecha" class="form-control form-control-sm" value="@ViewBag.Fecha" />
+        </div>
+        <div class="col-auto">
+            <button type="submit" class="btn btn-sm btn-secondary">🔍 Filtrar</button>
+            <a asp-action="Gestion" class="btn btn-sm btn-outline-secondary">✕</a>
+        </div>
+    </div>
+</form>
+
+@if (!Model.Any())
+{
+    <div class="alert alert-info">No hay reservas con los filtros aplicados.</div>
+}
+else
+{
+    <div class="card border-0 shadow-sm">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0 small">
+                <thead class="table-dark">
+                    <tr>
+                        <th>Sala</th>
+                        <th>Solicitante</th>
+                        <th>Fecha</th>
+                        <th>Horario</th>
+                        <th>Motivo</th>
+                        <th>Estado</th>
+                        <th>Solicitado</th>
+                        <th class="text-center">Acciones</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var r in Model)
+                    {
+                        var badge = r.Estado switch
+                        {
+                                    "Aprobada" => "success",
+                                    "Rechazada" => "danger",
+                                    "Devuelta" => "warning",
+                            _ => "secondary"
+                        };
+                        <tr class="@(r.Estado == "Rechazada" ? "table-secondary" : "")">
+                            <td><strong>@r.Sala?.Nombre</strong></td>
+                            <td>
+                                <div class="fw-semibold">@r.NombreSolicitante</div>
+                                <small class="text-muted">@r.Cargo · @r.Area</small>
+                            </td>
+                            <td>@r.Fecha.ToString("dd/MM/yyyy")</td>
+                            <td class="font-monospace">@r.HoraInicio.ToString("HH:mm")–@r.HoraFin.ToString("HH:mm")</td>
+                            <td style="max-width:180px">
+                                <span class="d-block text-truncate text-muted" title="@r.Motivo">@r.Motivo</span>
+                                @if (!string.IsNullOrEmpty(r.Observacion))
+                                {
+                                    <small class="text-warning d-block">↩️ @r.Observacion</small>
+                                }
+                            </td>
+                            <td><span class="badge bg-@badge">@r.Estado</span></td>
+                            <td><small class="text-muted">@r.FechaSolicitud.ToString("dd/MM HH:mm")</small></td>
+                            <td class="text-center" style="min-width:150px">
+                                @if (r.Estado == "Pendiente" || r.Estado == "Devuelta")
+                                {
+                                    <!-- Aprobar -->
+                                    <form asp-action="Aprobar" method="post" class="d-inline">
+                                        @Html.AntiForgeryToken()
+                                        <input type="hidden" name="id" value="@r.Id" />
+                                        <button type="submit" class="btn btn-sm btn-success" title="Aprobar">✅</button>
+                                    </form>
+                                    <!-- Rechazar -->
+                                    <button type="button" class="btn btn-sm btn-danger" title="Rechazar"
+                                            onclick="abrirModal(@r.Id,'Rechazar')">
+                                        ❌
+                                    </button>
+                                    <!-- Devolver -->
+                                    <button type="button" class="btn btn-sm btn-warning" title="Devolver"
+                                            onclick="abrirModal(@r.Id,'Devolver')">
+                                        ↩️
+                                    </button>
+                                }
+                                @if (r.Estado == "Aprobada" || r.Estado == "Pendiente" || r.Estado == "Devuelta")
+                                {
+                                    <!-- Cancelar (gestor puede cancelar cualquier reserva activa) -->
+                                    <form asp-action="Cancelar" method="post" class="d-inline">
+                                        @Html.AntiForgeryToken()
+                                        <input type="hidden" name="id" value="@r.Id" />
+                                        <input type="hidden" name="desde" value="Gestion" />
+                                        <button type="submit" class="btn btn-sm btn-outline-dark"
+                                                title="Cancelar reserva"
+                                                onclick="return confirm('¿Cancelar la reserva de @r.NombreSolicitante el @r.Fecha.ToString("dd/MM/yyyy") a las @r.HoraInicio.ToString("HH:mm")?')">
+                                            🗑️
+                                        </button>
+                                    </form>
+                                }
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+}
+
+<!-- Modal observación para Rechazar / Devolver -->
+<div class="modal fade" id="modalObs" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form id="formModal" method="post">
+                @Html.AntiForgeryToken()
+                <input type="hidden" name="id" id="modalId" />
+                <div class="modal-header">
+                    <h6 class="modal-title" id="modalTitulo">Observación</h6>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <label class="form-label small fw-bold">Observación (obligatoria)</label>
+                    <textarea name="observacion" class="form-control" rows="3"
+                              placeholder="Indica el motivo..." required></textarea>
+                </div>
+                <div class="modal-footer">
+                    <button type="submit" class="btn btn-primary" id="modalBtn">Confirmar</button>
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        var modal = new bootstrap.Modal(document.getElementById('modalObs'));
+        function abrirModal(id, accion) {
+            document.getElementById('modalId').value   = id;
+            document.getElementById('formModal').action = '/Salas/' + accion;
+            document.getElementById('modalTitulo').textContent =
+                accion === 'Rechazar' ? '❌ Rechazar reserva' : '↩️ Devolver reserva';
+            document.getElementById('modalBtn').textContent = accion;
+            modal.show();
+        }
+    </script>
+}

@@ -1,0 +1,17 @@
+@model Farmacol.ViewComponents.UserAvatarViewComponent.AvatarModel
+
+@* Renderiza el avatar y el nombre, enlazando al perfil *@
+<a asp-controller="Perfil" asp-action="Index" class="text-decoration-none d-flex align-items-center gap-2">
+    @{ var fotoRaw = Model?.Foto; }
+    @if (!string.IsNullOrEmpty(fotoRaw))
+    {
+        var fotoUrl = fotoRaw.StartsWith("/") ? fotoRaw : "/" + fotoRaw;
+        <img src="@Url.Content(fotoUrl)" alt="avatar" style="width:32px;height:32px;border-radius:50%;object-fit:cover;" />
+    }
+    else
+    {
+        var ini = (Model?.Nombre ?? "?")[..1].ToUpper();
+        <div class="avatar">@ini</div>
+    }
+    <span style="color:#495057">@Model?.Nombre</span>
+</a>

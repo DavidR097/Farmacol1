@@ -3,6 +3,13 @@
 }
 
 <h1>Crear Usuario</h1>
+@if (ViewBag.Personal != null && ViewBag.Personal.Count == 0)
+{
+    <div class="alert alert-info">
+        <strong>✅ Todos los empleados ya tienen usuario creado.</strong><br />
+        No hay más empleados disponibles para crear usuario en este momento.
+    </div>
+}
 <hr />
 
 @if (ViewBag.Error != null)
@@ -15,14 +22,20 @@
         <form method="post">
             @Html.AntiForgeryToken()
             <div class="mb-3">
-                <label class="form-label">Empleado</label>
+                <label class="form-label">Empleado <span class="text-danger">*</span></label>
                 <select name="cedula" class="form-select" required>
-                    <option value="">-- Selecciona un empleado --</option>
+                    <option value="">-- Selecciona un empleado sin usuario --</option>
                     @foreach (var p in ViewBag.Personal)
                     {
-                        <option value="@p.CC">@p.Nombre - @p.Cargo</option>
+                        <option value="@p.CC">
+                            @p.Nombre — @p.Cargo (@p.UsuarioCorporativo)
+                        </option>
                     }
                 </select>
+                @if (ViewBag.Personal.Count == 0)
+                {
+                    <small class="text-muted">No hay empleados pendientes por crear usuario.</small>
+                }
             </div>
             <div class="mb-3">
                 <label class="form-label">Contraseña</label>
@@ -34,7 +47,7 @@
                     <option value="">-- Selecciona un rol --</option>
                     @foreach (var r in ViewBag.Roles)
                     {
-                        <option value="@r.Name">@r.Name</option>
+                        <option value="@r">@r</option>
                     }
                 </select>
             </div>

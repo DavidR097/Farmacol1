@@ -17,10 +17,357 @@ namespace Farmacol.Migrations
         {
 #pragma warning disable 612, 618
             modelBuilder
-                .HasAnnotation("ProductVersion", "10.0.3")
+                .HasAnnotation("ProductVersion", "10.0.5")
                 .HasAnnotation("Relational:MaxIdentifierLength", 128);
 
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
+
+            modelBuilder.Entity("Farmacol.Models.TbAnuncio", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<bool>("Activo")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("CreadoPor")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<DateTime>("FechaCreacion")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime?>("FechaExpiracion")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int?>("Height")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Imagen")
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
+                    b.Property<string>("Mensaje")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Tipo")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.Property<string>("Titulo")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
+                    b.Property<int?>("Width")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("TbAnuncios");
+                });
+
+            modelBuilder.Entity("Farmacol.Models.TbAuditTrail", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Accion")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<string>("Descripcion")
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.Property<string>("EntidadId")
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<DateTime>("Fecha")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("datetime2")
+                        .HasDefaultValueSql("GETDATE()");
+
+                    b.Property<string>("Ip")
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.Property<string>("Modulo")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<string>("Usuario")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("TBAuditTrail", (string)null);
+                });
+
+            modelBuilder.Entity("Farmacol.Models.TbDelegacion", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<bool>("Activa")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("AprobadorOriginal")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Area")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int>("CC")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Cargo")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("CreadaPor")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime>("FechaCreacion")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateOnly>("FechaFin")
+                        .HasColumnType("date");
+
+                    b.Property<DateOnly>("FechaInicio")
+                        .HasColumnType("date");
+
+                    b.Property<string>("Motivo")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Nombre")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("TBDelegaciones", (string)null);
+                });
+
+            modelBuilder.Entity("Farmacol.Models.TbExpediente", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("CC")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("FechaSubida")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("datetime2")
+                        .HasDefaultValueSql("GETDATE()");
+
+                    b.Property<string>("Modulo")
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
+
+                    b.Property<string>("NombreArchivo")
+                        .IsRequired()
+                        .HasMaxLength(300)
+                        .HasColumnType("nvarchar(300)");
+
+                    b.Property<string>("RutaArchivo")
+                        .IsRequired()
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.Property<string>("SubidoPor")
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
+                    b.Property<string>("TipoDocumento")
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<bool>("Visible")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bit")
+                        .HasDefaultValue(true);
+
+                    b.HasKey("Id");
+
+                    b.ToTable("TBExpedientes", "dbo");
+                });
+
+            modelBuilder.Entity("Farmacol.Models.TbPlantilla", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<bool>("Activa")
+                        .HasColumnType("bit");
+
+                    b.Property<DateTime>("FechaSubida")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("datetime2")
+                        .HasDefaultValueSql("GETDATE()");
+
+                    b.Property<string>("Modulo")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
+
+                    b.Property<string>("Nombre")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
+                    b.Property<string>("RutaArchivo")
+                        .IsRequired()
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.Property<string>("SubidaPor")
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
+                    b.Property<string>("TipoDocumento")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("TBPlantillas", (string)null);
+                });
+
+            modelBuilder.Entity("Farmacol.Models.TbReservaSala", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Area")
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
+                    b.Property<string>("AtendidaPor")
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
+                    b.Property<int>("CC")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Cargo")
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
+                    b.Property<string>("Estado")
+                        .IsRequired()
+                        .ValueGeneratedOnAdd()
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)")
+                        .HasDefaultValue("Pendiente");
+
+                    b.Property<DateOnly>("Fecha")
+                        .HasColumnType("date");
+
+                    b.Property<DateTime>("FechaSolicitud")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("datetime2")
+                        .HasDefaultValueSql("GETDATE()");
+
+                    b.Property<TimeOnly>("HoraFin")
+                        .HasColumnType("time");
+
+                    b.Property<TimeOnly>("HoraInicio")
+                        .HasColumnType("time");
+
+                    b.Property<string>("Motivo")
+                        .IsRequired()
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.Property<string>("NombreSolicitante")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
+                    b.Property<string>("Observacion")
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.Property<int>("SalaId")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("SalaId");
+
+                    b.ToTable("TBReservasSalas", (string)null);
+                });
+
+            modelBuilder.Entity("Farmacol.Models.TbSala", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<bool>("Activa")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bit")
+                        .HasDefaultValue(true);
+
+                    b.Property<string>("Nombre")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("TBSalas", (string)null);
+                });
+
+            modelBuilder.Entity("Farmacol.Models.Tbarea", b =>
+                {
+                    b.Property<int>("IdArea")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int")
+                        .HasColumnName("ID_Area");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("IdArea"));
+
+                    b.Property<string>("Nombre")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .IsUnicode(false)
+                        .HasColumnType("varchar(100)");
+
+                    b.HasKey("IdArea")
+                        .HasName("PK__TBAreas");
+
+                    b.ToTable("TBAreas", (string)null);
+                });
 
             modelBuilder.Entity("Farmacol.Models.Tbinventario", b =>
                 {
@@ -37,61 +384,96 @@ namespace Farmacol.Migrations
                         .HasColumnType("varchar(200)");
 
                     b.Property<int?>("CC")
-                        .HasColumnType("int");
+                        .HasColumnType("int")
+                        .HasColumnName("Cédula");
 
                     b.Property<string>("Dispositivo")
-                        .IsRequired()
-                        .HasMaxLength(100)
+                        .HasMaxLength(200)
                         .IsUnicode(false)
-                        .HasColumnType("varchar(100)");
+                        .HasColumnType("varchar(200)");
 
                     b.Property<string>("Imei")
-                        .HasMaxLength(20)
+                        .HasMaxLength(100)
                         .IsUnicode(false)
-                        .HasColumnType("varchar(20)")
+                        .HasColumnType("varchar(100)")
                         .HasColumnName("IMEI");
 
                     b.Property<string>("Marca")
-                        .HasMaxLength(20)
+                        .HasMaxLength(100)
                         .IsUnicode(false)
-                        .HasColumnType("varchar(20)");
+                        .HasColumnType("varchar(100)");
 
                     b.Property<string>("Modelo")
-                        .HasMaxLength(20)
+                        .HasMaxLength(100)
                         .IsUnicode(false)
-                        .HasColumnType("varchar(20)");
+                        .HasColumnType("varchar(100)");
 
                     b.Property<string>("Observación")
-                        .HasMaxLength(100)
+                        .HasMaxLength(500)
                         .IsUnicode(false)
-                        .HasColumnType("varchar(100)");
+                        .HasColumnType("varchar(500)");
 
                     b.Property<string>("Planta")
-                        .HasMaxLength(20)
+                        .HasMaxLength(100)
                         .IsUnicode(false)
-                        .HasColumnType("varchar(20)");
+                        .HasColumnType("varchar(100)");
 
                     b.Property<string>("Serie")
-                        .HasMaxLength(20)
+                        .HasMaxLength(100)
                         .IsUnicode(false)
-                        .HasColumnType("varchar(20)");
+                        .HasColumnType("varchar(100)");
 
                     b.Property<string>("Ubicación")
-                        .IsRequired()
-                        .HasMaxLength(100)
+                        .HasMaxLength(200)
                         .IsUnicode(false)
-                        .HasColumnType("varchar(100)");
+                        .HasColumnType("varchar(200)");
 
                     b.Property<string>("Ubicación2")
+                        .HasMaxLength(200)
+                        .IsUnicode(false)
+                        .HasColumnType("varchar(200)");
+
+                    b.HasKey("IdEquipo")
+                        .HasName("PK__TBInvent__AB5A5EA976A52A69");
+
+                    b.ToTable("TBInventario", (string)null);
+                });
+
+            modelBuilder.Entity("Farmacol.Models.Tbnotificacione", b =>
+                {
+                    b.Property<int>("IdNotificacion")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int")
+                        .HasColumnName("ID_Notificacion");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("IdNotificacion"));
+
+                    b.Property<DateTime>("FechaCreacion")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int?>("IdSolicitud")
+                        .HasColumnType("int")
+                        .HasColumnName("ID_Solicitud");
+
+                    b.Property<bool>("Leida")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("Mensaje")
+                        .IsRequired()
+                        .HasMaxLength(300)
+                        .IsUnicode(false)
+                        .HasColumnType("varchar(300)");
+
+                    b.Property<string>("UsuarioDestino")
                         .IsRequired()
                         .HasMaxLength(100)
                         .IsUnicode(false)
                         .HasColumnType("varchar(100)");
 
-                    b.HasKey("IdEquipo")
-                        .HasName("PK__TBInvent__AB5A5EA90397842F");
+                    b.HasKey("IdNotificacion")
+                        .HasName("PK__TBNotifi");
 
-                    b.ToTable("TBInventario", (string)null);
+                    b.ToTable("TBNotificaciones", (string)null);
                 });
 
             modelBuilder.Entity("Farmacol.Models.Tbpersonal", b =>
@@ -99,130 +481,279 @@ namespace Farmacol.Migrations
                     b.Property<int>("CC")
                         .HasColumnType("int");
 
-                    b.Property<string>("Arl")
-                        .IsRequired()
+                    b.Property<int?>("AniosAntiguedad")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Area")
                         .HasMaxLength(100)
-                        .IsUnicode(false)
-                        .HasColumnType("varchar(100)")
-                        .HasColumnName("ARL");
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<string>("Arl")
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<decimal?>("AuxAlimentacion2020")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<decimal?>("AuxAlimentacion2021")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<decimal?>("AuxAlimentacion2022")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<decimal?>("AuxAlimentacion2023")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<decimal?>("AuxGasolina2021")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<decimal?>("AuxGasolina20222023")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<decimal?>("AuxRodamiento")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<decimal?>("AuxRodamiento20222023")
+                        .HasColumnType("decimal(18,2)");
 
                     b.Property<string>("Banco")
-                        .IsRequired()
                         .HasMaxLength(100)
-                        .IsUnicode(false)
-                        .HasColumnType("varchar(100)");
+                        .HasColumnType("nvarchar(100)");
 
                     b.Property<string>("Barrio")
-                        .IsRequired()
                         .HasMaxLength(100)
-                        .IsUnicode(false)
-                        .HasColumnType("varchar(100)");
+                        .HasColumnType("nvarchar(100)");
 
-                    b.Property<string>("CajaCompensación")
-                        .IsRequired()
+                    b.Property<decimal?>("BaseIncentivo20222023")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<string>("CajaCompensacion")
                         .HasMaxLength(100)
-                        .IsUnicode(false)
-                        .HasColumnType("varchar(100)");
+                        .HasColumnType("nvarchar(100)");
 
                     b.Property<string>("Cargo")
-                        .IsRequired()
                         .HasMaxLength(100)
-                        .IsUnicode(false)
-                        .HasColumnType("varchar(100)");
+                        .HasColumnType("nvarchar(100)");
 
-                    b.Property<int>("CelularEmergencia")
-                        .HasColumnType("int");
+                    b.Property<string>("CargoJefeInmediato")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("CiudadNacimiento")
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
 
                     b.Property<string>("CiudadTrabajo")
-                        .IsRequired()
                         .HasMaxLength(100)
-                        .IsUnicode(false)
-                        .HasColumnType("varchar(100)");
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<string>("CodCeco")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Concepto")
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
+                    b.Property<string>("Contacto")
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
 
                     b.Property<string>("ContactoEmergencia")
-                        .IsRequired()
-                        .HasMaxLength(1)
-                        .IsUnicode(false)
-                        .HasColumnType("varchar(1)");
+                        .HasMaxLength(150)
+                        .HasColumnType("nvarchar(150)");
 
-                    b.Property<string>("Eps")
-                        .IsRequired()
-                        .HasMaxLength(100)
-                        .IsUnicode(false)
-                        .HasColumnType("varchar(100)")
-                        .HasColumnName("EPS");
+                    b.Property<string>("CorreoCorporativo")
+                        .HasMaxLength(150)
+                        .HasColumnType("nvarchar(150)");
 
-                    b.Property<string>("ExpediciónCiudad")
-                        .IsRequired()
-                        .HasMaxLength(100)
-                        .IsUnicode(false)
-                        .HasColumnType("varchar(100)");
+                    b.Property<string>("CorreoPersonal")
+                        .HasMaxLength(150)
+                        .HasColumnType("nvarchar(150)");
 
-                    b.Property<string>("FondoCesantias")
-                        .IsRequired()
-                        .HasMaxLength(100)
-                        .IsUnicode(false)
-                        .HasColumnType("varchar(100)");
+                    b.Property<string>("DireccionResidencia")
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
 
-                    b.Property<string>("FondoPensiones")
-                        .IsRequired()
-                        .HasMaxLength(100)
-                        .IsUnicode(false)
-                        .HasColumnType("varchar(100)");
-
-                    b.Property<long>("NoCuenta")
-                        .HasColumnType("bigint");
-
-                    b.Property<string>("Nombre")
-                        .IsRequired()
-                        .HasMaxLength(100)
-                        .IsUnicode(false)
-                        .HasColumnType("varchar(100)");
-
-                    b.Property<int>("NúmeroCel")
+                    b.Property<int?>("Edad")
                         .HasColumnType("int");
 
-                    b.Property<string>("Parentesco")
-                        .IsRequired()
+                    b.Property<string>("Eps")
                         .HasMaxLength(100)
-                        .IsUnicode(false)
-                        .HasColumnType("varchar(100)");
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<string>("EstadoCivil")
+                        .HasMaxLength(30)
+                        .HasColumnType("nvarchar(30)");
+
+                    b.Property<string>("ExpedicionCiudad")
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<DateOnly?>("FechaIngreso")
+                        .HasColumnType("date");
+
+                    b.Property<DateOnly?>("FechaNacimiento")
+                        .HasColumnType("date");
+
+                    b.Property<string>("FirmaPath")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("FondoCesantias")
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<string>("FondoPensiones")
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<string>("FotoPerfil")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Generacion")
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.Property<string>("Genero")
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
+
+                    b.Property<string>("Gerencia")
+                        .HasMaxLength(150)
+                        .HasColumnType("nvarchar(150)");
+
+                    b.Property<string>("Grupo")
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.Property<string>("JefeInmediato")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<decimal?>("LlaveSnacBebidas")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<decimal?>("MedicinaPrepagada")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<string>("MesNacimiento")
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
+
+                    b.Property<int?>("MesesAntiguedad")
+                        .HasColumnType("int");
+
+                    b.Property<int?>("MesesEdad")
+                        .HasColumnType("int");
+
+                    b.Property<string>("NombreCentroCostos")
+                        .HasMaxLength(150)
+                        .HasColumnType("nvarchar(150)");
+
+                    b.Property<string>("NombreColaborador")
+                        .HasMaxLength(150)
+                        .HasColumnType("nvarchar(150)");
+
+                    b.Property<string>("NumeroCuenta")
+                        .HasMaxLength(30)
+                        .HasColumnType("nvarchar(30)");
+
+                    b.Property<string>("Parentesco")
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
 
                     b.Property<string>("Rh")
-                        .IsRequired()
-                        .HasMaxLength(5)
-                        .IsUnicode(false)
-                        .HasColumnType("varchar(5)")
-                        .HasColumnName("RH");
+                        .HasMaxLength(10)
+                        .HasColumnType("nvarchar(10)");
+
+                    b.Property<decimal?>("SalarioEneFeb2024")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<decimal?>("SalarioEnero2020")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<decimal?>("SalarioFeb2020")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<decimal?>("SalarioFeb2021")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<decimal?>("SalarioFeb2022")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<decimal?>("SalarioFeb2023")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<decimal?>("SalarioFeb2025")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<decimal?>("SalarioFeb2026")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<decimal?>("SalarioMar2024")
+                        .HasColumnType("decimal(18,2)");
 
                     b.Property<string>("TallaCamisa")
                         .HasMaxLength(10)
-                        .IsUnicode(false)
-                        .HasColumnType("varchar(10)");
+                        .HasColumnType("nvarchar(10)");
+
+                    b.Property<string>("TelefonoEmergencia")
+                        .HasMaxLength(30)
+                        .HasColumnType("nvarchar(30)");
 
                     b.Property<string>("TipoContrato")
-                        .IsRequired()
-                        .HasMaxLength(1)
-                        .IsUnicode(false)
-                        .HasColumnType("varchar(1)");
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
 
-                    b.Property<string>("Tpcuenta")
-                        .IsRequired()
+                    b.Property<string>("TipoCuenta")
+                        .HasMaxLength(30)
+                        .HasColumnType("nvarchar(30)");
+
+                    b.Property<string>("UsuarioCorporativo")
                         .HasMaxLength(100)
-                        .IsUnicode(false)
-                        .HasColumnType("varchar(100)")
-                        .HasColumnName("TPCuenta");
+                        .HasColumnType("nvarchar(100)");
 
-                    b.HasKey("CC")
-                        .HasName("PK__TBPerson__F12AB2889EE65D65");
+                    b.Property<DateOnly?>("VencimientoPeriodoPrueba")
+                        .HasColumnType("date");
+
+                    b.HasKey("CC");
 
                     b.ToTable("TBPersonal", (string)null);
+                });
+
+            modelBuilder.Entity("Farmacol.Models.TbpersonalRetirado", b =>
+                {
+                    b.Property<int>("CC")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Area")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Cargo")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("CorreoCorporativo")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime>("FechaRetiro")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("MotivoRetiro")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("NombreColaborador")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("UsuarioCorporativo")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("CC");
+
+                    b.ToTable("TBPersonalRetirado", (string)null);
                 });
 
             modelBuilder.Entity("Farmacol.Models.Tbresponsiva", b =>
                 {
                     b.Property<int>("CC")
-                        .HasColumnType("int");
+                        .HasColumnType("int")
+                        .HasColumnName("Cédula");
 
                     b.Property<string>("Equipo")
                         .HasMaxLength(100)
@@ -235,9 +766,9 @@ namespace Farmacol.Migrations
                         .HasColumnType("varchar(100)");
 
                     b.Property<string>("Marca")
-                        .HasMaxLength(20)
+                        .HasMaxLength(100)
                         .IsUnicode(false)
-                        .HasColumnType("varchar(20)");
+                        .HasColumnType("varchar(100)");
 
                     b.Property<string>("Observación")
                         .HasMaxLength(100)
@@ -245,12 +776,12 @@ namespace Farmacol.Migrations
                         .HasColumnType("varchar(100)");
 
                     b.Property<string>("Serie")
-                        .HasMaxLength(30)
+                        .HasMaxLength(100)
                         .IsUnicode(false)
-                        .HasColumnType("varchar(30)");
+                        .HasColumnType("varchar(100)");
 
                     b.HasKey("CC")
-                        .HasName("PK__TBRespon__F12AB288D845A325");
+                        .HasName("PK__TBRespon__F12AB28853CB5A26");
 
                     b.ToTable("TBResponsivas", (string)null);
                 });
@@ -262,23 +793,26 @@ namespace Farmacol.Migrations
                         .HasColumnName("ID_Solicitud");
 
                     b.Property<string>("Anexos")
-                        .HasMaxLength(100)
+                        .HasMaxLength(200)
                         .IsUnicode(false)
-                        .HasColumnType("varchar(100)");
+                        .HasColumnType("varchar(200)");
 
                     b.Property<int>("CC")
-                        .HasColumnType("int");
+                        .HasColumnType("int")
+                        .HasColumnName("Cédula");
 
                     b.Property<DateOnly>("FechaSolicitud")
                         .HasColumnType("date")
                         .HasColumnName("Fecha_Solicitud");
 
                     b.Property<string>("Motivo")
-                        .HasMaxLength(100)
+                        .IsRequired()
+                        .HasMaxLength(200)
                         .IsUnicode(false)
-                        .HasColumnType("varchar(100)");
+                        .HasColumnType("varchar(200)");
 
                     b.Property<string>("Nombre")
+                        .IsRequired()
                         .HasMaxLength(100)
                         .IsUnicode(false)
                         .HasColumnType("varchar(100)");
@@ -289,13 +823,14 @@ namespace Farmacol.Migrations
                         .HasColumnType("varchar(200)");
 
                     b.Property<string>("TipoSolicitud")
+                        .IsRequired()
                         .HasMaxLength(100)
                         .IsUnicode(false)
                         .HasColumnType("varchar(100)")
                         .HasColumnName("Tipo_Solicitud");
 
                     b.HasKey("IdSolicitud")
-                        .HasName("PK__TBSoliRe__ED71123ADE9FCA6C");
+                        .HasName("PK__TBSoliRe__ED71123A21CDC8AB");
 
                     b.ToTable("TBSoliRechazada", (string)null);
                 });
@@ -310,9 +845,9 @@ namespace Farmacol.Migrations
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("IdSolicitud"));
 
                     b.Property<string>("Anexos")
-                        .HasMaxLength(100)
+                        .HasMaxLength(200)
                         .IsUnicode(false)
-                        .HasColumnType("varchar(100)");
+                        .HasColumnType("varchar(200)");
 
                     b.Property<string>("AprobCh")
                         .HasMaxLength(10)
@@ -326,25 +861,37 @@ namespace Farmacol.Migrations
                         .HasColumnType("varchar(10)")
                         .HasColumnName("Aprob_JInmediato");
 
+                    b.Property<int>("CC")
+                        .HasColumnType("int");
+
                     b.Property<string>("Cargo")
                         .HasMaxLength(100)
                         .IsUnicode(false)
                         .HasColumnType("varchar(100)");
 
                     b.Property<string>("CargoJinmediato")
-                        .IsRequired()
                         .HasMaxLength(100)
                         .IsUnicode(false)
                         .HasColumnType("varchar(100)")
                         .HasColumnName("Cargo_JInmediato");
 
-                    b.Property<int>("CC")
-                        .HasColumnType("int");
+                    b.Property<string>("DocumentoSolicitado")
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
 
                     b.Property<string>("Estado")
                         .HasMaxLength(100)
                         .IsUnicode(false)
                         .HasColumnType("varchar(100)");
+
+                    b.Property<string>("EtapaAprobacion")
+                        .HasMaxLength(50)
+                        .IsUnicode(false)
+                        .HasColumnType("varchar(50)")
+                        .HasColumnName("EtapaAprobacion");
+
+                    b.Property<DateTime?>("FechaDevolucion")
+                        .HasColumnType("datetime2");
 
                     b.Property<DateOnly?>("FechaFin")
                         .HasColumnType("date")
@@ -354,7 +901,7 @@ namespace Farmacol.Migrations
                         .HasColumnType("date")
                         .HasColumnName("Fecha_Inicio");
 
-                    b.Property<DateOnly>("FechaSolicitud")
+                    b.Property<DateOnly?>("FechaSolicitud")
                         .HasColumnType("date")
                         .HasColumnName("Fecha_Solicitud");
 
@@ -367,7 +914,6 @@ namespace Farmacol.Migrations
                         .HasColumnName("Hora_Inicio");
 
                     b.Property<string>("JefeInmediato")
-                        .IsRequired()
                         .HasMaxLength(100)
                         .IsUnicode(false)
                         .HasColumnType("varchar(100)")
@@ -378,15 +924,87 @@ namespace Farmacol.Migrations
                         .IsUnicode(false)
                         .HasColumnType("varchar(200)");
 
+                    b.Property<string>("NivelSolicitante")
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<string>("Nombre")
                         .HasMaxLength(100)
                         .IsUnicode(false)
                         .HasColumnType("varchar(100)");
 
+                    b.Property<string>("ObservacionJefe")
+                        .HasMaxLength(300)
+                        .IsUnicode(false)
+                        .HasColumnType("varchar(300)")
+                        .HasColumnName("ObservacionJefe");
+
+                    b.Property<string>("ObservacionRRHH")
+                        .HasMaxLength(300)
+                        .IsUnicode(false)
+                        .HasColumnType("varchar(300)")
+                        .HasColumnName("ObservacionRRHH");
+
                     b.Property<string>("Observaciones")
                         .HasMaxLength(200)
                         .IsUnicode(false)
                         .HasColumnType("varchar(200)");
+
+                    b.Property<string>("Paso1Aprobador")
+                        .HasMaxLength(100)
+                        .IsUnicode(false)
+                        .HasColumnType("varchar(100)");
+
+                    b.Property<string>("Paso1Estado")
+                        .HasMaxLength(20)
+                        .IsUnicode(false)
+                        .HasColumnType("varchar(20)");
+
+                    b.Property<string>("Paso1Obs")
+                        .HasMaxLength(300)
+                        .IsUnicode(false)
+                        .HasColumnType("varchar(300)");
+
+                    b.Property<string>("Paso2Aprobador")
+                        .HasMaxLength(100)
+                        .IsUnicode(false)
+                        .HasColumnType("varchar(100)");
+
+                    b.Property<string>("Paso2Estado")
+                        .HasMaxLength(20)
+                        .IsUnicode(false)
+                        .HasColumnType("varchar(20)");
+
+                    b.Property<string>("Paso2Obs")
+                        .HasMaxLength(300)
+                        .IsUnicode(false)
+                        .HasColumnType("varchar(300)");
+
+                    b.Property<string>("Paso3Aprobador")
+                        .HasMaxLength(100)
+                        .IsUnicode(false)
+                        .HasColumnType("varchar(100)");
+
+                    b.Property<string>("Paso3Estado")
+                        .HasMaxLength(20)
+                        .IsUnicode(false)
+                        .HasColumnType("varchar(20)");
+
+                    b.Property<string>("Paso3Obs")
+                        .HasMaxLength(300)
+                        .IsUnicode(false)
+                        .HasColumnType("varchar(300)");
+
+                    b.Property<int?>("PasoActual")
+                        .HasColumnType("int");
+
+                    b.Property<string>("SubtipoPermiso")
+                        .HasMaxLength(100)
+                        .IsUnicode(false)
+                        .HasColumnType("varchar(100)");
+
+                    b.Property<string>("TipoFlujo")
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
 
                     b.Property<string>("TipoSolicitud")
                         .IsRequired()
@@ -395,18 +1013,63 @@ namespace Farmacol.Migrations
                         .HasColumnType("varchar(200)")
                         .HasColumnName("Tipo_Solicitud");
 
-                    b.Property<DateOnly>("TotalDias")
-                        .HasColumnType("date")
+                    b.Property<int?>("TotalDias")
+                        .HasColumnType("int")
                         .HasColumnName("Total_Dias");
 
                     b.Property<int?>("TotalHoras")
                         .HasColumnType("int")
                         .HasColumnName("Total_Horas");
 
+                    b.Property<int?>("TotalPasos")
+                        .HasColumnType("int");
+
                     b.HasKey("IdSolicitud")
-                        .HasName("PK__TBSolici__ED71123A2F1546D8");
+                        .HasName("PK__TBSolici__ED71123A33D0234D");
 
                     b.ToTable("TBSolicitudes", (string)null);
+                });
+
+            modelBuilder.Entity("Farmacol.Models.TbsubtiposPermiso", b =>
+                {
+                    b.Property<int>("IdSubtipo")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int")
+                        .HasColumnName("ID_Subtipo");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("IdSubtipo"));
+
+                    b.Property<string>("Nombre")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .IsUnicode(false)
+                        .HasColumnType("varchar(100)");
+
+                    b.HasKey("IdSubtipo")
+                        .HasName("PK__TBSubtip__730213EB2F928969");
+
+                    b.ToTable("TBSubtiposPermiso", (string)null);
+                });
+
+            modelBuilder.Entity("Farmacol.Models.TbtiposSolicitud", b =>
+                {
+                    b.Property<int>("IdTipo")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int")
+                        .HasColumnName("ID_Tipo");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("IdTipo"));
+
+                    b.Property<string>("Nombre")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .IsUnicode(false)
+                        .HasColumnType("varchar(100)");
+
+                    b.HasKey("IdTipo")
+                        .HasName("PK__TBTiposS__D34E66199410A618");
+
+                    b.ToTable("TBTiposSolicitud", (string)null);
                 });
 
             modelBuilder.Entity("Farmacol.Models.Tbvacacione", b =>
@@ -423,13 +1086,13 @@ namespace Farmacol.Migrations
                         .IsUnicode(false)
                         .HasColumnType("varchar(100)");
 
-                    b.Property<string>("Cargo")
+                    b.Property<string>("CC")
                         .IsRequired()
                         .HasMaxLength(100)
                         .IsUnicode(false)
                         .HasColumnType("varchar(100)");
 
-                    b.Property<string>("CC")
+                    b.Property<string>("Cargo")
                         .IsRequired()
                         .HasMaxLength(100)
                         .IsUnicode(false)
@@ -463,7 +1126,7 @@ namespace Farmacol.Migrations
                         .HasColumnName("Total_Días");
 
                     b.HasKey("IdVacación")
-                        .HasName("PK__TBVacaci__C39CCDF11840A309");
+                        .HasName("PK__TBVacaci__C39CCDF16ADBF4C9");
 
                     b.ToTable("TBVacaciones", (string)null);
                 });
@@ -664,6 +1327,17 @@ namespace Farmacol.Migrations
                     b.HasKey("UserId", "LoginProvider", "Name");
 
                     b.ToTable("AspNetUserTokens", (string)null);
+                });
+
+            modelBuilder.Entity("Farmacol.Models.TbReservaSala", b =>
+                {
+                    b.HasOne("Farmacol.Models.TbSala", "Sala")
+                        .WithMany()
+                        .HasForeignKey("SalaId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Sala");
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<string>", b =>

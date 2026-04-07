@@ -1,0 +1,220 @@
+﻿@model IEnumerable<Farmacol.Models.TbDelegacion>
+@{
+    ViewData["Title"] = "Inhabilitaciones Temporales";
+    var areas = Model.Where(d => !string.IsNullOrEmpty(d.Area))
+                     .Select(d => d.Area!).Distinct().OrderBy(a => a).ToList();
+}
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h2 class="mb-0">⏸️ Inhabilitaciones Temporales</h2>
+        <small class="text-muted">Gestión de aprobadores temporalmente inhabilitados</small>
+    </div>
+    <a asp-action="Crear" class="btn btn-primary">➕ Nueva Inhabilitación</a>
+</div>
+<div class="d-flex gap-2 mb-3">
+    <!-- Exportar con filtros -->
+    <a asp-action="ExportarExcel"
+       asp-route-busqueda="@ViewBag.Busqueda"
+       asp-route-estado="@ViewBag.Estado"
+       class="btn btn-success btn-sm">
+        📥 Exportar filtrado
+    </a>
+    <!-- Exportar todo -->
+    <a asp-action="ExportarExcel" asp-route-todo="true"
+       class="btn btn-outline-success btn-sm">
+        📥 Exportar todo
+    </a>
+</div>
+
+@if (TempData["Exito"] != null)
+{
+    <div class="alert alert-success alert-dismissible fade show">
+        @TempData["Exito"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+}
+@if (TempData["Error"] != null)
+{
+    <div class="alert alert-danger alert-dismissible fade show">
+        @TempData["Error"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+}
+
+<!-- Buscador y filtros -->
+<div class="card border-0 shadow-sm p-3 mb-4">
+    <div class="row g-2 align-items-end">
+        <div class="col-md-4">
+            <label class="form-label small text-muted mb-1">Búsqueda</label>
+            <input type="text" id="filtroNombre" class="form-control"
+                   placeholder="🔍 Nombre, cargo, motivo..." />
+        </div>
+        <div class="col-md-3">
+            <label class="form-label small text-muted mb-1">Área</label>
+            <select id="filtroArea" class="form-select">
+                <option value="">Todas las áreas</option>
+                @foreach (var area in areas)
+                {
+                    <option value="@area.ToLower()">@area</option>
+                }
+            </select>
+        </div>
+        <div class="col-md-3">
+            <label class="form-label small text-muted mb-1">Estado</label>
+            <select id="filtroEstado" class="form-select">
+                <option value="">Todos</option>
+                <option value="activa">⏸️ Activa</option>
+                <option value="programada">📅 Programada</option>
+                <option value="vencida">✅ Vencida</option>
+                <option value="cancelada">Cancelada</option>
+            </select>
+        </div>
+        <div class="col-md-2">
+            <button type="button" class="btn btn-outline-secondary w-100"
+                    onclick="limpiarFiltros()">
+                ✕ Limpiar
+            </button>
+        </div>
+    </div>
+</div>
+
+<div class="mb-2">
+    <small class="text-muted">Mostrando <span id="contadorDel">@Model.Count()</span> registro(s)</small>
+</div>
+
+@if (!Model.Any())
+{
+    <div class="card border-0 shadow-sm">
+        <div class="card-body text-center py-5">
+            <div style="font-size:3rem">✅</div>
+            <h5 class="mt-3 text-muted">No hay inhabilitaciones registradas</h5>
+        </div>
+    </div>
+}
+else
+{
+    <div class="card border-0 shadow-sm">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0" id="tablaDel">
+                <thead class="table-dark">
+                    <tr>
+                        <th>Empleado</th>
+                        <th>Cargo / Área</th>
+                        <th>Motivo</th>
+                        <th>Desde</th>
+                        <th>Hasta</th>
+                        <th>Estado</th>
+                        <th>Creada por</th>
+                        <th class="text-center">Acciones</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var d in Model)
+                    {
+                        var hoy = DateOnly.FromDateTime(DateTime.Today);
+                        var vigente = d.Activa && d.FechaInicio <= hoy && d.FechaFin >= hoy;
+                        var futura = d.Activa && d.FechaInicio > hoy;
+
+                        string estadoLabel, estadoKey;
+                        string badgeClass;
+                        if (!d.Activa)
+                        {
+                            estadoLabel = "Cancelada"; estadoKey = "cancelada"; badgeClass = "secondary";
+                        }
+                        else if (vigente)
+                        {
+                            estadoLabel = "⏸️ Activa"; estadoKey = "activa"; badgeClass = "warning text-dark";
+                        }
+                        else if (futura)
+                        {
+                            estadoLabel = "📅 Programada"; estadoKey = "programada"; badgeClass = "info";
+                        }
+                        else
+                        {
+                            estadoLabel = "✅ Vencida"; estadoKey = "vencida"; badgeClass = "success";
+                        }
+
+                        <tr data-nombre="@d.Nombre?.ToLower()"
+                            data-cargo="@d.Cargo?.ToLower()"
+                            data-motivo="@d.Motivo?.ToLower()"
+                            data-area="@d.Area?.ToLower()"
+                            data-estado="@estadoKey">
+                            <td>
+                                <strong>@d.Nombre</strong>
+                                <br /><small class="text-muted">CC: @d.CC</small>
+                            </td>
+                            <td>
+                                @d.Cargo
+                                <br /><small class="text-muted">@d.Area</small>
+                            </td>
+                            <td><small class="text-muted">@d.Motivo</small></td>
+                            <td><small>@d.FechaInicio.ToString("dd/MM/yyyy")</small></td>
+                            <td><small>@d.FechaFin.ToString("dd/MM/yyyy")</small></td>
+                            <td><span class="badge bg-@badgeClass">@estadoLabel</span></td>
+                            <td><small class="text-muted">@d.CreadaPor</small></td>
+                            <td class="text-center">
+                                @if (d.Activa)
+                                {
+                                    <div class="d-flex gap-1 justify-content-center">
+                                        <a asp-action="Editar" asp-route-id="@d.Id"
+                                           class="btn btn-sm btn-outline-warning" title="Editar">✏️</a>
+                                        <form asp-action="Cancelar" method="post" class="d-inline">
+                                            @Html.AntiForgeryToken()
+                                            <input type="hidden" name="id" value="@d.Id" />
+                                            <button type="submit" class="btn btn-sm btn-outline-danger"
+                                                    title="Cancelar inhabilitación"
+                                                    onclick="return confirm('¿Cancelar? Las solicitudes volverán al aprobador original.')">
+                                                ✕
+                                            </button>
+                                        </form>
+                                    </div>
+                                }
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+}
+
+@section Scripts {
+    <script>
+        var filtroNombre = document.getElementById('filtroNombre');
+        var filtroArea   = document.getElementById('filtroArea');
+        var filtroEstado = document.getElementById('filtroEstado');
+        var contador     = document.getElementById('contadorDel');
+
+        function filtrar() {
+            var texto  = (filtroNombre.value || '').toLowerCase();
+            var area   = (filtroArea.value   || '').toLowerCase();
+            var estado = (filtroEstado.value  || '').toLowerCase();
+            var filas  = document.querySelectorAll('#tablaDel tbody tr');
+            var visible = 0;
+            filas.forEach(function (tr) {
+                var matchTexto = !texto ||
+                    (tr.dataset.nombre || '').includes(texto) ||
+                    (tr.dataset.cargo  || '').includes(texto) ||
+                    (tr.dataset.motivo || '').includes(texto);
+                var matchArea   = !area   || (tr.dataset.area   || '') === area;
+                var matchEstado = !estado || (tr.dataset.estado || '') === estado;
+                var mostrar = matchTexto && matchArea && matchEstado;
+                tr.style.display = mostrar ? '' : 'none';
+                if (mostrar) visible++;
+            });
+            if (contador) contador.textContent = visible;
+        }
+
+        function limpiarFiltros() {
+            filtroNombre.value = '';
+            filtroArea.value   = '';
+            filtroEstado.value = '';
+            filtrar();
+        }
+
+        filtroNombre.addEventListener('input',  filtrar);
+        filtroArea.addEventListener('change',   filtrar);
+        filtroEstado.addEventListener('change', filtrar);
+    </script>
+}

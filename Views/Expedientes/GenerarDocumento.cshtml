@@ -1,0 +1,201 @@
+﻿@{
+    ViewData["Title"] = "Generar Documento";
+    var personal  = ViewBag.Personal  as Farmacol.Models.Tbpersonal;
+    var plantilla = ViewBag.Plantilla as string ?? "responsiva";
+    var fecha     = ViewBag.Fecha     as string ?? DateTime.Today.ToString("dd/MM/yyyy");
+}
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <div>
+        <a asp-action="Expediente" asp-route-cc="@personal?.CC"
+           class="btn btn-sm btn-outline-secondary mb-2">← Volver al expediente</a>
+        <h2 class="mb-0">📄 Generar Documento</h2>
+        <small class="text-muted">Los datos del empleado se cargan automáticamente</small>
+    </div>
+    <div class="d-flex gap-2">
+        <button onclick="imprimirDoc()" class="btn btn-primary">🖨️ Imprimir / Guardar PDF</button>
+    </div>
+</div>
+
+<!-- Selector de plantilla -->
+<div class="card border-0 shadow-sm mb-4 p-3">
+    <div class="row g-2 align-items-end">
+        <div class="col-md-4">
+            <label class="form-label small fw-bold">Plantilla</label>
+            <select id="selPlantilla" class="form-select" onchange="cambiarPlantilla(this.value)">
+                <option value="responsiva"    selected="@(plantilla == "responsiva")">📋 Responsiva de equipo TI</option>
+                <option value="constancia"    selected="@(plantilla == "constancia")">📝 Constancia laboral</option>
+                <option value="paz_y_salvo"   selected="@(plantilla == "paz_y_salvo")">✅ Paz y salvo</option>
+                <option value="carta_retiro"  selected="@(plantilla == "carta_retiro")">📤 Carta de retiro</option>
+            </select>
+        </div>
+        <div class="col-md-2">
+            <a asp-action="GenerarDocumento" asp-route-cc="@personal?.CC"
+               asp-route-plantilla="@plantilla"
+               class="btn btn-outline-secondary w-100">🔄 Recargar</a>
+        </div>
+    </div>
+</div>
+
+<!-- Documento imprimible -->
+<div class="card border-0 shadow-sm" id="docImprimible">
+    <div class="card-body p-4" style="font-family: 'Times New Roman', serif; font-size: 12pt; max-width: 800px; margin: 0 auto;">
+
+        <!-- Encabezado -->
+        <div class="text-center mb-4">
+            <h4 class="fw-bold mb-1">💊 FARMACOL S.A.S.</h4>
+            <div class="text-muted small">Sistema de Recursos Humanos</div>
+            <hr />
+            <h5 class="fw-bold mt-3" id="tituloDoc">
+                @(plantilla switch {
+                    "constancia"   => "CONSTANCIA LABORAL",
+                    "paz_y_salvo"  => "PAZ Y SALVO",
+                    "carta_retiro" => "CARTA DE RETIRO",
+                    _              => "RESPONSIVA DE EQUIPO TECNOLÓGICO"
+                })
+            </h5>
+        </div>
+
+        <!-- Datos del empleado (siempre presentes) -->
+        <div class="mb-4 p-3 border rounded bg-light">
+            <div class="row g-2">
+                <div class="col-md-6">
+                    <strong>Nombre:</strong> @personal?.NombreColaborador
+                </div>
+                <div class="col-md-6">
+                    <strong>C.C.:</strong> @personal?.CC
+                </div>
+                <div class="col-md-6">
+                    <strong>Cargo:</strong> @personal?.Cargo
+                </div>
+                <div class="col-md-6">
+                    <strong>Área:</strong> @personal?.Area
+                </div>
+                <div class="col-md-6">
+                    <strong>Ciudad:</strong> @personal?.CiudadTrabajo
+                </div>
+                <div class="col-md-6">
+                    <strong>Fecha:</strong> @fecha
+                </div>
+                @if (personal?.FechaIngreso.HasValue == true)
+                {
+                    <div class="col-md-6">
+                        <strong>Fecha de ingreso:</strong> @personal.FechaIngreso.Value.ToString("dd/MM/yyyy")
+                    </div>
+                }
+                @if (!string.IsNullOrEmpty(personal?.TipoContrato))
+                {
+                    <div class="col-md-6">
+                        <strong>Tipo de contrato:</strong> @personal.TipoContrato
+                    </div>
+                }
+            </div>
+        </div>
+
+        <!-- Cuerpo según plantilla -->
+        @if (plantilla == "responsiva")
+        {
+            <p>Por medio de la presente, yo <strong>@personal?.NombreColaborador</strong>,
+            identificado(a) con C.C. <strong>@personal?.CC</strong>, con cargo de
+            <strong>@personal?.Cargo</strong> en el área de <strong>@personal?.Area</strong>,
+            declaro haber recibido a satisfacción el siguiente equipo tecnológico:</p>
+
+            <table class="table table-bordered mt-3 mb-3">
+                <thead class="table-light">
+                    <tr>
+                        <th>Equipo</th>
+                        <th>Marca</th>
+                        <th>Serial / Serie</th>
+                        <th>Estado</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>&nbsp;</td>
+                        <td>&nbsp;</td>
+                        <td>&nbsp;</td>
+                        <td>&nbsp;</td>
+                    </tr>
+                    <tr>
+                        <td>&nbsp;</td>
+                        <td>&nbsp;</td>
+                        <td>&nbsp;</td>
+                        <td>&nbsp;</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <p>Me comprometo a cuidar y conservar en buen estado los equipos recibidos,
+            respondiendo por cualquier daño causado por mal uso o negligencia.</p>
+        }
+        else if (plantilla == "constancia")
+        {
+            <p>El suscrito certifica que <strong>@personal?.NombreColaborador</strong>,
+            identificado(a) con C.C. <strong>@personal?.CC</strong>, labora en
+            <strong>Farmacol S.A.S.</strong> en el cargo de <strong>@personal?.Cargo</strong>
+            en el área de <strong>@personal?.Area</strong>
+            @if (personal?.FechaIngreso.HasValue == true)
+            {
+                <span>, desde el @personal.FechaIngreso.Value.ToString("dd 'de' MMMM 'de' yyyy", new System.Globalization.CultureInfo("es-CO"))</span>
+            }.</p>
+
+            <p>La presente constancia se expide a solicitud del interesado, en @personal?.CiudadTrabajo,
+            a los @fecha.</p>
+        }
+        else if (plantilla == "paz_y_salvo")
+        {
+            <p>Certificamos que el señor(a) <strong>@personal?.NombreColaborador</strong>,
+            identificado(a) con C.C. <strong>@personal?.CC</strong>, se encuentra a paz y salvo
+            con <strong>Farmacol S.A.S.</strong> en todas sus obligaciones laborales,
+            administrativas y financieras a la fecha.</p>
+        }
+        else if (plantilla == "carta_retiro")
+        {
+            <p>Ciudad y fecha: @personal?.CiudadTrabajo, @fecha</p>
+            <br />
+            <p>Señor(a) <strong>@personal?.NombreColaborador</strong><br />
+            C.C. <strong>@personal?.CC</strong><br />
+            Cargo: <strong>@personal?.Cargo</strong></p>
+            <br />
+            <p>Por medio de la presente, le comunicamos la terminación de su contrato de trabajo
+            con <strong>Farmacol S.A.S.</strong>, en el cargo de <strong>@personal?.Cargo</strong>
+            del área de <strong>@personal?.Area</strong>.</p>
+        }
+
+        <!-- Firmas -->
+        <div class="row mt-5">
+            <div class="col-6 text-center">
+                <div style="border-top: 1px solid #000; width: 80%; margin: 0 auto; padding-top: 8px;">
+                    <strong>@personal?.NombreColaborador</strong><br />
+                    <small>C.C. @personal?.CC</small><br />
+                    <small>@personal?.Cargo</small>
+                </div>
+            </div>
+            <div class="col-6 text-center">
+                <div style="border-top: 1px solid #000; width: 80%; margin: 0 auto; padding-top: 8px;">
+                    <strong>Representante Farmacol S.A.S.</strong><br />
+                    <small>Capital Humano</small>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    @@media print {
+        nav, #topbar, .btn, form, .card-header, select, label, a { display: none !important; }
+        #docImprimible { box-shadow: none !important; border: none !important; }
+        body { background: white !important; margin: 0; }
+    }
+</style>
+
+@section Scripts {
+    <script>
+        function imprimirDoc() { window.print(); }
+
+        function cambiarPlantilla(val) {
+            var cc = @personal?.CC;
+            window.location.href = '/Expedientes/GenerarDocumento?cc=' + cc + '&plantilla=' + val;
+        }
+    </script>
+}

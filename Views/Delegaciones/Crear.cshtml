@@ -1,0 +1,74 @@
+﻿@{
+    ViewData["Title"] = "Nueva Inhabilitación";
+}
+
+<h2>⏸️ Nueva Inhabilitación Temporal</h2>
+<hr />
+
+@if (TempData["Error"] != null)
+{
+    <div class="alert alert-danger">@TempData["Error"]</div>
+}
+
+<div class="card shadow-sm" style="max-width:600px">
+    <div class="card-header bg-warning text-dark fw-bold">
+        ⏸️ Inhabilitar Aprobador Temporalmente
+    </div>
+    <div class="card-body">
+        <form asp-action="Crear" method="post">
+            @Html.AntiForgeryToken()
+
+            <div class="mb-3">
+                <label class="form-label fw-bold">Empleado a inhabilitar</label>
+                <select name="cc" class="form-select" required>
+                    <option value="">-- Selecciona --</option>
+                    @foreach (var p in ViewBag.Personal as
+                                        IEnumerable<Farmacol.Models.Tbpersonal>
+                                        ?? new List<Farmacol.Models.Tbpersonal>())
+                    {
+                        <option value="@p.CC">
+                            @p.NombreColaborador — @p.Cargo (@p.Area)
+                        </option>
+                    }
+                </select>
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label fw-bold">Motivo</label>
+                <select name="motivo" class="form-select" required>
+                    <option value="">-- Selecciona --</option>
+                    <option>Vacaciones</option>
+                    <option>Licencia médica</option>
+                    <option>Licencia de maternidad/paternidad</option>
+                    <option>Comisión empresarial</option>
+                    <option>Permiso personal</option>
+                    <option>Otro</option>
+                </select>
+            </div>
+
+            <div class="row g-3 mb-3">
+                <div class="col-6">
+                    <label class="form-label fw-bold">Fecha inicio</label>
+                    <input type="date" name="fechaInicio" class="form-control"
+                           value="@DateTime.Today.ToString("yyyy-MM-dd")" required />
+                </div>
+                <div class="col-6">
+                    <label class="form-label fw-bold">Fecha fin</label>
+                    <input type="date" name="fechaFin" class="form-control" required />
+                </div>
+            </div>
+
+            <div class="alert alert-warning small">
+                ⚠️ Al confirmar, todas las solicitudes pendientes de este aprobador
+                se redirigirán automáticamente al <strong>Gerente General</strong>
+                durante el período indicado.
+            </div>
+
+            <button type="submit" class="btn btn-warning w-100 fw-bold">
+                ⏸️ Confirmar Inhabilitación
+            </button>
+        </form>
+    </div>
+</div>
+
+<a asp-action="Index" class="btn btn-secondary mt-3">← Volver</a>
