@@ -264,6 +264,13 @@ namespace Farmacol.Controllers
         {
             var personal = await BuscarPersonalActual();
 
+            var hoy = DateTime.Today;
+            bool vacacionesInhabilitadas = hoy.Day >= 11;
+
+            ViewBag.VacacionesInhabilitadas = vacacionesInhabilitadas;
+            ViewBag.MesActual = hoy.ToString("MMMM yyyy", new System.Globalization.CultureInfo("es-CO"));
+            ViewBag.MesSiguiente = hoy.AddMonths(1).ToString("MMMM yyyy", new System.Globalization.CultureInfo("es-CO"));
+
             ViewBag.SubtiposPermiso = await _context.TbsubtiposPermisos.ToListAsync();
             ViewBag.CedulaActual = personal?.CC;
             ViewBag.NombreActual = personal?.NombreColaborador;
@@ -307,6 +314,16 @@ namespace Farmacol.Controllers
             ModelState.Remove("Paso1Aprobador"); ModelState.Remove("Paso2Aprobador");
             ModelState.Remove("Paso3Aprobador"); ModelState.Remove("NivelSolicitante");
             ModelState.Remove("TipoFlujo"); ModelState.Remove("DocumentoSolicitado");
+
+            if (tbsolicitude.TipoSolicitud?.Equals("Vacaciones", StringComparison.OrdinalIgnoreCase) == true)
+            {
+                var hoy = DateTime.Today;
+                if (hoy.Day >= 11)
+                {
+                    return await VolverConError($"A partir del día 11 de cada mes no se pueden crear solicitudes de vacaciones del mes actual. " +
+                                                $"Las solicitudes para {hoy.AddMonths(1):MMMM yyyy} se habilitarán a partir del día 1.");
+                }
+            }
 
             // Helper local para restaurar ViewBag y volver a la vista sin perder los datos del usuario
             async Task<IActionResult> VolverConError(string error)
@@ -366,6 +383,22 @@ namespace Farmacol.Controllers
                 {
                     return await VolverConError("Error al calcular días de vacaciones. Intenta más tarde.");
                 }
+            }
+
+            if (tbsolicitude.TipoSolicitud?.Equals("Vacaciones", StringComparison.OrdinalIgnoreCase) == true)
+            {
+                var diasSolicitados = tbsolicitude.TotalDias ?? 0;
+                var diasEnDinero = tbsolicitude.DiasEnDinero ?? 0;
+
+                var vac = await _VacacionesService.CalcularVacacionesAsync(solicitante.CC);
+                var disponibles = (int)Math.Floor(vac.DiasDisponibles);
+                var maxDinero = (int)Math.Floor(disponibles * 0.5);
+
+                if (diasEnDinero > maxDinero)
+                    return await VolverConError($"No puedes solicitar más de {maxDinero} días en dinero (50% del disponible).");
+
+                if (diasSolicitados + diasEnDinero > disponibles)
+                    return await VolverConError("La suma de días de vacaciones + días en dinero no puede superar los días disponibles.");
             }
 
             tbsolicitude = await _flujo.InicializarFlujo(tbsolicitude, solicitante);

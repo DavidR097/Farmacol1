@@ -16,18 +16,15 @@
 <div class="mb-4">
     <label class="form-label fw-bold fs-5">¿Qué tipo de solicitud deseas crear?</label>
     <div class="d-flex gap-3 mt-2">
-        <button type="button" class="btn btn-outline-primary btn-lg px-5"
-                onclick="mostrarFormulario('permiso')">
+        <button type="button" id="btnPermiso" class="btn btn-outline-primary btn-lg px-5">
             🕐 Permiso
         </button>
-        <button type="button" class="btn btn-outline-success btn-lg px-5"
-                onclick="mostrarFormulario('vacaciones')">
+        <button type="button" id="btnVacaciones" class="btn btn-outline-success btn-lg px-5">
             🏖️ Vacaciones
         </button>
     </div>
 </div>
 
-@* El bloque de información de Vacaciones se muestra dentro del formulario de Vacaciones cuando el usuario lo selecciona *@
 <!-- FORMULARIO PERMISO -->
 <div id="formPermiso" style="display:none">
     <h4 class="text-primary mb-3">📋 Solicitud de Permiso</h4>
@@ -39,31 +36,22 @@
             <div class="col-md-6">
                 <div class="form-group mb-2">
                     <label class="control-label">CC</label>
-                    <input name="CC" class="form-control"
-                           value="@ViewBag.CedulaActual"
-                           @(esAdminRRHH ? "" : "readonly") />
+                    <input name="CC" class="form-control" value="@ViewBag.CedulaActual" @(esAdminRRHH ? "" : "readonly") />
                 </div>
                 <div class="form-group mb-2">
                     <label class="control-label">Nombre</label>
-                    <input name="Nombre" class="form-control"
-                           value="@ViewBag.NombreActual"
-                           @(esAdminRRHH ? "" : "readonly") />
+                    <input name="Nombre" class="form-control" value="@ViewBag.NombreActual" @(esAdminRRHH ? "" : "readonly") />
                 </div>
                 <div class="form-group mb-2">
                     <label class="control-label">Cargo</label>
-                    <input name="Cargo" class="form-control"
-                           value="@ViewBag.CargoActual"
-                           @(esAdminRRHH ? "" : "readonly") />
+                    <input name="Cargo" class="form-control" value="@ViewBag.CargoActual" @(esAdminRRHH ? "" : "readonly") />
                 </div>
 
-                @* Área: solo visible para Admin/RRHH que crean en nombre de otro *@
                 @if (esAdminRRHH)
                 {
                     <div class="form-group mb-2">
                         <label class="control-label">Área del solicitante</label>
-                        <input name="AreaSolicitante" class="form-control"
-                               placeholder="Se obtiene automáticamente del perfil" readonly
-                               value="@ViewBag.AreaActual" />
+                        <input name="AreaSolicitante" class="form-control" value="@ViewBag.AreaActual" readonly />
                     </div>
                 }
 
@@ -89,24 +77,19 @@
                     <textarea name="Observaciones" class="form-control" rows="2"></textarea>
                 </div>
 
-                @* Info del flujo que se asignará automáticamente *@
                 <div class="alert alert-info py-2 mt-2">
-                    <small>
-                        🔄 El flujo de aprobación se asignará automáticamente
-                        según tu área y cargo al enviar la solicitud.
-                    </small>
+                    <small>🔄 El flujo de aprobación se asignará automáticamente según tu área y cargo.</small>
                 </div>
             </div>
+
             <div class="col-md-6">
                 <div class="form-group mb-2">
                     <label class="control-label">Hora Inicio</label>
-                    <input name="HoraInicio" id="horaInicioP" type="time"
-                           class="form-control" oninput="calcularHoras()" />
+                    <input name="HoraInicio" id="horaInicioP" type="time" class="form-control" oninput="calcularHoras()" />
                 </div>
                 <div class="form-group mb-2">
                     <label class="control-label">Hora Fin</label>
-                    <input name="HoraFin" id="horaFinP" type="time"
-                           class="form-control" oninput="calcularHoras()" />
+                    <input name="HoraFin" id="horaFinP" type="time" class="form-control" oninput="calcularHoras()" />
                 </div>
                 <div class="form-group mb-2">
                     <label class="control-label">Total Horas</label>
@@ -114,13 +97,11 @@
                 </div>
                 <div class="form-group mb-2">
                     <label class="control-label">Fecha Inicio (opcional)</label>
-                    <input name="FechaInicio" id="fechaInicioP" type="date"
-                           class="form-control" oninput="calcularDiasPermiso()" />
+                    <input name="FechaInicio" id="fechaInicioP" type="date" class="form-control" oninput="calcularDiasPermiso()" />
                 </div>
                 <div class="form-group mb-2">
                     <label class="control-label">Fecha Fin (opcional)</label>
-                    <input name="FechaFin" id="fechaFinP" type="date"
-                           class="form-control" oninput="calcularDiasPermiso()" />
+                    <input name="FechaFin" id="fechaFinP" type="date" class="form-control" oninput="calcularDiasPermiso()" />
                 </div>
                 <div class="form-group mb-2">
                     <label class="control-label">Total Días</label>
@@ -128,13 +109,13 @@
                 </div>
                 <div class="form-group mb-2">
                     <label class="control-label">Fecha Solicitud</label>
-                    <input name="FechaSolicitud" class="form-control" type="date"
-                           value="@DateTime.Today.ToString("yyyy-MM-dd")" readonly />
+                    <input name="FechaSolicitud" class="form-control" type="date" value="@DateTime.Today.ToString("yyyy-MM-dd")" readonly />
                 </div>
                 <div class="form-group mb-2">
                     <label class="control-label">Anexo (PDF)</label>
                     <input type="file" name="archivoAnexo" accept=".pdf" class="form-control" />
                 </div>
+
                 @if (esAdminRRHH)
                 {
                     <div class="form-group mb-2">
@@ -145,17 +126,10 @@
                             <option value="Rechazada">Rechazada</option>
                         </select>
                     </div>
-                    <div class="form-group mb-2">
-                        <label class="control-label">Aprobación Jefe</label>
-                        <input name="AprobJinmediato" class="form-control" />
-                    </div>
-                    <div class="form-group mb-2">
-                        <label class="control-label">Aprobación CH</label>
-                        <input name="AprobCh" class="form-control" />
-                    </div>
-                }
+                } 
             </div>
         </div>
+
         <div class="mt-3">
             <button type="submit" class="btn btn-primary">Enviar Solicitud</button>
             <a asp-action="Index" class="btn btn-secondary">Cancelar</a>
@@ -179,69 +153,61 @@
             <div class="col-md-5">
                 <div class="form-group mb-2">
                     <label class="control-label">CC</label>
-                    <input name="CC" class="form-control"
-                           value="@ViewBag.CedulaActual"
-                           @(esAdminRRHH ? "" : "readonly") />
+                    <input name="CC" class="form-control" value="@ViewBag.CedulaActual" @(esAdminRRHH ? "" : "readonly") />
                 </div>
                 <div class="form-group mb-2">
                     <label class="control-label">Nombre</label>
-                    <input name="Nombre" class="form-control"
-                           value="@ViewBag.NombreActual"
-                           @(esAdminRRHH ? "" : "readonly") />
+                    <input name="Nombre" class="form-control" value="@ViewBag.NombreActual" @(esAdminRRHH ? "" : "readonly") />
                 </div>
                 <div class="form-group mb-2">
                     <label class="control-label">Cargo</label>
-                    <input name="Cargo" class="form-control"
-                           value="@ViewBag.CargoActual"
-                           @(esAdminRRHH ? "" : "readonly") />
+                    <input name="Cargo" class="form-control" value="@ViewBag.CargoActual" @(esAdminRRHH ? "" : "readonly") />
                 </div>
+
                 <div class="form-group mb-2">
                     <label class="control-label">Total Días</label>
-                    <input id="totalDiasDisplay" class="form-control" readonly
-                           placeholder="Se calcula al elegir fechas" />
+                    <input id="totalDiasDisplay" class="form-control" readonly placeholder="Se calcula al elegir fechas" />
                 </div>
                 <div class="form-group mb-2">
                     <label class="control-label">Días disponibles</label>
-                    <input id="diasDisponiblesDisplay" class="form-control" readonly
-                           value="@(ViewBag.Vacaciones?.DiasDisponibles ?? 0)" />
+                    <input id="diasDisponiblesDisplay" class="form-control" readonly value="@(ViewBag.Vacaciones?.DiasDisponibles ?? 0)" />
                 </div>
                 <div class="form-group mb-2">
                     <label class="control-label">Días restantes tras solicitud</label>
                     <input id="diasRestantesDisplay" class="form-control" readonly value="" />
                 </div>
+
+                <!-- Días en Dinero -->
+                <div class="form-group mb-3">
+                    <label class="form-label fw-bold">Días en Dinero (máximo 50% de días disponibles)</label>
+                    <div class="input-group">
+                        <input type="number" name="DiasEnDinero" id="diasEnDinero" 
+                               class="form-control" min="0" placeholder="Cantidad de días a liquidar en dinero" />
+                        <span class="input-group-text">días</span>
+                    </div>
+                    <small class="text-muted" id="maxDineroInfo"></small>
+                </div>
+
                 <div class="form-group mb-2">
                     <label class="control-label">Fecha Solicitud</label>
-                    <input class="form-control" type="date"
-                           value="@DateTime.Today.ToString("yyyy-MM-dd")" readonly />
+                    <input class="form-control" type="date" value="@DateTime.Today.ToString("yyyy-MM-dd")" readonly />
                 </div>
+
                 <div class="form-group mb-2">
                     <label class="control-label">Observaciones (opcional)</label>
                     <textarea name="Observaciones" class="form-control" rows="3"></textarea>
                 </div>
+
                 <div class="form-group mb-2">
                     <label class="control-label">Anexo (PDF)</label>
                     <input type="file" name="archivoAnexo" accept=".pdf" class="form-control" />
                 </div>
 
                 <div class="alert alert-info py-2">
-                    <small>
-                        🔄 El flujo de aprobación se asignará automáticamente
-                        según tu área y cargo al enviar la solicitud.
-                    </small>
+                    <small>🔄 El flujo de aprobación se asignará automáticamente según tu área y cargo.</small>
                 </div>
-
-                @if (esAdminRRHH)
-                {
-                    <div class="form-group mb-2">
-                        <label class="control-label">Estado</label>
-                        <select name="Estado" class="form-select">
-                            <option value="En proceso">En proceso</option>
-                            <option value="Aprobada">Aprobada</option>
-                            <option value="Rechazada">Rechazada</option>
-                        </select>
-                    </div>
-                }
             </div>
+
             <div class="col-md-7">
                 <label class="control-label fw-bold">Selecciona las fechas de vacaciones</label>
                 <div class="mt-2 d-flex gap-3 mb-3">
@@ -251,6 +217,7 @@
                 <div id="calendarioVacaciones" class="border rounded p-3"></div>
             </div>
         </div>
+
         <div class="mt-3">
             <div id="vacWarning" class="alert alert-danger d-none">❌ No tienes suficientes días disponibles para el rango seleccionado.</div>
             <button type="submit" id="vacSubmit" class="btn btn-success">Enviar Solicitud</button>
@@ -261,130 +228,69 @@
 
 @section Scripts {
     <style>
-        .cal-grid {
-            display: grid;
-            grid-template-columns: repeat(7, 1fr);
-            gap: 4px;
-        }
-
-        .cal-header-row {
-            display: grid;
-            grid-template-columns: repeat(7, 1fr);
-            gap: 4px;
-            margin-bottom: 6px;
-        }
-
+        .cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; }
+        .cal-header-row { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; margin-bottom: 6px; }
         .cal-day {
-            padding: 8px 4px;
-            text-align: center;
-            border-radius: 6px;
-            cursor: pointer;
-            border: 1px solid #dee2e6;
-            font-size: 0.9rem;
-            transition: all 0.15s;
+            padding: 8px 4px; text-align: center; border-radius: 6px; cursor: pointer;
+            border: 1px solid #dee2e6; font-size: 0.9rem; transition: all 0.15s;
         }
-
-            .cal-day:hover {
-                background: #e9ecef;
-            }
-
-            .cal-day.inicio {
-                background: #0d6efd !important;
-                color: white !important;
-                border-color: #0d6efd !important;
-            }
-
-            .cal-day.fin {
-                background: #dc3545 !important;
-                color: white !important;
-                border-color: #dc3545 !important;
-            }
-
-            .cal-day.rango {
-                background: #cfe2ff;
-                border-color: #9ec5fe;
-            }
-
-            .cal-day.vacio {
-                border: none;
-                cursor: default;
-            }
-
-        .cal-nav {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 10px;
-        }
+        .cal-day:hover { background: #e9ecef; }
+        .cal-day.inicio { background: #0d6efd !important; color: white !important; border-color: #0d6efd !important; }
+        .cal-day.fin   { background: #dc3545 !important; color: white !important; border-color: #dc3545 !important; }
+        .cal-day.rango { background: #cfe2ff; border-color: #9ec5fe; }
+        .cal-day.vacio { border: none; cursor: default; }
+        .cal-nav { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
     </style>
 
     <script>
-        // Valor de días disponibles calculado en servidor
-        var serverDiasDisponibles = Number('@(ViewBag.Vacaciones?.DiasDisponibles ?? 0)'.replace(',', '.')) || 0;
+        document.addEventListener('DOMContentLoaded', function () {
+            // Botones de selección
+            document.getElementById('btnPermiso').addEventListener('click', () => {
+                document.getElementById('formPermiso').style.display = 'block';
+                document.getElementById('formVacaciones').style.display = 'none';
+            });
 
-        function mostrarFormulario(tipo) {
-            document.getElementById('formPermiso').style.display    = tipo === 'permiso'    ? 'block' : 'none';
-            document.getElementById('formVacaciones').style.display = tipo === 'vacaciones' ? 'block' : 'none';
-            if (tipo === 'vacaciones') {
-                // Mostrar valores iniciales antes de abrir calendario
-                var dispEl = document.getElementById('diasDisponiblesDisplay');
-                var restEl = document.getElementById('diasRestantesDisplay');
-                var warningEl = document.getElementById('vacWarning');
-                var submitBtn = document.getElementById('vacSubmit');
-                if (dispEl) dispEl.value = (Math.floor(serverDiasDisponibles) || 0) + ' días';
-                if (restEl) restEl.value = (Math.floor(serverDiasDisponibles) || 0) + ' días';
-                if (warningEl) warningEl.classList.add('d-none');
-                if (submitBtn) submitBtn.disabled = false;
+            document.getElementById('btnVacaciones').addEventListener('click', () => {
+                document.getElementById('formPermiso').style.display = 'none';
+                document.getElementById('formVacaciones').style.display = 'block';
                 renderCalendario();
-            }
-        }
+            });
+        });
 
-        function calcularHoras() {
-            const inicio = document.getElementById('horaInicioP').value;
-            const fin    = document.getElementById('horaFinP').value;
-            if (inicio && fin) {
-                const [h1, m1] = inicio.split(':').map(Number);
-                const [h2, m2] = fin.split(':').map(Number);
-                const totalMin = (h2 * 60 + m2) - (h1 * 60 + m1);
-                document.getElementById('totalHorasP').value = totalMin > 0 ? (totalMin / 60).toFixed(1) : '';
-            }
-        }
+        // ==================== CALENDARIO VACACIONES ====================
+        let fechaInicio = null;
+        let fechaFin = null;
+        let calYear = new Date().getFullYear();
+        let calMonth = new Date().getMonth();
 
-        function calcularDiasPermiso() {
-            const inicio = document.getElementById('fechaInicioP').value;
-            const fin    = document.getElementById('fechaFinP').value;
-            if (inicio && fin && fin >= inicio) {
-                const diff = Math.round((new Date(fin) - new Date(inicio)) / (1000*60*60*24)) + 1;
-                document.getElementById('totalDiasP').value = diff;
-            } else {
-                document.getElementById('totalDiasP').value = '';
-            }
-        }
-
-        let fechaInicio = null, fechaFin = null;
-        let calYear = new Date().getFullYear(), calMonth = new Date().getMonth();
-        const meses   = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+        const meses = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
         const diasSem = ['Dom','Lun','Mar','Mié','Jue','Vie','Sáb'];
 
         function renderCalendario() {
-            const cont      = document.getElementById('calendarioVacaciones');
+            const cont = document.getElementById('calendarioVacaciones');
+            if (!cont) return;
+
             const primerDia = new Date(calYear, calMonth, 1).getDay();
             const totalDias = new Date(calYear, calMonth + 1, 0).getDate();
+
             let html = `
                 <div class="cal-nav">
                     <button type="button" class="btn btn-sm btn-outline-secondary" onclick="cambiarMes(-1)">◀</button>
                     <strong>${meses[calMonth]} ${calYear}</strong>
                     <button type="button" class="btn btn-sm btn-outline-secondary" onclick="cambiarMes(1)">▶</button>
                 </div>
-                <div class="cal-header-row">${diasSem.map(d=>`<div class="text-center fw-bold small text-muted">${d}</div>`).join('')}</div>
+                <div class="cal-header-row">${diasSem.map(d => `<div class="text-center fw-bold small text-muted">${d}</div>`).join('')}</div>
                 <div class="cal-grid">`;
+
             for (let i = 0; i < primerDia; i++) html += `<div class="cal-day vacio"></div>`;
+
             for (let d = 1; d <= totalDias; d++) {
-                const fechaStr = new Date(calYear, calMonth, d).toISOString().split('T')[0];
+                const fechaStr = `${calYear}-${String(calMonth+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
                 let clase = 'cal-day';
                 if (fechaInicio && fechaStr === fechaInicio) clase += ' inicio';
-                else if (fechaFin && fechaStr === fechaFin)  clase += ' fin';
+                else if (fechaFin && fechaStr === fechaFin) clase += ' fin';
                 else if (fechaInicio && fechaFin && fechaStr > fechaInicio && fechaStr < fechaFin) clase += ' rango';
+
                 html += `<div class="${clase}" onclick="seleccionarFecha('${fechaStr}')">${d}</div>`;
             }
             html += `</div>`;
@@ -394,69 +300,128 @@
         function cambiarMes(dir) {
             calMonth += dir;
             if (calMonth > 11) { calMonth = 0; calYear++; }
-            if (calMonth < 0)  { calMonth = 11; calYear--; }
+            if (calMonth < 0) { calMonth = 11; calYear--; }
             renderCalendario();
         }
 
         function seleccionarFecha(fechaStr) {
-            if (!fechaInicio || (fechaInicio && fechaFin)) {
-                fechaInicio = fechaStr; fechaFin = null;
-            } else if (fechaStr > fechaInicio) {
-                fechaFin = fechaStr;
-            } else {
-                fechaInicio = fechaStr; fechaFin = null;
-            }
-            document.getElementById('inputFechaInicio').value = fechaInicio ?? '';
-            document.getElementById('inputFechaFin').value    = fechaFin    ?? '';
-            document.getElementById('lblInicio').textContent  = fechaInicio ?? 'No seleccionado';
-            document.getElementById('lblFin').textContent     = fechaFin    ?? 'No seleccionado';
-            if (fechaInicio && fechaFin) {
-                // calcular solo días hábiles (excluir sábados y domingos),
-                // excepto usuarios en área 'Planta' que cuentan sábados (excluir solo domingos)
-                var includeSat = false;
-                try { includeSat = Boolean(@(ViewBag.Vacaciones?.EsPlanta?.ToString().ToLower() ?? "false")); } catch(e) { includeSat = false; }
-                const diff = countWorkingDays(new Date(fechaInicio), new Date(fechaFin), includeSat);
-                document.getElementById('totalDiasDisplay').value = diff + ' días';
-                document.getElementById('inputTotalDias').value   = diff;
-                // Comprobar contra días disponibles (proporcionados desde servidor en ViewBag.Vacaciones.DiasDisponibles)
-                try {
-                    var disponibles = Number(@(ViewBag.Vacaciones?.DiasDisponibles ?? 0));
-                    var warningEl = document.getElementById('vacWarning');
-                    var submitBtn  = document.getElementById('vacSubmit');
-                        var restantesEl = document.getElementById('diasRestantesDisplay');
-                        var restantes = disponibles - diff;
-                        if (restantesEl) restantesEl.value = (restantes >= 0 ? restantes : 0) + ' días';
-                    if (disponibles < diff) {
-                        if (warningEl) warningEl.classList.remove('d-none');
-                        if (submitBtn) submitBtn.disabled = true;
-                    } else {
-                        if (warningEl) warningEl.classList.add('d-none');
-                        if (submitBtn) submitBtn.disabled = false;
-                    }
-                } catch(e) { }
-            } else {
-                document.getElementById('totalDiasDisplay').value = '';
-                document.getElementById('inputTotalDias').value   = '';
-                    var restantesEl2 = document.getElementById('diasRestantesDisplay');
-                    if (restantesEl2) restantesEl2.value = '';
-            }
-            renderCalendario();
+    if (!fechaInicio || fechaFin) {
+        fechaInicio = fechaStr;
+        fechaFin = null;
+    } else if (fechaStr < fechaInicio) {
+        fechaFin = fechaInicio;
+        fechaInicio = fechaStr;
+    } else {
+        fechaFin = fechaStr;
+    }
+
+    // Actualizar campos ocultos
+    document.getElementById('inputFechaInicio').value = fechaInicio || '';
+    document.getElementById('inputFechaFin').value = fechaFin || '';
+
+    // Actualizar etiquetas visibles
+    document.getElementById('lblInicio').textContent = fechaInicio 
+        ? fechaInicio.split('-').reverse().join('/') 
+        : 'No seleccionado';
+    
+    document.getElementById('lblFin').textContent = fechaFin 
+        ? fechaFin.split('-').reverse().join('/') 
+        : 'No seleccionado';
+
+    if (fechaInicio && fechaFin) {
+        // Determinar si cuenta sábados (solo Planta)
+        let includeSat = false;
+        try {
+            includeSat = Boolean(@(ViewBag.Vacaciones?.EsPlanta?.ToString().ToLower() ?? "false"));
+        } catch(e) { includeSat = false; }
+
+        const diff = countWorkingDays(new Date(fechaInicio), new Date(fechaFin), includeSat);
+
+        // Actualizar total días
+        document.getElementById('totalDiasDisplay').value = diff + ' días';
+        document.getElementById('inputTotalDias').value = diff;
+
+        // === CALCULAR DÍAS RESTANTES ===
+        const disponibles = Number(@(ViewBag.Vacaciones?.DiasDisponibles ?? 0));
+        const restantes = disponibles - diff;
+
+        const restantesEl = document.getElementById('diasRestantesDisplay');
+        if (restantesEl) {
+            restantesEl.value = (restantes >= 0 ? restantes : 0) + ' días';
         }
 
-        // Cuenta días hábiles entre dos fechas inclusive. Si includeSaturday=true cuenta sábados (excluye solo domingos).
+        // Validación de días disponibles
+        const warningEl = document.getElementById('vacWarning');
+        const submitBtn = document.getElementById('vacSubmit');
+
+        if (disponibles < diff) {
+            if (warningEl) warningEl.classList.remove('d-none');
+            if (submitBtn) submitBtn.disabled = true;
+        } else {
+            if (warningEl) warningEl.classList.add('d-none');
+            if (submitBtn) submitBtn.disabled = false;
+        }
+
+        // Días en Dinero (máximo 50%)
+        const maxDinero = Math.floor(disponibles * 0.5);
+        const infoEl = document.getElementById('maxDineroInfo');
+        if (infoEl) infoEl.textContent = `Máximo permitido: ${maxDinero} días`;
+
+        const diasDineroInput = document.getElementById('diasEnDinero');
+        if (diasDineroInput) {
+            diasDineroInput.max = maxDinero;
+            diasDineroInput.oninput = function () {
+                if (parseInt(this.value || 0) > maxDinero) this.value = maxDinero;
+            };
+        }
+    } else {
+        // Limpiar cuando no hay rango completo
+        document.getElementById('totalDiasDisplay').value = '';
+        document.getElementById('inputTotalDias').value = '';
+        const restantesEl = document.getElementById('diasRestantesDisplay');
+        if (restantesEl) restantesEl.value = '';
+    }
+
+    renderCalendario();
+}
+
         function countWorkingDays(startDate, endDate, includeSaturday) {
             if (!startDate || !endDate) return 0;
-            var s = new Date(startDate.getFullYear(), startDate.getMonth(), startDate.getDate());
-            var e = new Date(endDate.getFullYear(), endDate.getMonth(), endDate.getDate());
-            if (e < s) return 0;
-            var count = 0;
-            for (var d = new Date(s); d <= e; d.setDate(d.getDate() + 1)) {
-                var dow = d.getDay(); // 0=Sun,6=Sat
-                if (dow === 0) continue; // always skip Sunday
-                if (dow === 6 && !includeSaturday) continue; // skip Saturday unless includeSaturday
-                count++;
+            let count = 0;
+            let current = new Date(startDate);
+            const end = new Date(endDate);
+
+            while (current <= end) {
+                const dow = current.getDay();
+                if (dow !== 0 && (dow !== 6 || includeSaturday)) {
+                    count++;
+                }
+                current.setDate(current.getDate() + 1);
             }
             return count;
         }
+
+        // Funciones de Permiso
+        window.calcularHoras = function () {
+            const inicio = document.getElementById('horaInicioP').value;
+            const fin = document.getElementById('horaFinP').value;
+            if (inicio && fin) {
+                const [h1, m1] = inicio.split(':').map(Number);
+                const [h2, m2] = fin.split(':').map(Number);
+                const totalMin = (h2 * 60 + m2) - (h1 * 60 + m1);
+                document.getElementById('totalHorasP').value = totalMin > 0 ? (totalMin / 60).toFixed(1) : '';
+            }
+        };
+
+        window.calcularDiasPermiso = function () {
+            const inicio = document.getElementById('fechaInicioP').value;
+            const fin = document.getElementById('fechaFinP').value;
+            if (inicio && fin && fin >= inicio) {
+                const diff = Math.round((new Date(fin) - new Date(inicio)) / (1000*60*60*24)) + 1;
+                document.getElementById('totalDiasP').value = diff;
+            } else {
+                document.getElementById('totalDiasP').value = '';
+            }
+        };
     </script>
 }

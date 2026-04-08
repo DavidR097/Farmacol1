@@ -215,14 +215,18 @@ public class ExcelService
     public byte[] ExportarAuditTrail(IEnumerable<TbAuditTrail> datos)
     {
         using var wb = new XLWorkbook();
+
+        // ==================== HOJA DETALLADA ====================
         var ws = wb.Worksheets.Add("Audit Trail");
 
         string[] cols = {
-            "ID", "Fecha", "Hora", "Usuario", "Módulo",
-            "Acción", "Descripción", "ID Entidad", "IP"
-        };
+        "ID", "Fecha", "Hora", "Usuario", "Módulo",
+        "Acción", "Descripción", "ID Entidad", "IP"
+    };
+
         for (int i = 0; i < cols.Length; i++)
             ws.Cell(1, i + 1).Value = cols[i];
+
         EstilizarEncabezado(ws, cols.Length);
 
         int fila = 2;
@@ -231,9 +235,9 @@ public class ExcelService
             ws.Cell(fila, 1).Value = a.Id;
             ws.Cell(fila, 2).Value = a.Fecha.ToString("dd/MM/yyyy");
             ws.Cell(fila, 3).Value = a.Fecha.ToString("HH:mm:ss");
-            ws.Cell(fila, 4).Value = a.Usuario;
-            ws.Cell(fila, 5).Value = a.Modulo;
-            ws.Cell(fila, 6).Value = a.Accion;
+            ws.Cell(fila, 4).Value = a.Usuario ?? "";
+            ws.Cell(fila, 5).Value = a.Modulo ?? "";
+            ws.Cell(fila, 6).Value = a.Accion ?? "";
             ws.Cell(fila, 7).Value = a.Descripcion ?? "";
             ws.Cell(fila, 8).Value = a.EntidadId ?? "";
             ws.Cell(fila, 9).Value = a.Ip ?? "";
@@ -241,15 +245,9 @@ public class ExcelService
             // Color por acción
             var color = a.Accion switch
             {
-                "Crear" => XLColor.FromHtml("#d4edda"),
-                "Aprobar" => XLColor.FromHtml("#d4edda"),
-                "Login" => XLColor.FromHtml("#d1ecf1"),
-                "Eliminar" => XLColor.FromHtml("#f8d7da"),
-                "Rechazar" => XLColor.FromHtml("#f8d7da"),
-                "Login fallido" => XLColor.FromHtml("#f8d7da"),
-                "Devolver" => XLColor.FromHtml("#fff3cd"),
-                "Cancelar" => XLColor.FromHtml("#fff3cd"),
-                "Logout" => XLColor.FromHtml("#e2e3e5"),
+                "Crear" or "Aprobar" or "Login" => XLColor.FromHtml("#d4edda"),
+                "Rechazar" or "Eliminar" or "Login fallido" => XLColor.FromHtml("#f8d7da"),
+                "Devolver" or "Cancelar" => XLColor.FromHtml("#fff3cd"),
                 _ => fila % 2 == 0 ? XLColor.FromHtml("#f8f9fa") : XLColor.White
             };
             ws.Row(fila).Style.Fill.BackgroundColor = color;
@@ -257,8 +255,57 @@ public class ExcelService
         }
 
         AutoAjustar(ws);
-        ws.Cell(fila + 1, 1).Value = $"Total: {datos.Count()} registros";
-        ws.Cell(fila + 1, 1).Style.Font.Bold = true;
+        ws.Cell(fila + 2, 1).Value = $"Total registros: {datos.Count()}";
+        ws.Cell(fila + 2, 1).Style.Font.Bold = true;
+
+        // ==================== HOJA DE RESUMEN (mejorada) ====================
+        var wsResumen = wb.Worksheets.Add("Resumen");
+
+        wsResumen.Cell(1, 1).Value = "RESUMEN DE ACTIVIDADES DEL SISTEMA";
+        wsResumen.Cell(1, 1).Style.Font.Bold = true;
+        wsResumen.Cell(1, 1).Style.Font.FontSize = 16;
+        wsResumen.Cell(1, 1).Style.Font.FontColor = XLColor.White;
+        wsResumen.Cell(1, 1).Style.Fill.BackgroundColor = XLColor.FromHtml("#0d6efd");
+
+        int row = 4;
+
+        // Por Módulo
+        wsResumen.Cell(row, 1).Value = "Actividades por Módulo";
+        wsResumen.Cell(row, 1).Style.Font.Bold = true;
+        row++;
+
+        var porModulo = datos.GroupBy(a => a.Modulo ?? "Sin Módulo")
+                             .Select(g => new { Nombre = g.Key, Cantidad = g.Count() })
+                             .OrderByDescending(x => x.Cantidad);
+
+        foreach (var item in porModulo)
+        {
+            wsResumen.Cell(row, 1).Value = item.Nombre;
+            wsResumen.Cell(row, 2).Value = item.Cantidad;
+            row++;
+        }
+
+        row += 4;
+
+        // Por Acción
+        wsResumen.Cell(row, 1).Value = "Actividades por Acción";
+        wsResumen.Cell(row, 1).Style.Font.Bold = true;
+        row++;
+
+        var porAccion = datos.GroupBy(a => a.Accion ?? "Sin Acción")
+                             .Select(g => new { Nombre = g.Key, Cantidad = g.Count() })
+                             .OrderByDescending(x => x.Cantidad);
+
+        foreach (var item in porAccion)
+        {
+            wsResumen.Cell(row, 1).Value = item.Nombre;
+            wsResumen.Cell(row, 2).Value = item.Cantidad;
+            row++;
+        }
+
+        // Formato bonito en resumen
+        wsResumen.Columns().AdjustToContents();
+        wsResumen.Column(2).Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Right;
 
         return ToBytes(wb);
     }

@@ -1,106 +1,279 @@
-﻿@{
-    ViewData["Title"] = "Home";
-    var anuncios = ViewBag.Anuncios as List<Farmacol.Models.TbAnuncio> ?? new List<Farmacol.Models.TbAnuncio>();
+﻿@using Farmacol.Models
+@model dynamic 
+@{
+    ViewData["Title"] = "Inicio";
+    var anuncios = ViewBag.Anuncios as List<TbAnuncio> ?? new List<TbAnuncio>();
+    var userName = User.Identity?.Name ?? "Usuario";
 }
 
-    <div class="row align-items-start">
-        <div class="col-lg-3 d-none d-lg-block">
-            <div class="d-flex flex-column gap-3">
-                <div id="lateralLeft" class="card shadow-sm" style="aspect-ratio:555/774; overflow:hidden;">
-                    <div class="d-flex align-items-center justify-content-center h-100 text-muted">Sin anuncio lateral</div>
-                </div>
-                @* Los anuncios laterales con dimensiones válidas se determinan en el servidor y están en ViewBag.LateralAnuncios *@
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+
+<style>
+    :root {
+        --fc-blue: #0061f2;
+        --fc-purple: #6900c7;
+        --fc-orange: #FF5C0F;
+        --fc-bg: #f2f6fc;
+    }
+
+    .welcome-banner {
+        background: linear-gradient(45deg, var(--fc-blue), #00cfd5);
+        border-radius: 15px; color: white; padding: 35px; position: relative;
+    }
+
+    .stat-card {
+        border: none; border-radius: 12px; background: white; transition: transform 0.2s;
+    }
+    .stat-card:hover { transform: translateY(-3px); }
+
+    .quick-access-item {
+        background: white; border-radius: 12px; padding: 18px; border: 1px solid #eef2f8;
+        text-decoration: none; color: #212832; display: flex; align-items: center; transition: all 0.2s;
+    }
+    .quick-access-item:hover { border-color: var(--fc-blue); background: #f8faff; color: var(--fc-blue); }
+
+    .icon-shape {
+        width: 42px; height: 42px; border-radius: 10px; display: flex; align-items: center; justify-content: center; margin-right: 15px;
+    }
+
+    /* Estilo del Anuncio Único Lateral */
+    .announcement-card-fixed {
+        background: white; border-radius: 15px; position: sticky; top: 20px;
+    }
+    .announcement-image-wrapper {
+        position: relative; cursor: pointer; border-radius: 10px; overflow: hidden;
+    }
+    .announcement-overlay {
+        position: absolute; bottom: 0; left: 0; right: 0;
+        background: rgba(0, 0, 0, 0.6); color: white; padding: 10px; font-size: 0.85rem;
+    }
+</style>
+
+<div class="container-fluid px-4 pt-4">
+    <div class="row">
+        <div class="col-xl-9 col-lg-8">
+            
+            <div class="welcome-banner mb-4 shadow-sm">
+                <h2 class="fw-bold">Bienvenido, @userName 👋</h2>
+                <p class="lead mb-0">Resumen de Farmacol — @DateTime.Now.ToString("D")</p>
+            </div>
+
+            <div class="row g-3 mb-4">
+                @if (User.IsInRole("Administrador")) {
+                    <div class="col-md-4">
+                        <div class="stat-card shadow-sm p-3 border-start border-danger border-5">
+                            <small class="text-muted text-uppercase fw-bold">Seguridad</small>
+                            <h3 class="fw-bold mb-0 text-danger">@ViewBag.UsersBloqueados</h3>
+                            <div class="small">Usuarios Bloqueados</div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="stat-card shadow-sm p-3 border-start border-warning border-5">
+                            <small class="text-muted text-uppercase fw-bold">Sistema</small>
+                            <h3 class="fw-bold mb-0">@ViewBag.InhabilitacionesActivas</h3>
+                            <div class="small">Inhabilitaciones hoy</div>
+                        </div>
+                    </div>
+                }
+                @if (User.IsInRole("RRHH")) {
+                    <div class="col-md-3">
+                        <div class="stat-card shadow-sm p-3">
+                            <i class="bi bi-people-fill text-primary fs-3"></i>
+                            <h3 class="fw-bold mb-0">@ViewBag.PersonalActivo</h3>
+                            <div class="small text-muted">Personal Activo</div>
+                        </div>
+                    </div>  
+                    <div class="col-md-3">
+                        <div class="stat-card shadow-sm p-3">
+                            <i class="bi bi-file-earmark-text text-primary fs-3"></i>
+                            <h3 class="fw-bold mb-0">@ViewBag.SoliPendientes</h3>
+                            <div class="small text-muted">Solicitudes Pendientes</div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="stat-card shadow-sm p-3">
+                            <i class="bi bi-people-fill text-primary fs-3"></i>
+                            <h3 class="fw-bold mb-0">@ViewBag.VacacionesActivas</h3>
+                            <div class="small text-muted">Personal en Vacaciones</div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="stat-card shadow-sm p-3">
+                            <i class="bi bi-file-earmark-check text-primary fs-3"></i>
+                            <h3 class="fw-bold mb-0">@ViewBag.SoliAprobadas</h3>
+                            <div class="small text-muted">Solicitudes Aprobadas</div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="stat-card shadow-sm p-3">
+                            <i class="bi bi-file-earmark-check text-primary fs-3"></i>
+                            <h3 class="fw-bold mb-0">@ViewBag.TasaRevisión</h3>
+                            <div class="small text-muted">Tasa Revisión Solicitudes</div>
+                        </div>
+                    </div>
+                }
+            </div>
+
+            <h5 class="fw-bold mb-3"><i class="bi bi-grid-fill me-2"></i>Accesos Rápidos</h5>
+            <div class="row g-3">
+                @if (User.IsInRole("Administrador")) {
+                    <div class="col-md-4">
+                        <a asp-controller="Usuarios" asp-action="Index" class="quick-access-item shadow-sm">
+                            <div class="icon-shape bg-primary text-white"><i class="bi bi-people-fill"></i></div>
+                            <div><div class="fw-bold small">Gestión Usuarios</div><div class="text-muted small">Cuentas y Accesos</div></div>
+                        </a>
+                    </div>
+                    <div class="col-md-4">
+                        <a asp-controller="AuditTrail" asp-action="Index" class="quick-access-item shadow-sm">
+                            <div class="icon-shape bg-dark text-white"><i class="bi bi-search"></i></div>
+                            <div><div class="fw-bold small">Audit Trail</div><div class="text-muted small">Logs del sistema</div></div>
+                        </a>
+                    </div>
+                }
+
+                @if (User.IsInRole("RRHH") || User.IsInRole("Jefe") || User.IsInRole("Usuario") || User.IsInRole("TI") || User.IsInRole("Administrador") || User.IsInRole("Recepcionista") || User.IsInRole("Aprendiz") || User.IsInRole("Asistente") || User.IsInRole("Gerente") || User.IsInRole("Coordinador")) {
+                    <div class="col-md-4">
+                        <a asp-controller="Tbsolicitudes" asp-action="Create" class="quick-access-item shadow-sm">
+                            <div class="icon-shape bg-success text-white"><i class="bi bi-plus-circle"></i></div>
+                            <div><div class="fw-bold small">Nueva Solicitud</div><div class="text-muted small">Permisos y Vacaciones</div></div>
+                        </a>
+                    </div>
+                }
+
+                @if (User.IsInRole("RRHH")) {
+                    <div class="col-md-4">
+                        <a asp-controller="Tbpersonals" asp-action="Index" class="quick-access-item shadow-sm">
+                            <div class="icon-shape bg-primary text-white"><i class="bi bi-people-fill"></i></div>
+                            <div><div class="fw-bold small">Personal</div><div class="text-muted small">Administrar colaboradores</div></div>
+                        </a>
+                    </div>
+                    <div class="col-md-4">
+                        <a asp-controller="Tbsolicitudes" asp-action="Index" class="quick-access-item shadow-sm">
+                            <div class="icon-shape bg-success text-white"><i class="bi bi-plus-circle"></i></div>
+                            <div><div class="fw-bold small">Revisar Solicitudes</div><div class="text-muted small">Permisos y Vacaciones</div></div>
+                        </a>
+                    </div>
+                    <div class="col-md-4">
+                        <a asp-controller="SolicitudRRHH" asp-action="Gestión" class="quick-access-item shadow-sm">
+                            <div class="icon-shape bg-success text-white"><i class="bi bi-plus-circle"></i></div>
+                            <div><div class="fw-bold small">Solicitudes Documentales</div><div class="text-muted small">Documentos Personal</div></div>
+                        </a>
+                    </div>
+                    <div class="col-md-4">
+                        <a asp-controller="ExpedientesRRHH" asp-action="Index" class="quick-access-item shadow-sm">
+                            <div class="icon-shape bg-success text-white"><i class="bi bi-file-earmark-bar-graph-fill"></i></div>
+                            <div><div class="fw-bold small">Expedientes Colaboradores</div><div class="text-muted small">Administrar Expedientes</div></div>
+                        </a>
+                    </div>
+                }
+
+                @if (User.IsInRole("TI") || User.IsInRole("Administrador")) {
+                    <div class="col-md-4">
+                        <a asp-controller="Tbinventarios" asp-action="Index" class="quick-access-item shadow-sm">
+                            <div class="icon-shape bg-info text-white"><i class="bi bi-pc-display"></i></div>
+                            <div><div class="fw-bold small">Inventario TI</div><div class="text-muted small">Equipos y Series</div></div>
+                        </a>
+                    </div>
+                }
             </div>
         </div>
 
-        <div class="col-lg-6 mb-3">
-            @* Centro vacío: solo laterales con acordeón *@
-            <div class="d-flex h-100 align-items-center justify-content-center">
-                <div></div>
-            </div>
-        </div>
-        <div class="col-lg-3 d-none d-lg-block">
-            <div class="d-flex flex-column gap-3">
-                <div id="lateralRight" class="card shadow-sm" style="aspect-ratio:555/774; overflow:hidden;">
-                    <div class="d-flex align-items-center justify-content-center h-100 text-muted">Sin anuncio lateral</div>
+        <div class="col-xl-3 col-lg-4">
+            <div class="announcement-card-fixed shadow-sm p-3">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h6 class="fw-bold mb-0 text-primary">ANUNCIOS</h6>
+                    @if (User.IsInRole("Administrador") || User.IsInRole("RRHH")) {
+                        <a href="/anuncios" class="btn btn-sm btn-light p-1"><i class="bi bi-pencil-square"></i></a>
+                    }
+                </div>
+
+                <div id="announcementRotation">
+                    <div id="mainAdDisplay" class="announcement-image-wrapper">                        
+                        <div class="text-center p-5 bg-light rounded">
+                            <div class="spinner-border text-primary spinner-border-sm"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mt-4 border-top pt-3">
+                    <h6 class="fw-bold small">Estadísticas de Hoy</h6>
+                    <div class="d-flex justify-content-between mb-2 small">
+                        <span>Asistencias</span>
+                        <span class="badge bg-success">@ViewBag.Asistencias/156</span>
+                    </div>
+                    <div class="d-flex justify-content-between mb-2 small">
+                        <span>Permisos Activos</span>
+                        <span class="badge bg-warning text-dark">@ViewBag.PermisosHoy</span>
+                    </div>
                 </div>
             </div>
         </div>
     </div>
-
-    <div class="row mt-4">
-        <div class="col-12">
-            @* Eliminados los iconos circulares según solicitud del usuario *@
+</div>
+<div class="modal fade" id="announcementModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow-lg" style="border-radius: 20px;">
+            <div class="modal-header border-0 pb-0">
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body p-4 text-center">
+                <img id="modalAdImage" src="" class="img-fluid rounded-3 mb-3 shadow-sm" style="max-height: 300px; width: 100%; object-fit: cover;">
+                <h5 id="modalAdTitle" class="fw-bold text-primary mb-3"></h5>
+                <div class="p-3 bg-light rounded-3">
+                    <p id="modalAdMessage" class="text-muted mb-0" style="white-space: pre-wrap;"></p>
+                </div>
+            </div>
+            <div class="modal-footer border-0 justify-content-center pb-4">
+                <button type="button" class="btn btn-secondary px-4 rounded-pill" data-bs-dismiss="modal">Cerrar</button>
+            </div>
         </div>
     </div>
-
 </div>
 
 @section Scripts {
     <script>
         document.addEventListener('DOMContentLoaded', function () {
-            try {
-                // LateralAnuncios proviene del servidor y ya están filtrados por tamaño
-                var lateralData = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(ViewBag.LateralAnuncios ?? new List<Farmacol.Models.TbAnuncio>()));
-                var allAnuncios = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(ViewBag.Anuncios ?? new List<Farmacol.Models.TbAnuncio>()));
-                if (!lateralData || lateralData.length === 0) return;
-                console.debug('Lateral data:', lateralData);
-                var imgs = lateralData.map(function (a) {
-                    var src = a.Imagen || a.imagen || a.ImagenUrl || a.imagenUrl || a.url || a.Url || '';
-                    var titulo = a.Titulo || a.titulo || '';
-                    var mensaje = a.Mensaje || a.mensaje || '';
-                    return { src: src, titulo: titulo, mensaje: mensaje };
-                }).filter(function (x) { return x.src && x.src.length > 0; });
+            var ads = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(ViewBag.LateralAnuncios ?? new List<Farmacol.Models.TbAnuncio>()));
+            var container = document.getElementById('mainAdDisplay');
+            
+            // Elementos del Modal
+            var adModal = new bootstrap.Modal(document.getElementById('announcementModal'));
+            var modalImg = document.getElementById('modalAdImage');
+            var modalTitle = document.getElementById('modalAdTitle');
+            var modalMsg = document.getElementById('modalAdMessage');
 
-                var left = document.getElementById('lateralLeft');
-                var right = document.getElementById('lateralRight');
-                if (!left || !right) return;
+            if (ads && ads.length > 0) {
+                var index = 0;
 
-                // Preload images
-                var preloaded = [];
-                var loaded = 0;
-                imgs.forEach(function (it, idx) {
-                    var im = new Image();
-                    im.onload = function () { loaded++; preloaded[idx] = im; };
-                    im.onerror = function () { loaded++; preloaded[idx] = null; };
-                    im.src = it.src;
-                });
+                function updateAd() {
+                    var ad = ads[index % ads.length];
+                    var imgSrc = ad.Imagen || ad.ImagenUrl;
+                    var titulo = ad.Titulo || "Comunicado Farmacol";
+                    var mensaje = ad.Mensaje || "";
+                    
+                    // Renderizar el anuncio en el lateral
+                    container.innerHTML = `
+                        <div class="announcement-image-wrapper shadow-sm" style="cursor: pointer;">
+                            <img src="${imgSrc}" class="w-100 rounded-3" style="min-height: 380px; object-fit: cover;">
+                            ${mensaje ? `<div class="announcement-overlay"><strong>${titulo}</strong><br><small>Haga clic para leer más</small></div>` : ''}
+                        </div>
+                    `;
 
-                function startRotation() {
-                    var valid = imgs.filter(function(_, i) { return preloaded[i]; });
-                    var indices = preloaded.map(function(p, idx) { return p ? idx : -1; }).filter(function(i){ return i >= 0; });
-                    if (indices.length === 0) return;
+                    // Al hacer clic, llenar y abrir el modal
+                    container.onclick = function() {
+                        modalImg.src = imgSrc;
+                        modalTitle.innerText = titulo;
+                        modalMsg.innerText = mensaje;
+                        adModal.show();
+                    };
 
-                    var n = indices.length;
-                    var pos = 0;
-                    function show() {
-                        var leftIdx = indices[pos % n];
-                        var rightIdx = indices[(pos + 1) % n];
-                        var a = imgs[leftIdx];
-                        var b = imgs[rightIdx];
-                        left.innerHTML = '<img src="' + a.src + '" style="width:100%;height:100%;object-fit:cover;transition: transform .6s;" alt="' + (a.titulo || '') + '">';
-                        right.innerHTML = '<img src="' + b.src + '" style="width:100%;height:100%;object-fit:cover;transition: transform .6s;" alt="' + (b.titulo || '') + '">';
-                        var leftImg = left.querySelector('img');
-                        var rightImg = right.querySelector('img');
-                        if (leftImg && rightImg) {
-                            leftImg.style.transform = 'scale(1.02)'; rightImg.style.transform = 'scale(0.98)';
-                            setTimeout(function () { leftImg.style.transform = 'scale(0.98)'; rightImg.style.transform = 'scale(1.02)'; }, 2500);
-                        }
-                        pos = (pos + 1) % n;
-                    }
-                    show();
-                    setInterval(show, 5000);
+                    index++;
                 }
 
-                // Wait up to 1s for preload, then start
-                var waitStart = Date.now();
-                var waiter = setInterval(function () {
-                    if (loaded >= imgs.length || Date.now() - waitStart > 1000) {
-                        clearInterval(waiter);
-                        startRotation();
-                    }
-                }, 50);
-            } catch (e) { console.warn(e); }
+                updateAd();
+                if(ads.length > 1) setInterval(updateAd, 7000); // 7 segundos para que dé tiempo a leer el overlay
+            }
         });
     </script>
+}
 }

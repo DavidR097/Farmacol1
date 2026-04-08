@@ -1,7 +1,9 @@
 using Farmacol.Models;
 using Farmacol.Services;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using System.Diagnostics;
 
 namespace Farmacol.Controllers
@@ -9,55 +11,83 @@ namespace Farmacol.Controllers
     [Authorize]
     public class HomeController : Controller
     {
+        private readonly Farmacol1Context _context;
+        private readonly UserManager<IdentityUser> _userManager;
         private readonly AnuncioService _anuncioService;
         private readonly IWebHostEnvironment _env;
 
-        public HomeController(AnuncioService anuncioService, IWebHostEnvironment env)
+        public HomeController(
+            Farmacol1Context context, 
+            UserManager<IdentityUser> userManager,
+            AnuncioService anuncioService, 
+            IWebHostEnvironment env)
         {
+            _context = context;
+            _userManager = userManager;
             _anuncioService = anuncioService;
             _env = env;
         }
 
-        public IActionResult Privacy()
-        {
-            return View();
-        }
-
-        [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
-        public IActionResult Error()
-        {
-            return View(new ErrorViewModel { RequestId = Activity.Current?.Id ?? HttpContext.TraceIdentifier });
-        }
-
         public async Task<IActionResult> Index()
         {
+            // 1. OBTENER ANUNCIOS Y FILTRAR LATERALES (Imágenes verticales)
             var anuncios = await _anuncioService.ObtenerAnunciosActivosAsync();
-
-            // Filtrar en servidor imágenes verticales para laterales (aceptar más formatos que solo 555x774)
-            // Consideramos imagen vertical si la altura es mayor que el ancho.
-            var laterales = new List<TbAnuncio>();
-            foreach (var a in anuncios)
-            {
-                if (string.IsNullOrWhiteSpace(a.Imagen)) continue;
-                try
-                {
-                    var ruta = Path.Combine(_env.WebRootPath ?? "wwwroot", a.Imagen.TrimStart('/').Replace('/', Path.DirectorySeparatorChar));
-                    if (!System.IO.File.Exists(ruta)) continue;
-                    var dims = GetImageDimensions(ruta);
-                    if (dims.HasValue && dims.Value.height > dims.Value.width)
-                    {
-                        laterales.Add(a);
-                    }
-                }
-                catch { /* ignorar imágenes inválidas */ }
-            }
+            var laterales = anuncios.Where(a => EsImagenVertical(a.Imagen)).ToList();
 
             ViewBag.Anuncios = anuncios;
             ViewBag.LateralAnuncios = laterales;
+
+            // 2. ESTADÍSTICAS GENERALES (Personal Activo, Solicitudes, Vacaciones)
+            ViewBag.PersonalActivo = await _context.Tbpersonals.CountAsync();
+            ViewBag.SoliPendientes = await _context.Tbsolicitudes.CountAsync(s => s.Estado == "Pendiente");
+            ViewBag.SoliAprobadas = await _context.Tbsolicitudes.CountAsync(s => s.Estado == "Aprobada");
+
+            DateOnly fechaHoy = DateOnly.FromDateTime(DateTime.Now);
+
+            // Personas en vacaciones hoy
+            ViewBag.VacacionesActivas = await _context.Tbsolicitudes.CountAsync(s =>
+                s.TipoSolicitud == "Vacaciones" &&
+                s.Estado == "Aprobada" &&
+                s.FechaInicio != null && s.FechaFin != null && // Validación de nulidad
+                fechaHoy >= s.FechaInicio && fechaHoy <= s.FechaFin);
+
+            // 3. ESTADÍSTICAS POR ROL
+            if (User.IsInRole("Administrador"))
+            {
+                // Usuarios bloqueados por Identity
+                ViewBag.UsersBloqueados = await _userManager.Users
+                    .CountAsync(u => u.LockoutEnd != null && u.LockoutEnd > DateTimeOffset.Now);
+
+                ViewBag.InhabilitacionesActivas = await _context.TbDelegaciones
+                    .CountAsync(d => d.Activa);
+            }
+
+            if (User.IsInRole("RRHH"))
+            {
+                // Tasa de revisión de solicitudes
+                double total = await _context.Tbsolicitudes.CountAsync();
+                double revisadas = await _context.Tbsolicitudes.CountAsync(s => s.Estado != "Pendiente");
+                ViewBag.TasaRevision = total > 0 ? Math.Round((revisadas / total) * 100) : 0;
+            }
+
             return View();
         }
 
-        // Leer dimensiones básicas sin depender de System.Drawing
+        private bool EsImagenVertical(string? rutaRelativa)
+        {
+            if (string.IsNullOrWhiteSpace(rutaRelativa)) return false;
+
+            try
+            {
+                var rutaFisica = Path.Combine(_env.WebRootPath ?? "wwwroot", rutaRelativa.TrimStart('/').Replace('/', Path.DirectorySeparatorChar));
+                if (!System.IO.File.Exists(rutaFisica)) return false;
+
+                var dims = GetImageDimensions(rutaFisica);
+                return dims.HasValue && dims.Value.height > dims.Value.width;
+            }
+            catch { return false; }
+        }
+
         private (int width, int height)? GetImageDimensions(string path)
         {
             try
@@ -65,52 +95,42 @@ namespace Farmacol.Controllers
                 using var fs = new FileStream(path, FileMode.Open, FileAccess.Read);
                 using var br = new BinaryReader(fs);
                 var sig = br.ReadBytes(8);
+
                 // PNG
                 if (sig.Length >= 8 && sig[0] == 0x89 && sig[1] == 0x50 && sig[2] == 0x4E && sig[3] == 0x47)
                 {
                     fs.Seek(16, SeekOrigin.Begin);
                     var wBytes = br.ReadBytes(4);
                     var hBytes = br.ReadBytes(4);
-                    int w = (wBytes[0] << 24) | (wBytes[1] << 16) | (wBytes[2] << 8) | wBytes[3];
-                    int h = (hBytes[0] << 24) | (hBytes[1] << 16) | (hBytes[2] << 8) | hBytes[3];
-                    return (w, h);
+                    return ((wBytes[0] << 24) | (wBytes[1] << 16) | (wBytes[2] << 8) | wBytes[3],
+                            (hBytes[0] << 24) | (hBytes[1] << 16) | (hBytes[2] << 8) | hBytes[3]);
                 }
                 // GIF
                 if (sig.Length >= 3 && sig[0] == 0x47 && sig[1] == 0x49 && sig[2] == 0x46)
                 {
                     fs.Seek(6, SeekOrigin.Begin);
-                    ushort w = br.ReadUInt16();
-                    ushort h = br.ReadUInt16();
-                    return (w, h);
+                    return (br.ReadUInt16(), br.ReadUInt16());
                 }
-                // JPEG: parse markers
+                // JPEG
                 fs.Seek(0, SeekOrigin.Begin);
                 if (br.ReadByte() == 0xFF && br.ReadByte() == 0xD8)
                 {
                     while (fs.Position < fs.Length)
                     {
-                        byte markerStart = br.ReadByte();
-                        if (markerStart != 0xFF) continue;
+                        if (br.ReadByte() != 0xFF) continue;
                         byte marker = br.ReadByte();
                         while (marker == 0xFF) marker = br.ReadByte();
-                        // SOF markers range (we check common SOF types)
-                        if (marker == 0xC0 || marker == 0xC1 || marker == 0xC2 || marker == 0xC3 || marker == 0xC5 || marker == 0xC6 || marker == 0xC7 || marker == 0xC9 || marker == 0xCA || marker == 0xCB || marker == 0xCD || marker == 0xCE || marker == 0xCF)
+                        
+                        if (marker >= 0xC0 && marker <= 0xCF && marker != 0xC4 && marker != 0xC8 && marker != 0xCC)
                         {
-                            var lenBytes = br.ReadBytes(2);
-                            int len = (lenBytes[0] << 8) | lenBytes[1];
-                            // precision
-                            br.ReadByte();
-                            var hBytes = br.ReadBytes(2);
-                            var wBytes = br.ReadBytes(2);
-                            int h = (hBytes[0] << 8) | hBytes[1];
-                            int w = (wBytes[0] << 8) | wBytes[1];
+                            fs.Seek(3, SeekOrigin.Current); // Skip len (2) and precision (1)
+                            int h = (br.ReadByte() << 8) | br.ReadByte();
+                            int w = (br.ReadByte() << 8) | br.ReadByte();
                             return (w, h);
                         }
                         else
                         {
-                            var lenBytes = br.ReadBytes(2);
-                            if (lenBytes.Length < 2) break;
-                            int len = (lenBytes[0] << 8) | lenBytes[1];
+                            int len = (br.ReadByte() << 8) | br.ReadByte();
                             if (len < 2) break;
                             fs.Seek(len - 2, SeekOrigin.Current);
                         }
@@ -121,5 +141,9 @@ namespace Farmacol.Controllers
             return null;
         }
 
+        public IActionResult Privacy() => View();
+
+        [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
+        public IActionResult Error() => View(new ErrorViewModel { RequestId = Activity.Current?.Id ?? HttpContext.TraceIdentifier });
     }
 }
