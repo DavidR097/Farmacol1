@@ -30,31 +30,31 @@ namespace Farmacol.Controllers
 
         public async Task<IActionResult> Index()
         {
-            // 1. OBTENER ANUNCIOS Y FILTRAR LATERALES (Imágenes verticales)
+            // 1. ANUNCIOS Y FILTRAR LATERALES 
             var anuncios = await _anuncioService.ObtenerAnunciosActivosAsync();
             var laterales = anuncios.Where(a => EsImagenVertical(a.Imagen)).ToList();
 
             ViewBag.Anuncios = anuncios;
             ViewBag.LateralAnuncios = laterales;
 
-            // 2. ESTADÍSTICAS GENERALES (Personal Activo, Solicitudes, Vacaciones)
+            // 2. Personal Activo, Solicitudes, Vacaciones
             ViewBag.PersonalActivo = await _context.Tbpersonals.CountAsync();
-            ViewBag.SoliPendientes = await _context.Tbsolicitudes.CountAsync(s => s.Estado == "Pendiente");
+            ViewBag.SoliPendientes = await _context.Tbsolicitudes.CountAsync(s => s.Estado == "En proceso");
             ViewBag.SoliAprobadas = await _context.Tbsolicitudes.CountAsync(s => s.Estado == "Aprobada");
 
             DateOnly fechaHoy = DateOnly.FromDateTime(DateTime.Now);
 
-            // Personas en vacaciones hoy
+            // Personas en vacaciones 
             ViewBag.VacacionesActivas = await _context.Tbsolicitudes.CountAsync(s =>
                 s.TipoSolicitud == "Vacaciones" &&
                 s.Estado == "Aprobada" &&
-                s.FechaInicio != null && s.FechaFin != null && // Validación de nulidad
+                s.FechaInicio != null && s.FechaFin != null &&
                 fechaHoy >= s.FechaInicio && fechaHoy <= s.FechaFin);
 
             // 3. ESTADÍSTICAS POR ROL
             if (User.IsInRole("Administrador"))
             {
-                // Usuarios bloqueados por Identity
+                // Usuarios bloqueados 
                 ViewBag.UsersBloqueados = await _userManager.Users
                     .CountAsync(u => u.LockoutEnd != null && u.LockoutEnd > DateTimeOffset.Now);
 
@@ -66,8 +66,25 @@ namespace Farmacol.Controllers
             {
                 // Tasa de revisión de solicitudes
                 double total = await _context.Tbsolicitudes.CountAsync();
-                double revisadas = await _context.Tbsolicitudes.CountAsync(s => s.Estado != "Pendiente");
-                ViewBag.TasaRevision = total > 0 ? Math.Round((revisadas / total) * 100) : 0;
+                double revisadas = await _context.Tbsolicitudes.CountAsync(s => s.Estado == "Aprobada");
+                double tasa = total > 0 ? Math.Round((revisadas / total) * 100): 0;
+                ViewBag.TasaRevision = tasa;              
+                
+                string ColorClase = "text-primary";
+
+                if (tasa >= 70)
+                {
+                    ColorClase = "text-success";
+                }
+                else if (tasa > 30)
+                {
+                    ColorClase = "text-warning";
+                }
+                else
+                {
+                    ColorClase = "text-danger";
+                }
+                ViewBag.ColorClase = ColorClase;
             }
 
             return View();

@@ -75,7 +75,29 @@
                         </div>
                     </div>
                 }
-                @if (User.IsInRole("RRHH")) {
+                @if (User.IsInRole("RRHH"))
+                {
+                    <div class="col-md-3">
+                        <div class="stat-card shadow-sm p-3">
+                            <i class="bi bi-file-earmark-text text-primary fs-3"></i>
+                            <h3 class="fw-bold mb-0">@ViewBag.SoliPendientes</h3>
+                            <div class="small text-muted">Solicitudes Pendientes</div>
+                        </div>
+                    </div>                    
+                    <div class="col-md-3">
+                        <div class="stat-card shadow-sm p-3">
+                            <i class="bi bi-file-earmark-check text-primary fs-3"></i>
+                            <h3 class="fw-bold mb-0">@ViewBag.SoliAprobadas</h3>
+                            <div class="small text-muted">Solicitudes Aprobadas</div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="stat-card shadow-sm p-3">
+                            <i class="bi bi-file-earmark-bar-graph fs-3 @ViewBag.ColorClase"></i>
+                            <h3 class="fw-bold mb-0 @ViewBag.ColorClase">@ViewBag.TasaRevision<span class="fs-10">%</span></h3>
+                            <div class="small text-muted">Tasa Revisión Solicitudes</div>
+                        </div>
+                    </div>
                     <div class="col-md-3">
                         <div class="stat-card shadow-sm p-3">
                             <i class="bi bi-people-fill text-primary fs-3"></i>
@@ -85,30 +107,9 @@
                     </div>  
                     <div class="col-md-3">
                         <div class="stat-card shadow-sm p-3">
-                            <i class="bi bi-file-earmark-text text-primary fs-3"></i>
-                            <h3 class="fw-bold mb-0">@ViewBag.SoliPendientes</h3>
-                            <div class="small text-muted">Solicitudes Pendientes</div>
-                        </div>
-                    </div>
-                    <div class="col-md-3">
-                        <div class="stat-card shadow-sm p-3">
                             <i class="bi bi-people-fill text-primary fs-3"></i>
                             <h3 class="fw-bold mb-0">@ViewBag.VacacionesActivas</h3>
                             <div class="small text-muted">Personal en Vacaciones</div>
-                        </div>
-                    </div>
-                    <div class="col-md-3">
-                        <div class="stat-card shadow-sm p-3">
-                            <i class="bi bi-file-earmark-check text-primary fs-3"></i>
-                            <h3 class="fw-bold mb-0">@ViewBag.SoliAprobadas</h3>
-                            <div class="small text-muted">Solicitudes Aprobadas</div>
-                        </div>
-                    </div>
-                    <div class="col-md-3">
-                        <div class="stat-card shadow-sm p-3">
-                            <i class="bi bi-file-earmark-check text-primary fs-3"></i>
-                            <h3 class="fw-bold mb-0">@ViewBag.TasaRevisión</h3>
-                            <div class="small text-muted">Tasa Revisión Solicitudes</div>
                         </div>
                     </div>
                 }
@@ -134,8 +135,14 @@
                 @if (User.IsInRole("RRHH") || User.IsInRole("Jefe") || User.IsInRole("Usuario") || User.IsInRole("TI") || User.IsInRole("Administrador") || User.IsInRole("Recepcionista") || User.IsInRole("Aprendiz") || User.IsInRole("Asistente") || User.IsInRole("Gerente") || User.IsInRole("Coordinador")) {
                     <div class="col-md-4">
                         <a asp-controller="Tbsolicitudes" asp-action="Create" class="quick-access-item shadow-sm">
-                            <div class="icon-shape bg-success text-white"><i class="bi bi-plus-circle"></i></div>
+                            <div class="icon-shape bg-success text-white"><i class="bi bi-file-earmark-plus"></i></div>
                             <div><div class="fw-bold small">Nueva Solicitud</div><div class="text-muted small">Permisos y Vacaciones</div></div>
+                        </a>
+                    </div>
+                    <div class="col-md-4">
+                        <a asp-controller="Salas" asp-action="Index" class="quick-access-item shadow-sm">
+                            <div class="icon-shape bg-info text-white"><i class="bi bi-building-add"></i></div>
+                            <div><div class="fw-bold small">Salas</div><div class="text-muted small">Apartar sala</div></div>
                         </a>
                     </div>
                 }
@@ -143,35 +150,41 @@
                 @if (User.IsInRole("RRHH")) {
                     <div class="col-md-4">
                         <a asp-controller="Tbpersonals" asp-action="Index" class="quick-access-item shadow-sm">
-                            <div class="icon-shape bg-primary text-white"><i class="bi bi-people-fill"></i></div>
+                            <div class="icon-shape bg-black text-white"><i class="bi bi-people-fill"></i></div>
                             <div><div class="fw-bold small">Personal</div><div class="text-muted small">Administrar colaboradores</div></div>
                         </a>
                     </div>
                     <div class="col-md-4">
                         <a asp-controller="Tbsolicitudes" asp-action="Index" class="quick-access-item shadow-sm">
-                            <div class="icon-shape bg-success text-white"><i class="bi bi-plus-circle"></i></div>
-                            <div><div class="fw-bold small">Revisar Solicitudes</div><div class="text-muted small">Permisos y Vacaciones</div></div>
+                            <div class="icon-shape bg-primary text-white"><i class="bi bi-file-earmark-text"></i></div>
+                            <div><div class="fw-bold small">Solicitudes</div><div class="text-muted small">Revisar y aprobar</div></div>
                         </a>
                     </div>
                     <div class="col-md-4">
-                        <a asp-controller="SolicitudRRHH" asp-action="Gestión" class="quick-access-item shadow-sm">
-                            <div class="icon-shape bg-success text-white"><i class="bi bi-plus-circle"></i></div>
+                        <a asp-controller="SolicitudRRHH" asp-action="Gestion" class="quick-access-item shadow-sm">
+                            <div class="icon-shape bg-primary text-white"><i class="bi bi-file-earmark-person-fill"></i></div>
                             <div><div class="fw-bold small">Solicitudes Documentales</div><div class="text-muted small">Documentos Personal</div></div>
                         </a>
                     </div>
                     <div class="col-md-4">
                         <a asp-controller="ExpedientesRRHH" asp-action="Index" class="quick-access-item shadow-sm">
-                            <div class="icon-shape bg-success text-white"><i class="bi bi-file-earmark-bar-graph-fill"></i></div>
+                            <div class="icon-shape bg-primary text-white"><i class="bi bi-folder-fill"></i></div>
                             <div><div class="fw-bold small">Expedientes Colaboradores</div><div class="text-muted small">Administrar Expedientes</div></div>
                         </a>
                     </div>
                 }
 
-                @if (User.IsInRole("TI") || User.IsInRole("Administrador")) {
+                @if (User.IsInRole("TI")) {
                     <div class="col-md-4">
                         <a asp-controller="Tbinventarios" asp-action="Index" class="quick-access-item shadow-sm">
                             <div class="icon-shape bg-info text-white"><i class="bi bi-pc-display"></i></div>
                             <div><div class="fw-bold small">Inventario TI</div><div class="text-muted small">Equipos y Series</div></div>
+                        </a>
+                    </div>
+                    <div class="col-md-4">
+                        <a asp-controller="Usuarios" asp-action="Bloqueados" class="quick-access-item shadow-sm">
+                            <div class="icon-shape bg-info text-white"><i class="bi bi-unlock-fill"></i></div>
+                            <div><div class="fw-bold small">Desbloqueo</div><div class="text-muted small">Usuarios Bloqueados</div></div>
                         </a>
                     </div>
                 }
@@ -192,18 +205,6 @@
                         <div class="text-center p-5 bg-light rounded">
                             <div class="spinner-border text-primary spinner-border-sm"></div>
                         </div>
-                    </div>
-                </div>
-
-                <div class="mt-4 border-top pt-3">
-                    <h6 class="fw-bold small">Estadísticas de Hoy</h6>
-                    <div class="d-flex justify-content-between mb-2 small">
-                        <span>Asistencias</span>
-                        <span class="badge bg-success">@ViewBag.Asistencias/156</span>
-                    </div>
-                    <div class="d-flex justify-content-between mb-2 small">
-                        <span>Permisos Activos</span>
-                        <span class="badge bg-warning text-dark">@ViewBag.PermisosHoy</span>
                     </div>
                 </div>
             </div>
@@ -275,5 +276,4 @@
             }
         });
     </script>
-}
 }
