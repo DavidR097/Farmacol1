@@ -257,6 +257,98 @@ namespace Farmacol.Migrations
                     b.ToTable("TBPlantillas", (string)null);
                 });
 
+            modelBuilder.Entity("Farmacol.Models.TbRequisiciones", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("AprobCH")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("AprobCHMex")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("AprobGerenciaGen")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("CargoSolicitante")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("CreadoPor")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("DedicacionLaboral")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime>("FechaCreacion")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateOnly?>("FechaIngreso")
+                        .HasColumnType("date");
+
+                    b.Property<DateOnly?>("FechaSolicitud")
+                        .HasColumnType("date");
+
+                    b.Property<string>("Firma")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("FormacionAcademica")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("GerenciaSolicitante")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("IdiomaExtranjero")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("MotivoVacante")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("NoRequisicion")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("NombreSolicitante")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Observaciones")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<bool>("OfimaticaAvanzada")
+                        .HasColumnType("bit");
+
+                    b.Property<bool>("OfimaticaBasica")
+                        .HasColumnType("bit");
+
+                    b.Property<bool>("OfimaticaIntermedia")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("OtroConocimiento")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("OtrosEstudios")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("PosicionRequerida")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("ReemplazaA")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<bool>("SAP")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("TipoContrato")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("TbRequisiciones");
+                });
+
             modelBuilder.Entity("Farmacol.Models.TbReservaSala", b =>
                 {
                     b.Property<int>("Id")
@@ -627,6 +719,9 @@ namespace Farmacol.Migrations
                     b.Property<string>("JefeInmediato")
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<int?>("JefeInmediatoCC")
+                        .HasColumnType("int");
+
                     b.Property<decimal?>("LlaveSnacBebidas")
                         .HasColumnType("decimal(18,2)");
 
@@ -874,6 +969,9 @@ namespace Farmacol.Migrations
                         .IsUnicode(false)
                         .HasColumnType("varchar(100)")
                         .HasColumnName("Cargo_JInmediato");
+
+                    b.Property<int?>("DiasEnDinero")
+                        .HasColumnType("int");
 
                     b.Property<string>("DocumentoSolicitado")
                         .HasMaxLength(100)

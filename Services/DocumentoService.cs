@@ -136,6 +136,9 @@ public class DocumentoService
         Reemplazar(doc, "{{FECHA_INICIO}}", solicitud?.FechaInicio?.ToString("dd/MM/yyyy") ?? "");
         Reemplazar(doc, "{{FECHA_FIN}}", solicitud?.FechaFin?.ToString("dd/MM/yyyy") ?? "");
         Reemplazar(doc, "{{TOTAL_DIAS}}", solicitud?.TotalDias?.ToString() ?? "0");
+        Reemplazar(doc, "{{HORA_INICIO}}", solicitud?.HoraInicio?.ToString() ?? "");
+        Reemplazar(doc, "{{HORA_FIN}}", solicitud?.HoraFin?.ToString() ?? "");
+        Reemplazar(doc, "{{TOTAL_HORAS}}", solicitud?.TotalHoras?.ToString() ?? "0");
         Reemplazar(doc, "{{DIAS PENDIENTES}}", "0");
         Reemplazar(doc, "{{DIAS_PENDIENTES}}", "0");
         Reemplazar(doc, "{{OBSERVACIONES}}", obsTexto);

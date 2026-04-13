@@ -29,6 +29,7 @@ public partial class Farmacol1Context : IdentityDbContext<IdentityUser, Identity
     public virtual DbSet<TbSala> TbSalas { get; set; }
     public virtual DbSet<TbReservaSala> TbReservasSalas { get; set; }
     public virtual DbSet<TbAnuncio> TbAnuncios { get; set; }
+    public virtual DbSet<TbRequisiciones> TbRequisiciones { get; set; }
 
     //protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
     //    => optionsBuilder.UseSqlServer("Server=DARIANO\\SQLEXPRESS03;database=Farmacol1;integrated security=true;TrustServerCertificate=True;");
@@ -42,7 +43,7 @@ public partial class Farmacol1Context : IdentityDbContext<IdentityUser, Identity
             entity.HasKey(e => e.IdEquipo).HasName("PK__TBInvent__AB5A5EA976A52A69");
             entity.ToTable("TBInventario");
             entity.Property(e => e.IdEquipo).HasColumnName("ID_Equipo");
-            entity.Property(e => e.CC).HasColumnName("Cédula");  
+            entity.Property(e => e.CC).HasColumnName("Cédula");
             entity.Property(e => e.Anexo).HasMaxLength(200).IsUnicode(false);
             entity.Property(e => e.Dispositivo).HasMaxLength(200).IsUnicode(false);
             entity.Property(e => e.Imei).HasMaxLength(100).IsUnicode(false).HasColumnName("IMEI");
@@ -75,7 +76,7 @@ public partial class Farmacol1Context : IdentityDbContext<IdentityUser, Identity
             entity.Property(e => e.CiudadTrabajo).HasMaxLength(100);
             entity.Property(e => e.NombreColaborador).HasMaxLength(150);
             entity.Property(e => e.Cargo).HasMaxLength(100);
-            entity.Property(e => e.CodCeco); 
+            entity.Property(e => e.CodCeco);
             entity.Property(e => e.NombreCentroCostos).HasMaxLength(150);
             entity.Property(e => e.Area).HasMaxLength(100);
             entity.Property(e => e.Gerencia).HasMaxLength(150);
@@ -85,6 +86,7 @@ public partial class Farmacol1Context : IdentityDbContext<IdentityUser, Identity
             entity.Property(e => e.CiudadNacimiento).HasMaxLength(100);
             entity.Property(e => e.EstadoCivil).HasMaxLength(30);
             entity.Property(e => e.CorreoPersonal).HasMaxLength(150);
+            entity.Property(e => e.Contacto).HasMaxLength(100);
             entity.Property(e => e.Contacto).HasMaxLength(100);
             entity.Property(e => e.DireccionResidencia).HasMaxLength(200);
             entity.Property(e => e.Barrio).HasMaxLength(100);
@@ -127,7 +129,7 @@ public partial class Farmacol1Context : IdentityDbContext<IdentityUser, Identity
             entity.HasKey(e => e.IdSolicitud).HasName("PK__TBSoliRe__ED71123A21CDC8AB");
             entity.ToTable("TBSoliRechazada");
             entity.Property(e => e.IdSolicitud).ValueGeneratedNever().HasColumnName("ID_Solicitud");
-            entity.Property(e => e.CC).HasColumnName("Cédula"); 
+            entity.Property(e => e.CC).HasColumnName("Cédula");
             entity.Property(e => e.Anexos).HasMaxLength(200).IsUnicode(false);
             entity.Property(e => e.FechaSolicitud).HasColumnName("Fecha_Solicitud");
             entity.Property(e => e.Motivo).HasMaxLength(200).IsUnicode(false);
@@ -239,7 +241,7 @@ public partial class Farmacol1Context : IdentityDbContext<IdentityUser, Identity
             entity.Property(e => e.RutaArchivo).HasMaxLength(500).IsRequired();
             entity.Property(e => e.Modulo).HasMaxLength(20);
             entity.Property(e => e.SubidoPor).HasMaxLength(200);
-            entity.Property(e => e.Visible).HasDefaultValue(true);   
+            entity.Property(e => e.Visible).HasDefaultValue(true);
             entity.Property(e => e.FechaSubida).HasDefaultValueSql("GETDATE()");
         });
 

@@ -222,4 +222,5 @@ public class ExpedientesRRHHController : Controller
         return File(bytes, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
             $"ExpedientesRRHH_{DateTime.Now:yyyyMMdd_HHmm}.xlsx");
     }
+
 }

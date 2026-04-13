@@ -6,7 +6,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 namespace Farmacol.Migrations
 {
     /// <inheritdoc />
-    public partial class MigracionInicial : Migration
+    public partial class Fix_DiasEnDinero_Unique : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -65,7 +65,10 @@ namespace Farmacol.Migrations
                     FechaCreacion = table.Column<DateTime>(type: "datetime2", nullable: false),
                     FechaExpiracion = table.Column<DateTime>(type: "datetime2", nullable: true),
                     Activo = table.Column<bool>(type: "bit", nullable: false),
-                    CreadoPor = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: false)
+                    CreadoPor = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: false),
+                    Imagen = table.Column<string>(type: "nvarchar(200)", maxLength: 200, nullable: true),
+                    Width = table.Column<int>(type: "int", nullable: true),
+                    Height = table.Column<int>(type: "int", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -255,7 +258,11 @@ namespace Farmacol.Migrations
                     Concepto = table.Column<string>(type: "nvarchar(200)", maxLength: 200, nullable: true),
                     CorreoCorporativo = table.Column<string>(type: "nvarchar(150)", maxLength: 150, nullable: true),
                     UsuarioCorporativo = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: true),
-                    FotoPerfil = table.Column<string>(type: "nvarchar(max)", nullable: true)
+                    FotoPerfil = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    FirmaPath = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    JefeInmediato = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    CargoJefeInmediato = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    JefeInmediatoCC = table.Column<int>(type: "int", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -297,6 +304,44 @@ namespace Farmacol.Migrations
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_TBPlantillas", x => x.Id);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "TbRequisiciones",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    NoRequisicion = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    FechaSolicitud = table.Column<DateOnly>(type: "date", nullable: true),
+                    PosicionRequerida = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    GerenciaSolicitante = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    NombreSolicitante = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    CargoSolicitante = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    Firma = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    TipoContrato = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    DedicacionLaboral = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    MotivoVacante = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    ReemplazaA = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    FormacionAcademica = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    OtrosEstudios = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    IdiomaExtranjero = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    OfimaticaBasica = table.Column<bool>(type: "bit", nullable: false),
+                    OfimaticaIntermedia = table.Column<bool>(type: "bit", nullable: false),
+                    OfimaticaAvanzada = table.Column<bool>(type: "bit", nullable: false),
+                    SAP = table.Column<bool>(type: "bit", nullable: false),
+                    OtroConocimiento = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    AprobGerenciaGen = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    AprobCH = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    AprobCHMex = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    Observaciones = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    FechaIngreso = table.Column<DateOnly>(type: "date", nullable: true),
+                    FechaCreacion = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    CreadoPor = table.Column<string>(type: "nvarchar(max)", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_TbRequisiciones", x => x.Id);
                 });
 
             migrationBuilder.CreateTable(
@@ -372,7 +417,8 @@ namespace Farmacol.Migrations
                     NivelSolicitante = table.Column<string>(type: "nvarchar(max)", nullable: true),
                     FechaDevolucion = table.Column<DateTime>(type: "datetime2", nullable: true),
                     TipoFlujo = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: true),
-                    DocumentoSolicitado = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: true)
+                    DocumentoSolicitado = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: true),
+                    DiasEnDinero = table.Column<int>(type: "int", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -674,6 +720,9 @@ namespace Farmacol.Migrations
 
             migrationBuilder.DropTable(
                 name: "TBPlantillas");
+
+            migrationBuilder.DropTable(
+                name: "TbRequisiciones");
 
             migrationBuilder.DropTable(
                 name: "TBReservasSalas");

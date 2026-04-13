@@ -17,9 +17,9 @@ namespace Farmacol.Controllers
         private readonly IWebHostEnvironment _env;
 
         public HomeController(
-            Farmacol1Context context, 
+            Farmacol1Context context,
             UserManager<IdentityUser> userManager,
-            AnuncioService anuncioService, 
+            AnuncioService anuncioService,
             IWebHostEnvironment env)
         {
             _context = context;
@@ -67,9 +67,9 @@ namespace Farmacol.Controllers
                 // Tasa de revisión de solicitudes
                 double total = await _context.Tbsolicitudes.CountAsync();
                 double revisadas = await _context.Tbsolicitudes.CountAsync(s => s.Estado == "Aprobada");
-                double tasa = total > 0 ? Math.Round((revisadas / total) * 100): 0;
-                ViewBag.TasaRevision = tasa;              
-                
+                double tasa = total > 0 ? Math.Round((revisadas / total) * 100) : 0;
+                ViewBag.TasaRevision = tasa;
+
                 string ColorClase = "text-primary";
 
                 if (tasa >= 70)
@@ -137,7 +137,7 @@ namespace Farmacol.Controllers
                         if (br.ReadByte() != 0xFF) continue;
                         byte marker = br.ReadByte();
                         while (marker == 0xFF) marker = br.ReadByte();
-                        
+
                         if (marker >= 0xC0 && marker <= 0xCF && marker != 0xC4 && marker != 0xC8 && marker != 0xCC)
                         {
                             fs.Seek(3, SeekOrigin.Current); // Skip len (2) and precision (1)
