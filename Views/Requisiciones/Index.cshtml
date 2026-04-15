@@ -1,0 +1,72 @@
+﻿@model IEnumerable<Farmacol.Models.TbRequisicione>
+@{
+    ViewData["Title"] = "Requisiciones de Personal";
+}
+
+<h1>Requisiciones de Personal</h1>
+<hr />
+
+<div class="mb-3">
+    <a asp-action="Create" class="btn btn-primary">➕ Nueva Requisición</a>
+</div>
+
+@if (!Model.Any())
+{
+    <div class="alert alert-info">No hay requisiciones registradas.</div>
+}
+else
+{
+    <div class="table-responsive">
+        <table class="table table-hover align-middle">
+            <thead class="table-dark">
+                <tr>
+                    <th>No. Requisición</th>
+                    <th>Fecha Solicitud</th>
+                    <th>Posición Requerida</th>
+                    <th>Gerencia</th>
+                    <th>Solicitante</th>
+                    <th>Conocimientos</th>
+                    <th>Acciones</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var item in Model)
+                {
+                    <tr>
+                        <td><strong>@item.NoRequisicion</strong></td>
+                        <td>@item.FechaSolicitud?.ToString("dd/MM/yyyy")</td>
+                        <td>@item.PosicionRequerida</td>
+                        <td>@item.GerenciaSolicitante</td>
+                        <td>@item.NombreSolicitante</td>
+                        <td>
+                            @if (item.OfimaticaBasica)
+                            {
+                                <span class="badge bg-secondary">Básica</span>
+                            }
+                            @if (item.OfimaticaIntermedia)
+                            {
+                                <span class="badge bg-secondary">Intermedia</span>
+                            }
+                            @if (item.OfimaticaAvanzada)
+                            {
+                                <span class="badge bg-secondary">Avanzada</span>
+                            }
+                            @if (item.SAP)
+                            {
+                                <span class="badge bg-info">SAP</span>
+                            }
+                            @if (!string.IsNullOrEmpty(item.OtroConocimiento))
+                            {
+                                <span class="badge bg-warning">@item.OtroConocimiento</span>
+                            }
+                        </td>
+                        <td>
+                            <a asp-action="Details" asp-route-id="@item.Id" class="btn btn-sm btn-outline-primary">Ver</a>
+                            <a asp-action="Edit" asp-route-id="@item.Id" class="btn btn-sm btn-outline-warning">Editar</a>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+}

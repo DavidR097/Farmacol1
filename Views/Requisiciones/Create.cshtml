@@ -1,0 +1,220 @@
+﻿@model Farmacol.Models.TbRequisicione
+@{
+    ViewData["Title"] = "Nueva Requisición de Personal";
+}
+
+<div class="container py-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h1 class="h3 mb-0 text-primary">📑 Nueva Requisición de Personal</h1>
+            <p class="text-muted">Complete los campos para iniciar el proceso de selección.</p>
+        </div>
+        <a asp-action="Index" class="btn btn-outline-secondary">
+            <i class="bi bi-arrow-left"></i> Volver al listado
+        </a>
+    </div>
+
+    <hr />
+
+    @if (TempData["Error"] != null)
+    {
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+            <strong>⚠️ Error:</strong> @TempData["Error"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    }
+ *
+    <form asp-action="Create" method="post" class="needs-validation">
+        @Html.AntiForgeryToken()
+
+        <div class="card shadow-sm mb-4">
+            <div class="card-header bg-light fw-bold">
+                1. Información de la Solicitud
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-3 mb-3">
+                        <label class="form-label fw-bold text-secondary">No. Requisición</label>
+                        <input asp-for="NoRequisicion" class="form-control bg-light border-primary-subtle" readonly
+                               value="@ViewBag.NoRequisicionSugerido" />
+                    </div>
+
+                    <div class="col-md-3 mb-3">
+                        <label class="form-label fw-bold text-secondary">Fecha Solicitud</label>
+                        <input asp-for="FechaSolicitud" type="date" class="form-control bg-light"
+                               value="@Model.FechaSolicitud?.ToString("yyyy-MM-dd")" readonly />
+                    </div>
+
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label fw-bold">Nombre del Solicitante</label>
+                        <input asp-for="NombreSolicitante" class="form-control" required placeholder="Nombre completo" />
+                    </div>
+
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label fw-bold">Gerencia Solicitante</label>
+                        <input asp-for="GerenciaSolicitante" class="form-control" required placeholder="Ej. TI, RRHH, Finanzas" />
+                    </div>
+
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label fw-bold">Cargo del Solicitante</label>
+                        <input asp-for="CargoSolicitante" class="form-control" />
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card shadow-sm mb-4 border-start border-info border-4">
+            <div class="card-header bg-white fw-bold">
+                2. Perfil de la Posición
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label fw-bold">Posición Requerida</label>
+                        <input asp-for="PosicionRequerida" class="form-control" required placeholder="Nombre del puesto vacante" />
+                    </div>
+
+                    <div class="col-md-3 mb-3">
+                        <label class="form-label fw-bold">Tipo de Contrato</label>
+                        <select asp-for="TipoContrato" class="form-select">
+                            <option value="">Seleccione...</option>
+                            <option value="Indefinido">Indefinido</option>
+                            <option value="Término Fijo">Término Fijo</option>
+                            <option value="Prestación de Servicios">Prestación de Servicios</option>
+                            <option value="Aprendizaje">Aprendizaje</option>
+                            <option value="Obra o Labor">Obra o Labor</option>
+                        </select>
+                    </div>
+
+                    <div class="col-md-3 mb-3">
+                        <label class="form-label fw-bold">Fecha Probable Ingreso</label>
+                        <input asp-for="FechaIngreso" type="date" class="form-control" />
+                    </div>
+
+                    <div class="col-md-4 mb-3">
+                        <label class="form-label fw-bold">Dedicación Laboral</label>
+                        <select asp-for="DedicacionLaboral" class="form-select">
+                            <option value="">Seleccione...</option>
+                            <option value="Medio Tiempo">Medio Tiempo</option>
+                            <option value="Tiempo Completo">Tiempo Completo</option>
+                            <option value="Horas">Horas</option>                           
+                        </select>
+                    </div>
+
+                    <div class="col-md-8 mb-3">
+                        <label class="form-label fw-bold">Motivo Vacante</label>
+                        <select asp-for="MotivoVacante" class="form-select">
+                            <option value="">Seleccione...</option>
+                            <option value="Renuncia Titular">Renuncia Titular</option>
+                            <option value="Promoción o traslado">Promoción o traslado</option>
+                            <option value="Incapacidad">Incapacidad</option>
+                            <option value="Cancelación de contrato">Cancelación de contrato</option>
+                            <option value="Licencia no remunerada">Licencia no remunerada</option>
+                            <option value="Vacaciones">Vacaciones</option>
+                            <option value="Licencia Maternidad">Licencia Maternidad</option>
+                        </select>
+                    </div>
+
+
+
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label fw-bold">Formación Académica</label>
+                        <select asp-for="FormacionAcademica" class="form-select">
+                            <option value="">Seleccione...</option>
+                            <option value="Bachiller">Bachiller</option>
+                            <option value="Técnico">Técnico</option>
+                            <option value="Tecnólogo">Tecnólogo</option>
+                            <option value="Estudiante Universitario">Estudiante Universitario</option>
+                            <option value="Profesional">Profesional</option>
+                            <option value="Especialización">Especialización</option>
+                            <option value="Maestría">Maestría</option>
+                        </select>
+                    </div>
+                    <div class="col-md-3 mb-3">
+                        <label class="form-label fw-bold">Idioma Extranjero</label>
+                        <select asp-for="IdiomaExtranjero" class="form-select">
+                            <option value="">Seleccione...</option>
+                            <option value="Inglés">Inglés</option>
+                            <option value="Francés">Francés</option>
+                            <option value="Mandarín">Mandarín</option>
+                            <option value="Portugues">Portugues</option>
+                            <option value="Alemán">Alemán</option>
+                        </select>
+                    </div>
+                    <div class="col-md-3 mb-3">
+                        <label class="form-label fw-bold">Otros Estudios</label>
+                        <input asp-for="OtrosEstudios" class="form-control" />
+                    </div>
+                </div>
+
+                <div class="mb-0">
+                    <label class="form-label fw-bold">Observaciones y Requisitos Especiales</label>
+                    <textarea asp-for="Observaciones" class="form-control" rows="3" placeholder="Detalle funciones específicas o requisitos adicionales..."></textarea>
+                </div>
+            </div>
+        </div>
+
+        <div class="card shadow-sm mb-4 border-start border-primary border-4">
+            <div class="card-header bg-primary text-white">
+                <i class="bi bi-gear-fill"></i> <strong>Conocimientos Requeridos</strong>
+            </div>
+            <div class="card-body">
+                <div class="row g-3">
+                    <div class="col-6 col-md-3">
+                        <div class="form-check card p-2 hover-shadow">
+                            <input type="checkbox" asp-for="OfimaticaBasica" class="form-check-input ms-1" />
+                            <label asp-for="OfimaticaBasica" class="form-check-label ms-2">Ofimática Básica</label>
+                        </div>
+                    </div>
+                    <div class="col-6 col-md-3">
+                        <div class="form-check card p-2 hover-shadow">
+                            <input type="checkbox" asp-for="OfimaticaIntermedia" class="form-check-input ms-1" />
+                            <label asp-for="OfimaticaIntermedia" class="form-check-label ms-2">Ofimática Intermedia</label>
+                        </div>
+                    </div>
+                    <div class="col-6 col-md-3">
+                        <div class="form-check card p-2 hover-shadow">
+                            <input type="checkbox" asp-for="OfimaticaAvanzada" class="form-check-input ms-1" />
+                            <label asp-for="OfimaticaAvanzada" class="form-check-label ms-2">Ofimática Avanzada</label>
+                        </div>
+                    </div>
+                    <div class="col-6 col-md-3">
+                        <div class="form-check card p-2 hover-shadow">
+                            <input type="checkbox" asp-for="SAP" class="form-check-input ms-1" />
+                            <label asp-for="SAP" class="form-check-label ms-2">SAP</label>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mt-3">
+                    <label class="form-label fw-bold">Otros conocimientos específicos</label>
+                    <input asp-for="OtroConocimiento" class="form-control" placeholder="Mencione software o conocimientos adicionales" />
+                </div>
+            </div>
+        </div>
+
+        <div class="d-grid gap-2 d-md-flex justify-content-md-end mb-5">
+            <a asp-action="Index" class="btn btn-light btn-lg px-5 border">Cancelar</a>
+            <button type="submit" class="btn btn-success btn-lg px-5">
+                💾 Guardar Requisición
+            </button>
+        </div>
+    </form>
+</div>
+
+@section Scripts {
+    <style>
+        .hover-shadow:hover {
+            background-color: #f8f9fa;
+            border-color: #0d6efd;
+            transition: 0.3s;
+            cursor: pointer;
+        }
+        .card { border-radius: 10px; }
+        .form-control:focus, .form-select:focus {
+            border-color: #0d6efd;
+            box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.1);
+        }
+    </style>
+}
