@@ -30,8 +30,6 @@ namespace Farmacol.Services
                     IdSolicitud = idSolicitud
                 });
 
-                // Si el destino parece ser un correo o usuario, intentar encontrar el otro identificador
-                // y crear notificación para ambos (usuario corporativo y correo) para asegurar entrega.
                 try
                 {
                     var p = await _context.Tbpersonals.FirstOrDefaultAsync(x => x.UsuarioCorporativo == usuarioDestino || x.CorreoCorporativo == usuarioDestino);

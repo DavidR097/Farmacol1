@@ -33,4 +33,5 @@ public partial class TbRequisicione
     public DateOnly? FechaIngreso { get; set; }
     public DateTime FechaCreacion { get; set; } = DateTime.Now;
     public string? CreadoPor { get; set; }
+    public string? Estado { get; set; }
 }

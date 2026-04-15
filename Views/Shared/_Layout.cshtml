@@ -598,18 +598,7 @@
                                asp-controller="Tbsolicitudes" asp-action="Index">
                                 <span class="sb-icon">📄</span><span class="sb-text">Ver todas</span>
                             </a>
-                        }
-                        @if (User.IsInRole("Jefe") || User.IsInRole("Gerente") || 
-                                User.IsInRole("Gerente Capital Humano") || 
-                                User.IsInRole("RRHH") || User.IsInRole("Administrador"))
-                        {
-                            <div class="sb-label">Requisiciones</div>
-                            <a class="sb-item @(ctrl == "Requisiciones" ? "active" : "")"
-                                asp-controller="Requisiciones" asp-action="Index">
-                                <span class="sb-icon">📋</span>
-                                <span class="sb-text">Requisiciones de Personal</span>
-                            </a>
-                        }
+                        }                        
                         @if (crearSolicitud)
                         {
                             <a class="sb-sub-item @(ctrl == "Tbsolicitudes" && action == "Create" ? "active" : "")"
@@ -635,6 +624,17 @@
                                 <span class="sb-icon">❌</span><span class="sb-text">Rechazadas</span>
                             </a>
                         }
+                    @if (User.IsInRole("Jefe") || User.IsInRole("Gerente") ||
+                                                    User.IsInRole("Gerente Capital Humano") ||
+                                                    User.IsInRole("RRHH") || User.IsInRole("Administrador"))
+                    {
+                        <div class="sb-label">Requisiciones</div>
+                        <a class="sb-item @(ctrl == "Requisiciones" ? "active" : "")"
+                               asp-controller="Requisiciones" asp-action="Index">
+                            <span class="sb-icon">📋</span>
+                            <span class="sb-text">Requisiciones de Personal</span>
+                        </a>
+                    }
                     </div>
                 }
 

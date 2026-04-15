@@ -7,7 +7,7 @@ public class InhabilitadoController : Controller
     public IActionResult Index(string? hasta, string? motivo)
     {
         ViewBag.Hasta = hasta ?? "pronto";
-        ViewBag.Motivo = motivo ?? "";
+        ViewBag.Motivo = motivo ?? "Inhabilitación temporal";
         return View();
     }
 }

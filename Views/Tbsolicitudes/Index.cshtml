@@ -12,19 +12,17 @@
     bool esCapHumano = userArea == "Capital Humano";
     int? userCC = ViewBag.UserCC as int?;
 
-    // Quién puede ver el botón Revisar
+    
     bool puedeRevisar = esRRHH || esDirectivo || esJefe
-                     || (esGerente && !esCapHumano)   // Gerentes de área (no Cap Humano que es RRHH)
-                     || (esGerente && esCapHumano)     // Gerente Capital Humano también
+                     || (esGerente && !esCapHumano)  
+                     || (esGerente && esCapHumano)     
                      || (esCoord && esCapHumano)
                      || (esAsistente && esCapHumano);
 
-    // Quién puede crear solicitudes
     bool puedeCrear = esAdmin || esRRHH
                    || (esCoord && esCapHumano)
                    || (esAsistente && esCapHumano);
 
-    // Quién ve barra de búsqueda/filtros
     bool verFiltros = esAdmin || esRRHH || esDirectivo || esGerente || esJefe
                    || (esCoord && esCapHumano)
                    || (esAsistente && esCapHumano);
@@ -33,14 +31,14 @@
 <h1>Solicitudes</h1>
 
 <div class="d-flex gap-2 mb-3">
-    <!-- Exportar con filtros -->
+
     <a asp-action="ExportarExcel"
        asp-route-busqueda="@ViewBag.Busqueda"
        asp-route-estado="@ViewBag.Estado"
        class="btn btn-success btn-sm">
         📥 Exportar filtrado
     </a>
-    <!-- Exportar todo -->
+
     <a asp-action="ExportarExcel" asp-route-todo="true"
        class="btn btn-outline-success btn-sm">
         📥 Exportar todo

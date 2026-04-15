@@ -25,7 +25,7 @@ public class InhabilitadoMiddleware
 
         var path = context.Request.Path.Value?.ToLower() ?? "";
 
-        // Rutas que siempre se permiten aunque esté inhabilitado
+        // Rutas siempre permitidas aunque esté inhabilitado
         bool esRutaLibre = path.StartsWith("/login")
                         || path.StartsWith("/inhabilitado")
                         || path.StartsWith("/account")
@@ -43,44 +43,60 @@ public class InhabilitadoMiddleware
         }
 
         var userName = context.User.Identity.Name ?? "";
-        var identityUser = await userManager.FindByNameAsync(userName);
-
-        // 1. Revisar Lockout de Identity (esto es lo que más falta)
-        if (identityUser?.LockoutEnd.HasValue == true && identityUser.LockoutEnd > DateTimeOffset.UtcNow)
+        if (string.IsNullOrEmpty(userName))
         {
-            var hasta = identityUser.LockoutEnd.Value.LocalDateTime.ToString("dd/MM/yyyy");
-            context.Response.Redirect($"/Inhabilitado?hasta={hasta}&motivo=Inhabilitación%20por%20vacaciones");
+            await _next(context);
             return;
         }
 
-        Tbpersonal? personal = null;
-        if (!string.IsNullOrWhiteSpace(userName))
+        // Solo revisar delegaciones si el usuario es Jefe o Gerente
+        bool esJefeOGerente = context.User.IsInRole("Jefe") || context.User.IsInRole("Gerente");
+
+        if (!esJefeOGerente)
         {
-            personal = await db.Tbpersonals.AsNoTracking()
-                .FirstOrDefaultAsync(p => p.UsuarioCorporativo == userName);
-        }
-        if (personal == null && identityUser != null &&
-            !string.IsNullOrWhiteSpace(identityUser.Email))
-        {
-            personal = await db.Tbpersonals.AsNoTracking()
-                .FirstOrDefaultAsync(p => p.CorreoCorporativo == identityUser.Email);
+            // Usuarios normales (TI, Asistente, Usuario, etc.) NO se inhabilitan por delegación
+            await _next(context);
+            return;
         }
 
-        if (personal != null)
-        {
-            var hoy = DateOnly.FromDateTime(DateTime.Today);
-            var delegacionActiva = await db.TbDelegaciones
-                .AsNoTracking()
-                .AnyAsync(d => d.Activa &&
-                               d.CC == personal.CC &&
-                               d.FechaInicio <= hoy &&
-                               d.FechaFin >= hoy);
+        // Buscar el registro en Tbpersonal
+        var personal = await db.Tbpersonals.AsNoTracking()
+            .FirstOrDefaultAsync(p => p.UsuarioCorporativo == userName
+                                   || p.CorreoCorporativo == userName);
 
-            if (delegacionActiva)
-            {
-                context.Response.Redirect("/Inhabilitado");
-                return;
-            }
+        if (personal == null)
+        {
+            await _next(context);
+            return;
+        }
+
+        var hoy = DateOnly.FromDateTime(DateTime.Today);
+
+        // Revisar si tiene delegación activa
+        var delegacionActiva = await db.TbDelegaciones
+            .AsNoTracking()
+            .FirstOrDefaultAsync(d => d.Activa
+                                   && d.CC == personal.CC
+                                   && d.FechaInicio <= hoy
+                                   && d.FechaFin >= hoy);
+
+        if (delegacionActiva != null)
+        {
+            var hasta = delegacionActiva.FechaFin.ToString("dd/MM/yyyy");
+            var motivo = string.IsNullOrEmpty(delegacionActiva.Motivo)
+                        ? "Inhabilitación temporal"
+                        : delegacionActiva.Motivo;
+
+            context.Response.Redirect($"/Inhabilitado?hasta={hasta}&motivo={Uri.EscapeDataString(motivo)}");
+            return;
+        }
+
+        // Solo si es Jefe/Gerente y NO tiene delegación, revisamos Lockout de Identity (bloqueo manual)
+        var identityUser = await userManager.FindByNameAsync(userName);
+        if (identityUser?.LockoutEnd.HasValue == true && identityUser.LockoutEnd > DateTimeOffset.UtcNow)
+        {
+            context.Response.Redirect("/Inhabilitado?hasta=indefinido&motivo=Bloqueo%20manual%20por%20administrador");
+            return;
         }
 
         await _next(context);
