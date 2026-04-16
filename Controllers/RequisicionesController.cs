@@ -1,26 +1,26 @@
 ﻿using Farmacol.Models;
 using Farmacol.Services;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
 namespace Farmacol.Controllers;
 
-[Authorize(Roles = "Administrador,RRHH,Gerente")]
+[Authorize(Roles = "Administrador,RRHH,Gerente,Jefe,Gerente Capital Humano,Directivo")]
 public class RequisicionesController : Controller
 {
     private readonly Farmacol1Context _context;
     private readonly EmailService _email;
-    private readonly NotificacionService _notif;
+    private readonly UserManager<IdentityUser> _userManager;
 
-    public RequisicionesController(
-        Farmacol1Context context,
-        EmailService email,
-        NotificacionService notif)
+    public RequisicionesController(Farmacol1Context context, 
+                                    EmailService email, 
+                                    UserManager<IdentityUser> userManager)
     {
         _context = context;
         _email = email;
-        _notif = notif;
+        _userManager = userManager;
     }
 
     // INDEX
@@ -40,32 +40,32 @@ public class RequisicionesController : Controller
             .OrderByDescending(r => r.NoRequisicion)
             .FirstOrDefaultAsync();
 
-        string nuevoNo = "RP-00001";
+        string nuevoNoRequisicion = "RP-00001";
         if (ultimo != null && !string.IsNullOrEmpty(ultimo.NoRequisicion))
         {
             var num = int.TryParse(ultimo.NoRequisicion.Replace("RP-", ""), out int n) ? n : 0;
-            nuevoNo = $"RP-{(num + 1):D5}";
+            nuevoNoRequisicion = $"RP-{(num + 1):D5}";
         }
 
-        ViewBag.NoRequisicionSugerido = nuevoNo;
+        ViewBag.NoRequisicionSugerido = nuevoNoRequisicion;
 
         var model = new TbRequisicione
         {
-            FechaSolicitud = DateOnly.FromDateTime(DateTime.Today),
-            Estado = "En proceso"
+            FechaSolicitud = DateOnly.FromDateTime(DateTime.Today)
         };
 
         return View(model);
     }
 
-    // CREATE POST - Crea + Inicia flujo + Notificaciones
+    // CREATE POST - Corregido con notificaciones dinámicas
+    // CREATE POST - Notificaciones dinámicas por Cargo y Rol
     [HttpPost]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> Create(TbRequisicione tbRequisicione)
     {
         if (ModelState.IsValid)
         {
-            // Número de requisición
+            // Generar No. Requisición
             if (string.IsNullOrEmpty(tbRequisicione.NoRequisicion))
             {
                 var ultimo = await _context.TbRequisiciones
@@ -85,73 +85,120 @@ public class RequisicionesController : Controller
             tbRequisicione.CreadoPor = User.Identity?.Name ?? "Sistema";
             tbRequisicione.Estado = "En proceso";
 
-            tbRequisicione.AprobGerenciaGen = "Gerencia General";   
-            tbRequisicione.AprobCH = "RRHH";
-            tbRequisicione.AprobCHMex = "Directivo";          
-
             _context.Add(tbRequisicione);
             await _context.SaveChangesAsync();
 
-            // ====================== NOTIFICACIONES ======================
+            // =============================================
+            // NOTIFICACIONES POR CORREO - BÚSQUEDA ROBUSTA
+            // =============================================
+            try
+            {
+                // 1. Búsqueda por Cargo (más específico)
+                var cargosClave = new[]
+                {
+                "Gerente Capital Humano",
+                "Gerente General",
+                "Gerente Compensaciones Y Beneficios",
+            };
 
-            await EnviarNotificacionFlujo(tbRequisicione, "Gerencia General", "Directivo");
+                var correosPorCargo = await _context.Tbpersonals
+                    .Where(p => p.CorreoCorporativo != null &&
+                                p.Cargo != null &&
+                                cargosClave.Any(c => p.Cargo.Contains(c, StringComparison.OrdinalIgnoreCase)))
+                    .Select(p => p.CorreoCorporativo!)
+                    .Distinct()
+                    .ToListAsync();
 
-            await EnviarNotificacionFlujo(tbRequisicione, "RRHH", "RRHH");
+                // Combinar ambos (evitando duplicados)
+                var correosANotificar = correosPorCargo.ToList();
 
-            await EnviarNotificacionFlujo(tbRequisicione, "CH MXN", "Directivo");
+                if (correosANotificar.Any())
+                {
+                    var asunto = $"Nueva Requisición de Personal - {tbRequisicione.NoRequisicion}";
+                    var cuerpo = $@"
+                    <p>Se ha creado una nueva requisición de personal en el sistema:</p>
+                    <p><strong>No. Requisición:</strong> {tbRequisicione.NoRequisicion}</p>
+                    <p><strong>Posición Requerida:</strong> {tbRequisicione.PosicionRequerida}</p>
+                    <p><strong>Solicitante:</strong> {tbRequisicione.NombreSolicitante}</p>
+                    <p><strong>Gerencia:</strong> {tbRequisicione.GerenciaSolicitante}</p>
+                    <br>
+                    <p>Por favor ingrese al sistema para revisar y dar seguimiento.</p>";
 
-            TempData["Exito"] = $"✅ Requisición {tbRequisicione.NoRequisicion} creada y enviada a Gerencia General.";
-            return RedirectToAction(nameof(Index));
+                    foreach (var correo in correosANotificar)
+                    {
+                        if (!string.IsNullOrWhiteSpace(correo))
+                        {
+                            await _email.EnviarAsync(
+                                destinatario: correo,
+                                asunto: asunto,
+                                cuerpoHtml: cuerpo
+                            );
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                // Solo logueamos el error, no interrumpimos el flujo
+                Console.WriteLine($"Error enviando notificaciones de requisición: {ex.Message}");
+            }
+
+            TempData["Exito"] = $"✅ Requisición {tbRequisicione.NoRequisicion} creada correctamente.";
+            return RedirectToAction("Gestionar", new { id = tbRequisicione.Id });
         }
 
         return View(tbRequisicione);
     }
 
-    // Helper para enviar notificaciones (interna + correo)
-    private async Task EnviarNotificacionFlujo(TbRequisicione req, string paso, string rol)
+    // GESTIONAR / VER REQUISICIÓN (Versión simplificada - solo datos + estado)
+    public async Task<IActionResult> Gestionar(int id)
     {
-        string mensaje = $"Nueva requisición de personal #{req.NoRequisicion} requiere tu aprobación como {paso}.";
+        var req = await _context.TbRequisiciones.FindAsync(id);
+        if (req == null) return NotFound();
 
-        // Notificación interna (a todos los usuarios con ese rol)
-        var usuarios = await _context.Tbpersonals
-            .Where(p => p.Cargo != null && p.Cargo.Contains(rol, StringComparison.OrdinalIgnoreCase))
-            .ToListAsync();
-
-        foreach (var u in usuarios)
-        {
-            var destino = u.UsuarioCorporativo ?? u.CorreoCorporativo ?? "";
-            if (!string.IsNullOrEmpty(destino))
-            {
-                await _notif.CrearNotificacion(destino, mensaje, req.Id);
-            }
-        }
-
-        // Correo a RRHH / Gerente CH (ajusta según necesites)
-        if (rol == "RRHH" || rol == "Directivo")
-        {
-            try
-            {
-                await _email.EnviarAsync(
-                    destinatario: "seochoa@chinoin.com",
-                    asunto: $"Nueva Requisición - {req.NoRequisicion}",
-                    cuerpoHtml: $"<p><strong>Nueva requisición requiere aprobación:</strong></p>" +
-                                $"<p><strong>No.:</strong> {req.NoRequisicion}</p>" +
-                                $"<p><strong>Posición:</strong> {req.PosicionRequerida}</p>" +
-                                $"<p><strong>Solicitante:</strong> {req.NombreSolicitante}</p>" +
-                                $"<p>Paso actual: {paso}</p>"
-                );
-            }
-            catch { }
-        }
+        return View(req);
     }
 
-    // Resto de métodos (Details, Edit, etc.)
+    // DETAILS (opcional, puedes usarlo o redirigir a Gestionar)
     public async Task<IActionResult> Details(int id)
+    {
+        return RedirectToAction("Gestionar", new { id });
+    }
+
+    // EDIT (mantener si lo necesitas)
+    public async Task<IActionResult> Edit(int id)
     {
         var requisicion = await _context.TbRequisiciones.FindAsync(id);
         if (requisicion == null) return NotFound();
         return View(requisicion);
     }
 
-    // ... mantén tus métodos Edit si los necesitas
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> Edit(int id, TbRequisicione tbRequisicione)
+    {
+        if (id != tbRequisicione.Id) return NotFound();
+
+        if (ModelState.IsValid)
+        {
+            try
+            {
+                _context.Update(tbRequisicione);
+                await _context.SaveChangesAsync();
+                TempData["Exito"] = "✅ Requisición actualizada.";
+                return RedirectToAction(nameof(Index));
+            }
+            catch (DbUpdateConcurrencyException)
+            {
+                if (!TbRequisicioneExists(tbRequisicione.Id)) return NotFound();
+                throw;
+            }
+        }
+        return View(tbRequisicione);
+    }
+
+    private bool TbRequisicioneExists(int id)
+    {
+        return _context.TbRequisiciones.Any(e => e.Id == id);
+    }
 }

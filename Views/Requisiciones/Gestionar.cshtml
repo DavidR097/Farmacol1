@@ -1,59 +1,49 @@
 ﻿@model Farmacol.Models.TbRequisicione
 @{
-    ViewData["Title"] = $"Gestionar Requisición - {@Model.NoRequisicion}";
+    ViewData["Title"] = $"Requisición - {@Model.NoRequisicion}";
 }
 
-<h1>Gestionar Requisición #@Model.NoRequisicion</h1>
+<h1>Requisición #@Model.NoRequisicion</h1>
 <hr />
 
 <div class="row">
     <div class="col-md-8">
-        <div class="card mb-4">
-            <div class="card-header bg-primary text-white">
-                <strong>Panel de Evaluadores</strong>
-            </div>
-            <div class="card-body">
-                <form asp-action="Gestionar" method="post">
-                    @Html.AntiForgeryToken()
-                    <input type="hidden" name="id" value="@Model.Id" />
-
-                    <div class="mb-3">
-                        <label class="form-label fw-bold">Selecciona los miembros del panel de evaluadores (Jefes / Gerentes)</label>
-                        <select name="evaluadoresSeleccionados" class="form-select" multiple style="height: 280px;" required>
-                            @foreach (var ev in ViewBag.Evaluadores)
-                            {
-                                <option value="@ev.NombreColaborador">@ev.NombreColaborador - @ev.Cargo</option>
-                            }
-                        </select>
-                        <small class="text-muted">Mantén presionada la tecla Ctrl (o Cmd) para seleccionar varios evaluadores.</small>
-                    </div>
-
-                    <div class="d-grid">
-                        <button type="submit" class="btn btn-success btn-lg">
-                            ✅ Asignar Panel y Notificar Evaluadores
-                        </button>
-                    </div>
-                </form>
-            </div>
-        </div>
-    </div>
-
-    <div class="col-md-4">
         <div class="card">
-            <div class="card-header bg-secondary text-white">
-                <strong>Estado Actual</strong>
+            <div class="card-header bg-primary text-white">
+                <strong>Información de la Requisición</strong>
             </div>
             <div class="card-body">
-                <p><strong>No. Requisición:</strong> @Model.NoRequisicion</p>
-                <p><strong>Posición:</strong> @Model.PosicionRequerida</p>
-@*                  <p><strong>Estado:</strong> 
-                    <span class="badge bg-warning">@Model.Estado</span> 
-                </p> *@
+                <dl class="row">
+                    <dt class="col-sm-4">Fecha Solicitud</dt>
+                    <dd class="col-sm-8">@Model.FechaSolicitud?.ToString("dd/MM/yyyy")</dd>
+
+                    <dt class="col-sm-4">Posición Requerida</dt>
+                    <dd class="col-sm-8">@Model.PosicionRequerida</dd>
+
+                    <dt class="col-sm-4">Gerencia Solicitante</dt>
+                    <dd class="col-sm-8">@Model.GerenciaSolicitante</dd>
+
+                    <dt class="col-sm-4">Nombre Solicitante</dt>
+                    <dd class="col-sm-8">@Model.NombreSolicitante</dd>
+
+                    <dt class="col-sm-4">Cargo Solicitante</dt>
+                    <dd class="col-sm-8">@Model.CargoSolicitante</dd>
+
+                    <dt class="col-sm-4">Tipo de Contrato</dt>
+                    <dd class="col-sm-8">@Model.TipoContrato</dd>
+
+                    <dt class="col-sm-4">Estado Actual</dt>
+                    <dd class="col-sm-8">
+                        <span class="badge @(Model.Estado == "Aprobada" ? "bg-success" : "bg-warning") fs-6">
+                            @Model.Estado
+                        </span>
+                    </dd>
+                </dl>
             </div>
         </div>
     </div>
 </div>
 
 <div class="mt-4">
-    <a asp-action="Index" class="btn btn-secondary">← Volver a Requisiciones</a>
+    <a asp-action="Index" class="btn btn-secondary">← Volver a la lista</a>
 </div>
