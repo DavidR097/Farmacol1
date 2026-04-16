@@ -145,10 +145,10 @@
                         @{
                             var badge = Model.Estado switch
                             {
-                                        "Aprobada" => "bg-success",
-                                        "Rechazada" => "bg-danger",
-                                        "Devuelta" => "bg-warning text-dark",
-                                        "Finalizada" => "bg-secondary",
+                                "Aprobada" => "bg-success",
+                                "Rechazada" => "bg-danger",
+                                "Devuelta" => "bg-warning text-dark",
+                                "Finalizada" => "bg-secondary",
                                 _ => "bg-warning text-dark"
                             };
                         }
@@ -195,7 +195,7 @@
                     estado == "Pendiente" ? "⏳" : "🔒";
 
                     <div class="card border-0 mb-2 shadow-sm
-                                    @(i == Model.PasoActual ? "border-start border-primary border-3" : "")">
+                        @(i == Model.PasoActual ? "border-start border-primary border-3" : "")">
                         <div class="card-body py-2 px-3 small">
                             <div class="d-flex justify-content-between align-items-center">
                                 <span>
@@ -243,7 +243,7 @@
                                 style="border:none;"></iframe>
                     </div>
                     <a href="@Model.Anexos" target="_blank"
-                       class="btn btn-sm btn-outline-secondary mt-2 me-2">
+                           class="btn btn-sm btn-outline-secondary mt-2 me-2">
                         🔗 Abrir en nueva pestaña
                     </a>
                     <a asp-action="DescargarAnexo" asp-route-id="@Model.IdSolicitud" class="btn btn-sm btn-outline-primary mt-2">

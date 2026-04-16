@@ -1,12 +1,12 @@
-﻿    <!DOCTYPE html>
-    <html lang="es">
-    <head>
-        <meta charset="utf-8" />
-        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-        <title>@ViewData["Title"] - Farmacol</title>
-        <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
-        <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
-        <style>
+﻿<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] - Farmacol</title>
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+    <style>
             :root {
                 --sb-collapsed: 60px;
                 --sb-expanded: 240px;
@@ -435,9 +435,9 @@
                 #content.pushed {
                     margin-left: var(--sb-expanded);
                 }
-        </style>
-    </head>
-    <body>
+    </style>
+</head>
+<body>
     @{
         var userArea = ViewBag.UserArea as string ?? "";
         var userCargo = ViewBag.UserCargo as string ?? "";
@@ -492,138 +492,138 @@
                        ctrl == "Plantillas" || ctrl == "AuditTrail";
     }
 
-        <!-- TOPBAR -->
-        <div id="topbar">
-            <a class="brand" href="/">Farmacol Chinoin</a>
-            <div class="user-info">
-                @if (User.Identity?.IsAuthenticated == true)
+    <!-- TOPBAR -->
+    <div id="topbar">
+        <a class="brand" href="/">Farmacol Chinoin</a>
+        <div class="user-info">
+            @if (User.Identity?.IsAuthenticated == true)
+            {
+                @await Component.InvokeAsync("UserAvatar")
+                @if (!string.IsNullOrEmpty(userArea))
                 {
-                    @await Component.InvokeAsync("UserAvatar")
-                    @if (!string.IsNullOrEmpty(userArea))
-                    {
-                        <span class="badge bg-secondary">@userArea</span>
-                    }
-                    @if (hayNotif)
-                    {
-                        <button class="notif-btn" id="btnCampana" title="Notificaciones">
-                            🔔<span class="notif-badge" id="notifBadge">0</span>
-                        </button>
-                    }
+                    <span class="badge bg-secondary">@userArea</span>
                 }
+                @if (hayNotif)
+                {
+                    <button class="notif-btn" id="btnCampana" title="Notificaciones">
+                        🔔<span class="notif-badge" id="notifBadge">0</span>
+                    </button>
+                }
+            }
+        </div>
+    </div>
+
+    @if (hayNotif)
+    {
+        <div id="notifDropdown">
+            <div class="notif-header">
+                <span>🔔 Notificaciones</span>
+                <button class="btn btn-sm btn-link p-0 text-muted" id="btnMarcarTodas" style="font-size:.78rem;">
+                    Marcar todas leídas
+                </button>
+            </div>
+            <div class="notif-list" id="notifList"><div class="notif-empty">Cargando...</div></div>
+            <div class="notif-footer">
+                <a asp-controller="Tbsolicitudes" asp-action="MisSolicitudes">Ver mis solicitudes</a>
             </div>
         </div>
+    }
 
-        @if (hayNotif)
-        {
-            <div id="notifDropdown">
-                <div class="notif-header">
-                    <span>🔔 Notificaciones</span>
-                    <button class="btn btn-sm btn-link p-0 text-muted" id="btnMarcarTodas" style="font-size:.78rem;">
-                        Marcar todas leídas
-                    </button>
-                </div>
-                <div class="notif-list" id="notifList"><div class="notif-empty">Cargando...</div></div>
-                <div class="notif-footer">
-                    <a asp-controller="Tbsolicitudes" asp-action="MisSolicitudes">Ver mis solicitudes</a>
-                </div>
-            </div>
-        }
+    <!-- SIDEBAR -->
+    <nav id="sb">
+        <div class="sb-scroll">
+            <a class="sb-item @(ctrl == "Home" ? "active" : "")" asp-controller="Home" asp-action="Index">
+                <span class="sb-icon">🏠</span><span class="sb-text">Inicio</span>
+            </a>
 
-        <!-- SIDEBAR -->
-        <nav id="sb">
-            <div class="sb-scroll">
-                <a class="sb-item @(ctrl == "Home" ? "active" : "")" asp-controller="Home" asp-action="Index">
-                    <span class="sb-icon">🏠</span><span class="sb-text">Inicio</span>
+            @if (verBuscador)
+            {
+                <a class="sb-item @(ctrl == "Buscador" ? "active" : "")" asp-controller="Buscador" asp-action="Index">
+                    <span class="sb-icon">🔍</span><span class="sb-text">Buscador</span>
                 </a>
+            }
 
-                @if (verBuscador)
-                {
-                    <a class="sb-item @(ctrl == "Buscador" ? "active" : "")" asp-controller="Buscador" asp-action="Index">
-                        <span class="sb-icon">🔍</span><span class="sb-text">Buscador</span>
-                    </a>
-                }
-
-                @if (crearSolicitud || esUsuario)
-                {
-                    <a class="sb-item @(ctrl == "Tbsolicitudes" && action == "MisSolicitudes" ? "active" : "")"
+            @if (crearSolicitud || esUsuario)
+            {
+                <a class="sb-item @(ctrl == "Tbsolicitudes" && action == "MisSolicitudes" ? "active" : "")"
                        asp-controller="Tbsolicitudes" asp-action="MisSolicitudes">
-                        <span class="sb-icon">📁</span><span class="sb-text">Mis Solicitudes</span>
-                    </a>
-                }
+                    <span class="sb-icon">📁</span><span class="sb-text">Mis Solicitudes</span>
+                </a>
+            }
 
-                @if (User.Identity?.IsAuthenticated == true)
-                {
-                    <a class="sb-item @(ctrl == "MiExpediente" ? "active" : "")"
+            @if (User.Identity?.IsAuthenticated == true)
+            {
+                <a class="sb-item @(ctrl == "MiExpediente" ? "active" : "")"
                        asp-controller="MiExpediente" asp-action="Index">
-                        <span class="sb-icon">📂</span><span class="sb-text">Mi Expediente</span>
-                    </a>
-                }
+                    <span class="sb-icon">📂</span><span class="sb-text">Mi Expediente</span>
+                </a>
+            }
 
-                <div class="sb-divider"></div>
+            <div class="sb-divider"></div>
 
-                @if (verPersonal)
-                {
-                    <div class="sb-label">Personal</div>
-                    <div class="sb-item sb-toggle @(enPersonal ? "open" : "")" data-sub="sub-personal">
-                        <span class="sb-icon">👥</span>
-                        <span class="sb-text">Personal <span class="sb-arrow">▶</span></span>
-                    </div>
-                    <div class="sb-sub @(enPersonal ? "open" : "")" id="sub-personal">
-                        <a class="sb-sub-item @(ctrl == "Tbpersonals" ? "active" : "")"
+            @if (verPersonal)
+            {
+                <div class="sb-label">Personal</div>
+                <div class="sb-item sb-toggle @(enPersonal ? "open" : "")" data-sub="sub-personal">
+                    <span class="sb-icon">👥</span>
+                    <span class="sb-text">Personal <span class="sb-arrow">▶</span></span>
+                </div>
+                <div class="sb-sub @(enPersonal ? "open" : "")" id="sub-personal">
+                    <a class="sb-sub-item @(ctrl == "Tbpersonals" ? "active" : "")"
                            asp-controller="Tbpersonals" asp-action="Index">
-                            <span class="sb-icon">👤</span><span class="sb-text">Activo</span>
-                        </a>
-                        <a class="sb-sub-item @(ctrl == "PersonalRetirado" ? "active" : "")"
+                        <span class="sb-icon">👤</span><span class="sb-text">Activo</span>
+                    </a>
+                    <a class="sb-sub-item @(ctrl == "PersonalRetirado" ? "active" : "")"
                            asp-controller="PersonalRetirado" asp-action="Index">
-                            <span class="sb-icon">🗂️</span><span class="sb-text">Retirado</span>
-                        </a>
-                        <a class="sb-sub-item @(ctrl == "ExpedientesRRHH" ? "active" : "")"
+                        <span class="sb-icon">🗂️</span><span class="sb-text">Retirado</span>
+                    </a>
+                    <a class="sb-sub-item @(ctrl == "ExpedientesRRHH" ? "active" : "")"
                            asp-controller="ExpedientesRRHH" asp-action="Index">
-                            <span class="sb-icon">📂</span><span class="sb-text">Expedientes RRHH</span>
-                        </a>
-                    </div>
-                }
+                        <span class="sb-icon">📂</span><span class="sb-text">Expedientes RRHH</span>
+                    </a>
+                </div>
+            }
 
-                @if (verSolicitudes || crearSolicitud)
-                {
-                    <div class="sb-label">Solicitudes</div>
-                    <div class="sb-item sb-toggle @(enSoli ? "open" : "")" data-sub="sub-soli">
-                        <span class="sb-icon">📋</span>
-                        <span class="sb-text">Solicitudes <span class="sb-arrow">▶</span></span>
-                    </div>
-                    <div class="sb-sub @(enSoli ? "open" : "")" id="sub-soli">
-                        @if (verSolicitudes)
-                        {
-                            <a class="sb-sub-item @(ctrl == "Tbsolicitudes" && action == "Index" ? "active" : "")"
+            @if (verSolicitudes || crearSolicitud)
+            {
+                <div class="sb-label">Solicitudes</div>
+                <div class="sb-item sb-toggle @(enSoli ? "open" : "")" data-sub="sub-soli">
+                    <span class="sb-icon">📋</span>
+                    <span class="sb-text">Solicitudes <span class="sb-arrow">▶</span></span>
+                </div>
+                <div class="sb-sub @(enSoli ? "open" : "")" id="sub-soli">
+                    @if (verSolicitudes)
+                    {
+                        <a class="sb-sub-item @(ctrl == "Tbsolicitudes" && action == "Index" ? "active" : "")"
                                asp-controller="Tbsolicitudes" asp-action="Index">
-                                <span class="sb-icon">📄</span><span class="sb-text">Ver todas</span>
-                            </a>
-                        }                        
-                        @if (crearSolicitud)
-                        {
-                            <a class="sb-sub-item @(ctrl == "Tbsolicitudes" && action == "Create" ? "active" : "")"
-                               asp-controller="Tbsolicitudes" asp-action="Create">
-                                <span class="sb-icon">➕</span><span class="sb-text">Nueva</span>
-                            </a>
-                        }
-                        <a class="sb-sub-item @(ctrl == "SolicitudRRHH" && action == "Create" ? "active" : "")"
-                           asp-controller="SolicitudRRHH" asp-action="Create">
-                            <span class="sb-icon">📄</span><span class="sb-text">Solicitud RRHH</span>
+                            <span class="sb-icon">📄</span><span class="sb-text">Ver todas</span>
                         </a>
-                        @if (verGestionRRHH)
-                        {
-                            <a class="sb-sub-item @(ctrl == "SolicitudRRHH" && action == "Gestion" ? "active" : "")"
+                    }
+                    @if (crearSolicitud)
+                    {
+                        <a class="sb-sub-item @(ctrl == "Tbsolicitudes" && action == "Create" ? "active" : "")"
+                               asp-controller="Tbsolicitudes" asp-action="Create">
+                            <span class="sb-icon">➕</span><span class="sb-text">Nueva</span>
+                        </a>
+                    }
+                    <a class="sb-sub-item @(ctrl == "SolicitudRRHH" && action == "Create" ? "active" : "")"
+                           asp-controller="SolicitudRRHH" asp-action="Create">
+                        <span class="sb-icon">📄</span><span class="sb-text">Solicitud RRHH</span>
+                    </a>
+                    @if (verGestionRRHH)
+                    {
+                        <a class="sb-sub-item @(ctrl == "SolicitudRRHH" && action == "Gestion" ? "active" : "")"
                                asp-controller="SolicitudRRHH" asp-action="Gestion">
-                                <span class="sb-icon">📋</span><span class="sb-text">Gestión doc. RRHH</span>
-                            </a>
-                        }
-                        @if (verRechazadas)
-                        {
-                            <a class="sb-sub-item @(ctrl == "TbsoliRechazadums" ? "active" : "")"
+                            <span class="sb-icon">📋</span><span class="sb-text">Gestión doc. RRHH</span>
+                        </a>
+                    }
+                    @if (verRechazadas)
+                    {
+                        <a class="sb-sub-item @(ctrl == "TbsoliRechazadums" ? "active" : "")"
                                asp-controller="TbsoliRechazadums" asp-action="Index">
-                                <span class="sb-icon">❌</span><span class="sb-text">Rechazadas</span>
-                            </a>
-                        }
+                            <span class="sb-icon">❌</span><span class="sb-text">Rechazadas</span>
+                        </a>
+                    }
                     @if (User.IsInRole("Jefe") || User.IsInRole("Gerente") ||
                                                     User.IsInRole("Gerente Capital Humano") ||
                                                     User.IsInRole("RRHH") || User.IsInRole("Administrador"))
@@ -635,38 +635,38 @@
                             <span class="sb-text">Requisiciones de Personal</span>
                         </a>
                     }
-                    </div>
-                }
+                </div>
+            }
 
-                <div class="sb-divider"></div>
-                <a class="sb-item @(ctrl == "Salas" ? "active" : "")"
+            <div class="sb-divider"></div>
+            <a class="sb-item @(ctrl == "Salas" ? "active" : "")"
                    asp-controller="Salas" asp-action="Index">
-                    <span class="sb-icon">🏢</span><span class="sb-text">Salas</span>
-                </a>
+                <span class="sb-icon">🏢</span><span class="sb-text">Salas</span>
+            </a>
 
-                @if (verTI)
-                {
-                    <div class="sb-divider"></div>
-                    <div class="sb-label">Tecnología</div>
-                    <div class="sb-item sb-toggle @(enTI ? "open" : "")" data-sub="sub-ti">
-                        <span class="sb-icon">💻</span>
-                        <span class="sb-text">TI <span class="sb-arrow">▶</span></span>
-                    </div>
-                    <div class="sb-sub @(enTI ? "open" : "")" id="sub-ti">
-                        <a class="sb-sub-item @(ctrl == "Tbinventarios" ? "active" : "")"
+            @if (verTI)
+            {
+                <div class="sb-divider"></div>
+                <div class="sb-label">Tecnología</div>
+                <div class="sb-item sb-toggle @(enTI ? "open" : "")" data-sub="sub-ti">
+                    <span class="sb-icon">💻</span>
+                    <span class="sb-text">TI <span class="sb-arrow">▶</span></span>
+                </div>
+                <div class="sb-sub @(enTI ? "open" : "")" id="sub-ti">
+                    <a class="sb-sub-item @(ctrl == "Tbinventarios" ? "active" : "")"
                            asp-controller="Tbinventarios" asp-action="Index">
-                            <span class="sb-icon">🖥️</span><span class="sb-text">Inventario</span>
-                        </a>
-                        <a class="sb-sub-item @(ctrl == "Tbresponsivas" ? "active" : "")"
+                        <span class="sb-icon">🖥️</span><span class="sb-text">Inventario</span>
+                    </a>
+                    <a class="sb-sub-item @(ctrl == "Tbresponsivas" ? "active" : "")"
                            asp-controller="Tbresponsivas" asp-action="Index">
-                            <span class="sb-icon">📝</span><span class="sb-text">Responsivas</span>
-                        </a>
-                        <a class="sb-sub-item @(ctrl == "ExpedientesTI" ? "active" : "")"
+                        <span class="sb-icon">📝</span><span class="sb-text">Responsivas</span>
+                    </a>
+                    <a class="sb-sub-item @(ctrl == "ExpedientesTI" ? "active" : "")"
                            asp-controller="ExpedientesTI" asp-action="Index">
-                            <span class="sb-icon">📁</span><span class="sb-text">Expedientes TI</span>
-                        </a>
-                    </div>
-                }
+                        <span class="sb-icon">📁</span><span class="sb-text">Expedientes TI</span>
+                    </a>
+                </div>
+            }
 
             @* ── Administración: solo Admin ── *@
             @if (verAdmin)
@@ -723,125 +723,125 @@
                 </a>
             }
 
-            </div>
-            <div class="sb-bottom">
-                <div class="sb-divider"></div>
-                @if (User.Identity?.IsAuthenticated == true)
-                {
-                    <form asp-controller="Login" asp-action="Logout" method="post" class="m-0">
-                        @Html.AntiForgeryToken()
-                        <button type="submit" class="sb-item" style="width:calc(100% - 16px)">
-                            <span class="sb-icon">🚪</span>
-                            <span class="sb-text" style="color:#dc3545">Cerrar sesión</span>
-                        </button>
-                    </form>
-                }
-            </div>
-        </nav>
+        </div>
+        <div class="sb-bottom">
+            <div class="sb-divider"></div>
+            @if (User.Identity?.IsAuthenticated == true)
+            {
+                <form asp-controller="Login" asp-action="Logout" method="post" class="m-0">
+                    @Html.AntiForgeryToken()
+                    <button type="submit" class="sb-item" style="width:calc(100% - 16px)">
+                        <span class="sb-icon">🚪</span>
+                        <span class="sb-text" style="color:#dc3545">Cerrar sesión</span>
+                    </button>
+                </form>
+            }
+        </div>
+    </nav>
 
-        <div id="content">@RenderBody()</div>
+    <div id="content">@RenderBody()</div>
 
-        <script src="~/lib/jquery/dist/jquery.min.js"></script>
-        <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
-        <script src="~/js/site.js" asp-append-version="true"></script>
-        @await RenderSectionAsync("Scripts", required: false)
+    <script src="~/lib/jquery/dist/jquery.min.js"></script>
+    <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="~/js/site.js" asp-append-version="true"></script>
+    @await RenderSectionAsync("Scripts", required: false)
 
-        <script>
-            (function () {
-                var sb      = document.getElementById('sb');
+    <script>
+            (function() {
+                var sb = document.getElementById('sb');
                 var content = document.getElementById('content');
 
-                function expand()   { sb.classList.add('expanded');    content.classList.add('pushed'); }
+                function expand() { sb.classList.add('expanded'); content.classList.add('pushed'); }
                 function collapse() { sb.classList.remove('expanded'); content.classList.remove('pushed'); }
                 function isPinned() { return sb.dataset.pinned === '1'; }
-                function pin()      { sb.dataset.pinned = '1'; expand(); }
-                function unpin()    { sb.dataset.pinned = ''; if (!sb.matches(':hover')) collapse(); }
+                function pin() { sb.dataset.pinned = '1'; expand(); }
+                function unpin() { sb.dataset.pinned = ''; if (!sb.matches(':hover')) collapse(); }
 
                 sb.addEventListener('mouseenter', expand);
-                sb.addEventListener('mouseleave', function () { if (!isPinned()) collapse(); });
+                sb.addEventListener('mouseleave', function() { if (!isPinned()) collapse(); });
 
-                document.querySelectorAll('.sb-toggle').forEach(function (tog) {
-                    tog.addEventListener('click', function (e) {
+                document.querySelectorAll('.sb-toggle').forEach(function(tog) {
+                    tog.addEventListener('click', function(e) {
                         e.stopPropagation();
-                        var subEl  = document.getElementById(this.dataset.sub);
+                        var subEl = document.getElementById(this.dataset.sub);
                         var isOpen = subEl.classList.contains('open');
-                        document.querySelectorAll('.sb-sub').forEach(function (s)    { s.classList.remove('open'); });
-                        document.querySelectorAll('.sb-toggle').forEach(function (t) { t.classList.remove('open'); });
+                        document.querySelectorAll('.sb-sub').forEach(function(s) { s.classList.remove('open'); });
+                        document.querySelectorAll('.sb-toggle').forEach(function(t) { t.classList.remove('open'); });
                         if (!isOpen) { subEl.classList.add('open'); this.classList.add('open'); pin(); }
                         else { unpin(); }
                     });
                 });
 
-                document.addEventListener('click', function (e) {
+                document.addEventListener('click', function(e) {
                     if (!sb.contains(e.target)) {
-                        document.querySelectorAll('.sb-sub').forEach(function (s)    { s.classList.remove('open'); });
-                        document.querySelectorAll('.sb-toggle').forEach(function (t) { t.classList.remove('open'); });
+                        document.querySelectorAll('.sb-sub').forEach(function(s) { s.classList.remove('open'); });
+                        document.querySelectorAll('.sb-toggle').forEach(function(t) { t.classList.remove('open'); });
                         sb.dataset.pinned = ''; collapse();
                     }
                     var dropdown = document.getElementById('notifDropdown');
-                    var campana  = document.getElementById('btnCampana');
+                    var campana = document.getElementById('btnCampana');
                     if (dropdown && !dropdown.contains(e.target) && e.target !== campana)
                         dropdown.classList.remove('open');
                 });
 
                 if (document.querySelector('.sb-sub.open')) pin();
 
-                var campana  = document.getElementById('btnCampana');
+                var campana = document.getElementById('btnCampana');
                 var dropdown = document.getElementById('notifDropdown');
-                var badge    = document.getElementById('notifBadge');
-                var list     = document.getElementById('notifList');
+                var badge = document.getElementById('notifBadge');
+                var list = document.getElementById('notifList');
 
                 function iconoPor(msg) {
                     msg = (msg || '').toLowerCase();
-                    if (msg.includes('aprobada'))    return '✅';
-                    if (msg.includes('rechazada'))   return '❌';
-                    if (msg.includes('devuelta'))    return '↩️';
+                    if (msg.includes('aprobada')) return '✅';
+                    if (msg.includes('rechazada')) return '❌';
+                    if (msg.includes('devuelta')) return '↩️';
                     if (msg.includes('inhabilitad')) return '⏸️';
-                    if (msg.includes('vacacion'))    return '🌴';
-                    if (msg.includes('permiso'))     return '🕐';
+                    if (msg.includes('vacacion')) return '🌴';
+                    if (msg.includes('permiso')) return '🕐';
                     return '🔔';
                 }
 
                 function tiempoRel(fechaStr) {
                     if (!fechaStr) return '';
                     var diff = Math.floor((Date.now() - new Date(fechaStr).getTime()) / 1000);
-                    if (diff < 60)    return 'hace un momento';
-                    if (diff < 3600)  return 'hace ' + Math.floor(diff / 60) + ' min';
+                    if (diff < 60) return 'hace un momento';
+                    if (diff < 3600) return 'hace ' + Math.floor(diff / 60) + ' min';
                     if (diff < 86400) return 'hace ' + Math.floor(diff / 3600) + ' h';
                     return 'hace ' + Math.floor(diff / 86400) + ' días';
                 }
 
                 function cargarNotifs() {
                     fetch('/Tbsolicitudes/ObtenerNotificaciones')
-                        .then(function (r) { return r.json(); })
-                        .then(function (data) {
-                            var noLeidas = data.filter(function (n) { return !n.leida; }).length;
+                        .then(function(r) { return r.json(); })
+                        .then(function(data) {
+                            var noLeidas = data.filter(function(n) { return !n.leida; }).length;
                             if (badge) { badge.textContent = noLeidas; badge.style.display = noLeidas > 0 ? 'flex' : 'none'; }
                             if (!list) return;
                             if (data.length === 0) { list.innerHTML = '<div class="notif-empty">🎉 Sin notificaciones</div>'; return; }
-                            list.innerHTML = data.map(function (n) {
+                            list.innerHTML = data.map(function(n) {
                                 var icono = iconoPor(n.mensaje);
-                                var nl    = n.leida ? '' : ' no-leida';
-                                var href  = n.idSolicitud ? '/Tbsolicitudes/Revisar/' + n.idSolicitud : '#';
+                                var nl = n.leida ? '' : ' no-leida';
+                                var href = n.idSolicitud ? '/Tbsolicitudes/Revisar/' + n.idSolicitud : '#';
                                 return '<a class="notif-item' + nl + '" href="' + href + '">' +
-                                       '<span class="notif-icon">' + icono + '</span>' +
-                                       '<div class="notif-body"><div class="notif-msg">' + n.mensaje + '</div>' +
-                                       '<div class="notif-time">' + tiempoRel(n.fechaCreacion) + '</div></div>' +
-                                       (!n.leida ? '<div class="notif-dot"></div>' : '') + '</a>';
+                                    '<span class="notif-icon">' + icono + '</span>' +
+                                    '<div class="notif-body"><div class="notif-msg">' + n.mensaje + '</div>' +
+                                    '<div class="notif-time">' + tiempoRel(n.fechaCreacion) + '</div></div>' +
+                                    (!n.leida ? '<div class="notif-dot"></div>' : '') + '</a>';
                             }).join('');
-                        }).catch(function () {});
+                        }).catch(function() { });
                 }
 
                 function actualizarBadge() {
                     fetch('/Tbsolicitudes/ContarNotificaciones')
-                        .then(function (r) { return r.json(); })
-                        .then(function (n) {
+                        .then(function(r) { return r.json(); })
+                        .then(function(n) {
                             if (badge) { badge.textContent = n; badge.style.display = n > 0 ? 'flex' : 'none'; }
-                        }).catch(function () {});
+                        }).catch(function() { });
                 }
 
                 if (campana) {
-                    campana.addEventListener('click', function (e) {
+                    campana.addEventListener('click', function(e) {
                         e.stopPropagation();
                         dropdown.classList.toggle('open');
                         if (dropdown.classList.contains('open')) cargarNotifs();
@@ -850,18 +850,18 @@
 
                 var btnMarcar = document.getElementById('btnMarcarTodas');
                 if (btnMarcar) {
-                    btnMarcar.addEventListener('click', function () {
+                    btnMarcar.addEventListener('click', function() {
                         var token = document.querySelector('input[name="__RequestVerificationToken"]');
                         fetch('/Tbsolicitudes/MarcarLeidas', {
                             method: 'POST',
                             headers: { 'RequestVerificationToken': token ? token.value : '' }
-                        }).then(function () { cargarNotifs(); });
+                        }).then(function() { cargarNotifs(); });
                     });
                 }
 
                 actualizarBadge();
                 setInterval(actualizarBadge, 30000);
             })();
-        </script>
-    </body>
-    </html>
+    </script>
+</body>
+</html>

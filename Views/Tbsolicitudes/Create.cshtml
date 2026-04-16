@@ -169,11 +169,11 @@
                 <div class="form-group mb-3">
                     <label class="form-label fw-bold">Días en Dinero (máximo 50% de días disponibles)</label>
                     <div class="input-group">
-                        <input type="number" name="DiasEnDinero" id="diasEnDinero" 
-                               class="form-control" min="0" placeholder="Cantidad de días a liquidar en dinero" />
+                        <input type="number" name="DiasEnDinero" id="diasEnDinero"
+                               class="form-control" min="0" max="0" placeholder="0" />
                         <span class="input-group-text">días</span>
                     </div>
-                    <small class="text-muted" id="maxDineroInfo"></small>
+                    <small class="text-muted" id="maxDineroInfo">Máximo permitido: 0 días</small>
                 </div>
 
                 <div class="form-group mb-2">
@@ -296,6 +296,19 @@
     if (!fechaInicio || fechaFin) {
         fechaInicio = fechaStr;
         fechaFin = null;
+                    // === DÍAS EN DINERO Y RESTANTES ===
+            const maxDinero = Math.floor(disponibles * 0.5);
+            const infoEl = document.getElementById('maxDineroInfo');
+            if (infoEl) infoEl.textContent = `Máximo permitido: ${maxDinero} días`;
+
+            const diasDineroInput = document.getElementById('diasEnDinero');
+            if (diasDineroInput) {
+                diasDineroInput.max = maxDinero;
+                diasDineroInput.oninput = function() {
+                    let valor = parseInt(this.value) || 0;
+                    if (valor > maxDinero) this.value = maxDinero;
+                };
+            }
     } else if (fechaStr < fechaInicio) {
         fechaFin = fechaInicio;
         fechaInicio = fechaStr;
@@ -404,11 +417,12 @@
         window.calcularDiasPermiso = function () {
             const inicio = document.getElementById('fechaInicioP').value;
             const fin = document.getElementById('fechaFinP').value;
+
             if (inicio && fin && fin >= inicio) {
                 const diff = Math.round((new Date(fin) - new Date(inicio)) / (1000*60*60*24)) + 1;
                 document.getElementById('totalDiasP').value = diff;
             } else {
-                document.getElementById('totalDiasP').value = '';
+                document.getElementById('totalDiasP').value = '0';   // ← Importante: 0 cuando no hay rango de fechas
             }
         };
     </script>

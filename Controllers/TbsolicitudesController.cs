@@ -293,131 +293,108 @@ namespace Farmacol.Controllers
 
 
         // ── CREATE POST ───────────────────────────────────────────────────
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create(
-                            [Bind("CC,Nombre,Cargo,TipoSolicitud,SubtipoPermiso,HoraInicio,HoraFin,TotalHoras," +
-                            "FechaInicio,FechaFin,TotalDias,Motivo,FechaSolicitud,Observaciones")]
-                            Tbsolicitude tbsolicitude, IFormFile? archivoAnexo)
+[HttpPost]
+[ValidateAntiForgeryToken]
+public async Task<IActionResult> Create(
+    [Bind("CC,Nombre,Cargo,TipoSolicitud,SubtipoPermiso,HoraInicio,HoraFin,TotalHoras," +
+          "FechaInicio,FechaFin,TotalDias,Motivo,FechaSolicitud,Observaciones,DiasEnDinero")]
+    Tbsolicitude tbsolicitude, IFormFile? archivoAnexo)
+{
+    // Remover campos que no deben validarse manualmente
+    ModelState.Remove("Estado");
+    ModelState.Remove("EtapaAprobacion");
+    ModelState.Remove("ObservacionJefe");
+    ModelState.Remove("ObservacionRRHH");
+    ModelState.Remove("AprobJinmediato");
+    ModelState.Remove("AprobCh");
+    ModelState.Remove("JefeInmediato");
+    ModelState.Remove("CargoJinmediato");
+    ModelState.Remove("Paso1Aprobador");
+    ModelState.Remove("Paso2Aprobador");
+    ModelState.Remove("Paso3Aprobador");
+    ModelState.Remove("NivelSolicitante");
+    ModelState.Remove("TipoFlujo");
+    ModelState.Remove("DocumentoSolicitado");
+
+    // Helper local para volver con error (esto faltaba en tu código)
+    async Task<IActionResult> VolverConError(string errorMsg)
+    {
+        ModelState.AddModelError("", errorMsg);
+
+        var p = await BuscarPersonalActual();
+        ViewBag.SubtiposPermiso = await _context.TbsubtiposPermisos.ToListAsync();
+        ViewBag.CedulaActual = p?.CC;
+        ViewBag.NombreActual = p?.NombreColaborador;
+        ViewBag.CargoActual = p?.Cargo;
+        ViewBag.AreaActual = p?.Area;
+
+        if (p != null)
         {
-            ModelState.Remove("Motivo"); ModelState.Remove("Anexos");
-            ModelState.Remove("Estado"); ModelState.Remove("EtapaAprobacion");
-            ModelState.Remove("ObservacionJefe"); ModelState.Remove("ObservacionRRHH");
-            ModelState.Remove("AprobJinmediato"); ModelState.Remove("AprobCh");
-            ModelState.Remove("SubtipoPermiso"); ModelState.Remove("HoraInicio");
-            ModelState.Remove("HoraFin"); ModelState.Remove("TotalHoras");
-            ModelState.Remove("FechaInicio"); ModelState.Remove("FechaFin");
-            ModelState.Remove("TotalDias"); ModelState.Remove("CC");
-            ModelState.Remove("Nombre"); ModelState.Remove("Cargo");
-            ModelState.Remove("FechaSolicitud");
-            ModelState.Remove("JefeInmediato"); ModelState.Remove("CargoJinmediato");
-            ModelState.Remove("Paso1Aprobador"); ModelState.Remove("Paso2Aprobador");
-            ModelState.Remove("Paso3Aprobador"); ModelState.Remove("NivelSolicitante");
-            ModelState.Remove("TipoFlujo"); ModelState.Remove("DocumentoSolicitado");
-
-            if (tbsolicitude.TipoSolicitud?.Equals("Vacaciones", StringComparison.OrdinalIgnoreCase) == true)
-            {
-                var hoy = DateTime.Today;
-                if (hoy.Day >= 11)
-                {
-                    return await VolverConError($"A partir del día 11 de cada mes no se pueden crear solicitudes de vacaciones del mes actual. " +
-                                                $"Las solicitudes para {hoy.AddMonths(1):MMMM yyyy} se habilitarán a partir del día 1.");
-                }
-            }
-
-            // Helper local para restaurar ViewBag y volver a la vista sin perder los datos del usuario
-            async Task<IActionResult> VolverConError(string error)
-            {
-                ModelState.AddModelError("", error);
-                var p = await BuscarPersonalActual();
-                ViewBag.SubtiposPermiso = await _context.TbsubtiposPermisos.ToListAsync();
-                ViewBag.CedulaActual = p?.CC;
-                ViewBag.NombreActual = p?.NombreColaborador;
-                ViewBag.CargoActual = p?.Cargo;
-                ViewBag.AreaActual = p?.Area;
-                if (p != null)
-                {
-                    try { ViewBag.Vacaciones = await _VacacionesService.CalcularVacacionesAsync(p.CC); } catch { ViewBag.Vacaciones = null; }
-                }
-                return View(tbsolicitude);
-            }
-
-            if (!ModelState.IsValid)
-                return await VolverConError("");
-
-            // Validar archivo si se adjuntó
-            if (archivoAnexo != null && archivoAnexo.Length > 0)
-            {
-                var ext = Path.GetExtension(archivoAnexo.FileName).ToLower();
-                if (ext != ".pdf")
-                    return await VolverConError("Solo se permiten archivos PDF como anexo.");
-
-                var nombreArchivo = $"solicitud_{DateTime.Now.Ticks}.pdf";
-                var carpeta = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "anexos");
-                Directory.CreateDirectory(carpeta);
-                using var stream = new FileStream(Path.Combine(carpeta, nombreArchivo), FileMode.Create);
-                await archivoAnexo.CopyToAsync(stream);
-                tbsolicitude.Anexos = $"/anexos/{nombreArchivo}";
-            }
-
-            var solicitante = await _context.Tbpersonals
-                .FirstOrDefaultAsync(p => p.CC == tbsolicitude.CC);
-            if (solicitante == null)
-                return await VolverConError("No se encontró el perfil del solicitante.");
-
-            // Validación server-side para Vacaciones: no permitir solicitar más días que los disponibles
-            if (!string.IsNullOrWhiteSpace(tbsolicitude.TipoSolicitud) &&
-                tbsolicitude.TipoSolicitud.Equals("Vacaciones", StringComparison.OrdinalIgnoreCase))
-            {
-                var diasSolicitados = tbsolicitude.TotalDias ?? 0;
-                try
-                {
-                    var vac = await _VacacionesService.CalcularVacacionesAsync(solicitante.CC);
-                    var disponibles = (int)Math.Floor(vac.DiasDisponibles);
-                    if (diasSolicitados <= 0)
-                        return await VolverConError("Selecciona un rango válido de fechas para las vacaciones.");
-                    if (diasSolicitados > disponibles)
-                        return await VolverConError($"No tienes suficientes días disponibles ({disponibles}). Ajusta el rango seleccionado.");
-                }
-                catch
-                {
-                    return await VolverConError("Error al calcular días de vacaciones. Intenta más tarde.");
-                }
-            }
-
-            if (tbsolicitude.TipoSolicitud?.Equals("Vacaciones", StringComparison.OrdinalIgnoreCase) == true)
-            {
-                var diasSolicitados = tbsolicitude.TotalDias ?? 0;
-                var diasEnDinero = tbsolicitude.DiasEnDinero ?? 0;
-
-                var vac = await _VacacionesService.CalcularVacacionesAsync(solicitante.CC);
-                var disponibles = (int)Math.Floor(vac.DiasDisponibles);
-                var maxDinero = (int)Math.Floor(disponibles * 0.5);
-
-                if (diasEnDinero > maxDinero)
-                    return await VolverConError($"No puedes solicitar más de {maxDinero} días en dinero (50% del disponible).");
-
-                if (diasSolicitados + diasEnDinero > disponibles)
-                    return await VolverConError("La suma de días de vacaciones + días en dinero no puede superar los días disponibles.");
-            }
-
-            tbsolicitude = await _flujo.InicializarFlujo(tbsolicitude, solicitante);
-            _context.Add(tbsolicitude);
-            await _context.SaveChangesAsync();
-
-            await NotificarAprobador(tbsolicitude, 1);
-            try { await _email.NotificarSolicitudCreadaAsync(tbsolicitude); } catch { }
-            try
-            {
-                await _audit.RegistrarAsync(AuditService.MOD_SOLICITUDES, AuditService.ACC_CREAR,
-                $"{tbsolicitude.Nombre} creó solicitud de {tbsolicitude.TipoSolicitud}",
-                tbsolicitude.IdSolicitud.ToString());
-            }
-            catch { }
-
-            TempData["Exito"] = $"✅ Solicitud enviada. Pendiente de: {tbsolicitude.Paso1Aprobador}.";
-            return RedirectToAction(nameof(Index));
+            try { ViewBag.Vacaciones = await _VacacionesService.CalcularVacacionesAsync(p.CC); }
+            catch { ViewBag.Vacaciones = null; }
         }
+
+        return View(tbsolicitude);
+    }
+
+    if (!ModelState.IsValid)
+        return await VolverConError("Por favor verifica los datos ingresados.");
+
+    // Validar archivo PDF
+    if (archivoAnexo != null && archivoAnexo.Length > 0)
+    {
+        if (Path.GetExtension(archivoAnexo.FileName).ToLower() != ".pdf")
+            return await VolverConError("Solo se permiten archivos PDF como anexo.");
+
+        var nombreArchivo = $"anexo_{DateTime.Now.Ticks}.pdf";
+        var carpeta = Path.Combine(_env.WebRootPath ?? "wwwroot", "anexos");
+        Directory.CreateDirectory(carpeta);
+
+        using var stream = new FileStream(Path.Combine(carpeta, nombreArchivo), FileMode.Create);
+        await archivoAnexo.CopyToAsync(stream);
+        tbsolicitude.Anexos = $"/anexos/{nombreArchivo}";
+    }
+
+    var solicitante = await _context.Tbpersonals.FirstOrDefaultAsync(p => p.CC == tbsolicitude.CC);
+    if (solicitante == null)
+        return await VolverConError("No se encontró el perfil del solicitante.");
+
+    // === VALIDACIÓN VACACIONES ===
+    if (tbsolicitude.TipoSolicitud?.Equals("Vacaciones", StringComparison.OrdinalIgnoreCase) == true)
+    {
+        var diasSolicitados = tbsolicitude.TotalDias ?? 0;
+        var diasEnDinero = tbsolicitude.DiasEnDinero ?? 0;
+
+        var vac = await _VacacionesService.CalcularVacacionesAsync(solicitante.CC);
+        var disponibles = (int)Math.Floor(vac.DiasDisponibles);
+
+        if (diasSolicitados + diasEnDinero > disponibles)
+            return await VolverConError($"No tienes suficientes días disponibles. Disponibles: {disponibles}. " +
+                                        $"Solicitaste {diasSolicitados} días + {diasEnDinero} en dinero.");
+
+        var maxDinero = (int)Math.Floor(disponibles * 0.5);
+        if (diasEnDinero > maxDinero)
+            return await VolverConError($"No puedes solicitar más de {maxDinero} días en dinero (50% del disponible).");
+
+        if (diasSolicitados <= 0)
+            return await VolverConError("Debes seleccionar un rango válido de fechas.");
+    }
+
+    // Inicializar flujo de aprobación
+    tbsolicitude = await _flujo.InicializarFlujo(tbsolicitude, solicitante);
+
+    _context.Add(tbsolicitude);
+    await _context.SaveChangesAsync();
+
+    await NotificarAprobador(tbsolicitude, 1);
+
+    try { await _email.NotificarSolicitudCreadaAsync(tbsolicitude); } catch { }
+    try { await _audit.RegistrarAsync(AuditService.MOD_SOLICITUDES, AuditService.ACC_CREAR, 
+        $"{tbsolicitude.Nombre} creó solicitud de {tbsolicitude.TipoSolicitud}", tbsolicitude.IdSolicitud.ToString()); } catch { }
+
+    TempData["Exito"] = $"✅ Solicitud enviada. Pendiente de: {tbsolicitude.Paso1Aprobador}.";
+    return RedirectToAction(nameof(Index));
+}
 
         // ── REVISAR ───────────────────────────────────────────────────────
         public async Task<IActionResult> Revisar(int id)
@@ -530,14 +507,18 @@ namespace Farmacol.Controllers
 
                 }
 
+
                 var fi = solicitud.FechaInicio.Value.ToString("dd/MM/yyyy");
                 var ff = solicitud.FechaFin.Value.ToString("dd/MM/yyyy");
                 TempData["Exito"] = $"✅ Aprobada. {personal.NombreColaborador} inhabilitado del {fi} al {ff}.";
+
             }
             else
             {
                 TempData["Exito"] = "✅ Solicitud aprobada definitivamente.";
             }
+
+
 
             return RedirectToAction(nameof(Index));
         }

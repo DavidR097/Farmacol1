@@ -36,6 +36,7 @@ public class RequisicionesController : Controller
     // CREATE GET
     public async Task<IActionResult> Create()
     {
+        // Generar número de requisición automático
         var ultimo = await _context.TbRequisiciones
             .OrderByDescending(r => r.NoRequisicion)
             .FirstOrDefaultAsync();
@@ -49,15 +50,25 @@ public class RequisicionesController : Controller
 
         ViewBag.NoRequisicionSugerido = nuevoNoRequisicion;
 
+        // Obtener datos del usuario logueado desde Tbpersonals
+        var userName = User.Identity?.Name;
+
+        var personal = await _context.Tbpersonals
+            .FirstOrDefaultAsync(p => p.UsuarioCorporativo == userName ||
+                                      p.CorreoCorporativo == userName);
+
         var model = new TbRequisicione
         {
-            FechaSolicitud = DateOnly.FromDateTime(DateTime.Today)
+            FechaSolicitud = DateOnly.FromDateTime(DateTime.Today),
+            NombreSolicitante = personal?.NombreColaborador ?? User.Identity?.Name ?? "",
+            CargoSolicitante = personal?.Cargo ?? "",
+            GerenciaSolicitante = personal?.Area ?? ""  
         };
 
         return View(model);
     }
 
-    // CREATE POST - Corregido con notificaciones dinámicas
+
     // CREATE POST - Notificaciones dinámicas por Cargo y Rol
     [HttpPost]
     [ValidateAntiForgeryToken]
@@ -163,38 +174,6 @@ public class RequisicionesController : Controller
     public async Task<IActionResult> Details(int id)
     {
         return RedirectToAction("Gestionar", new { id });
-    }
-
-    // EDIT (mantener si lo necesitas)
-    public async Task<IActionResult> Edit(int id)
-    {
-        var requisicion = await _context.TbRequisiciones.FindAsync(id);
-        if (requisicion == null) return NotFound();
-        return View(requisicion);
-    }
-
-    [HttpPost]
-    [ValidateAntiForgeryToken]
-    public async Task<IActionResult> Edit(int id, TbRequisicione tbRequisicione)
-    {
-        if (id != tbRequisicione.Id) return NotFound();
-
-        if (ModelState.IsValid)
-        {
-            try
-            {
-                _context.Update(tbRequisicione);
-                await _context.SaveChangesAsync();
-                TempData["Exito"] = "✅ Requisición actualizada.";
-                return RedirectToAction(nameof(Index));
-            }
-            catch (DbUpdateConcurrencyException)
-            {
-                if (!TbRequisicioneExists(tbRequisicione.Id)) return NotFound();
-                throw;
-            }
-        }
-        return View(tbRequisicione);
     }
 
     private bool TbRequisicioneExists(int id)
