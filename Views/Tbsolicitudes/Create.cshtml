@@ -219,12 +219,17 @@
         .cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; }
         .cal-header-row { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; margin-bottom: 6px; }
         .cal-day {
-            padding: 8px 4px; text-align: center; border-radius: 6px; cursor: pointer;
-            border: 1px solid #dee2e6; font-size: 0.9rem; transition: all 0.15s;
+            padding: 8px 4px; 
+            text-align: center; 
+            border-radius: 6px; 
+            cursor: pointer;
+            border: 1px solid #dee2e6; 
+            font-size: 0.9rem; 
+            transition: all 0.15s;
         }
         .cal-day:hover { background: #e9ecef; }
         .cal-day.inicio { background: #0d6efd !important; color: white !important; border-color: #0d6efd !important; }
-        .cal-day.fin   { background: #dc3545 !important; color: white !important; border-color: #dc3545 !important; }
+        .cal-day.fin { background: #dc3545 !important; color: white !important; border-color: #dc3545 !important; }
         .cal-day.rango { background: #cfe2ff; border-color: #9ec5fe; }
         .cal-day.vacio { border: none; cursor: default; }
         .cal-nav { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
@@ -245,7 +250,7 @@
             });
         });
 
-        // ==================== CALENDARIO VACACIONES ====================
+        // ==================== VARIABLES GLOBALES ====================
         let fechaInicio = null;
         let fechaFin = null;
         let calYear = new Date().getFullYear();
@@ -254,6 +259,11 @@
         const meses = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
         const diasSem = ['Dom','Lun','Mar','Mié','Jue','Vie','Sáb'];
 
+        // Datos de vacaciones desde el servidor (más seguro)
+        const diasDisponibles = Number(@(ViewBag.Vacaciones?.DiasDisponibles ?? 0));
+        const esPlanta = Boolean(@(ViewBag.Vacaciones?.EsPlanta?.ToString().ToLower() ?? "false"));
+
+        // ==================== CALENDARIO ====================
         function renderCalendario() {
             const cont = document.getElementById('calendarioVacaciones');
             if (!cont) return;
@@ -270,11 +280,14 @@
                 <div class="cal-header-row">${diasSem.map(d => `<div class="text-center fw-bold small text-muted">${d}</div>`).join('')}</div>
                 <div class="cal-grid">`;
 
-            for (let i = 0; i < primerDia; i++) html += `<div class="cal-day vacio"></div>`;
+            for (let i = 0; i < primerDia; i++) {
+                html += `<div class="cal-day vacio"></div>`;
+            }
 
             for (let d = 1; d <= totalDias; d++) {
                 const fechaStr = `${calYear}-${String(calMonth+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
                 let clase = 'cal-day';
+
                 if (fechaInicio && fechaStr === fechaInicio) clase += ' inicio';
                 else if (fechaFin && fechaStr === fechaFin) clase += ' fin';
                 else if (fechaInicio && fechaFin && fechaStr > fechaInicio && fechaStr < fechaFin) clase += ' rango';
@@ -293,98 +306,79 @@
         }
 
         function seleccionarFecha(fechaStr) {
-    if (!fechaInicio || fechaFin) {
-        fechaInicio = fechaStr;
-        fechaFin = null;
-                    // === DÍAS EN DINERO Y RESTANTES ===
-            const maxDinero = Math.floor(disponibles * 0.5);
-            const infoEl = document.getElementById('maxDineroInfo');
-            if (infoEl) infoEl.textContent = `Máximo permitido: ${maxDinero} días`;
-
-            const diasDineroInput = document.getElementById('diasEnDinero');
-            if (diasDineroInput) {
-                diasDineroInput.max = maxDinero;
-                diasDineroInput.oninput = function() {
-                    let valor = parseInt(this.value) || 0;
-                    if (valor > maxDinero) this.value = maxDinero;
-                };
+            if (!fechaInicio || fechaFin) {
+                // Primer clic o después de tener ambos → inicia nuevo rango
+                fechaInicio = fechaStr;
+                fechaFin = null;
+            } 
+            else if (fechaStr < fechaInicio) {
+                fechaFin = fechaInicio;
+                fechaInicio = fechaStr;
+            } 
+            else {
+                fechaFin = fechaStr;
             }
-    } else if (fechaStr < fechaInicio) {
-        fechaFin = fechaInicio;
-        fechaInicio = fechaStr;
-    } else {
-        fechaFin = fechaStr;
-    }
 
-    // Actualizar campos ocultos
-    document.getElementById('inputFechaInicio').value = fechaInicio || '';
-    document.getElementById('inputFechaFin').value = fechaFin || '';
+            // Actualizar campos ocultos
+            document.getElementById('inputFechaInicio').value = fechaInicio || '';
+            document.getElementById('inputFechaFin').value = fechaFin || '';
 
-    // Actualizar etiquetas visibles
-    document.getElementById('lblInicio').textContent = fechaInicio 
-        ? fechaInicio.split('-').reverse().join('/') 
-        : 'No seleccionado';
-    
-    document.getElementById('lblFin').textContent = fechaFin 
-        ? fechaFin.split('-').reverse().join('/') 
-        : 'No seleccionado';
+            // Actualizar etiquetas visibles
+            document.getElementById('lblInicio').textContent = fechaInicio 
+                ? fechaInicio.split('-').reverse().join('/') 
+                : 'No seleccionado';
 
-    if (fechaInicio && fechaFin) {
-        // Determinar si cuenta sábados (solo Planta)
-        let includeSat = false;
-        try {
-            includeSat = Boolean(@(ViewBag.Vacaciones?.EsPlanta?.ToString().ToLower() ?? "false"));
-        } catch(e) { includeSat = false; }
+            document.getElementById('lblFin').textContent = fechaFin 
+                ? fechaFin.split('-').reverse().join('/') 
+                : 'No seleccionado';
 
-        const diff = countWorkingDays(new Date(fechaInicio), new Date(fechaFin), includeSat);
+            // Calcular días solo cuando tenemos rango completo
+            if (fechaInicio && fechaFin) {
+                const diff = countWorkingDays(new Date(fechaInicio), new Date(fechaFin), esPlanta);
 
-        // Actualizar total días
-        document.getElementById('totalDiasDisplay').value = diff + ' días';
-        document.getElementById('inputTotalDias').value = diff;
+                document.getElementById('totalDiasDisplay').value = diff + ' días';
+                document.getElementById('inputTotalDias').value = diff;
 
-        // === CALCULAR DÍAS RESTANTES ===
-        const disponibles = Number(@(ViewBag.Vacaciones?.DiasDisponibles ?? 0));
-        const restantes = disponibles - diff;
+                // Días restantes
+                const restantes = diasDisponibles - diff;
+                document.getElementById('diasRestantesDisplay').value = 
+                    (restantes >= 0 ? restantes : 0) + ' días';
 
-        const restantesEl = document.getElementById('diasRestantesDisplay');
-        if (restantesEl) {
-            restantesEl.value = (restantes >= 0 ? restantes : 0) + ' días';
+                // Validación
+                const warningEl = document.getElementById('vacWarning');
+                const submitBtn = document.getElementById('vacSubmit');
+
+                if (diff > diasDisponibles) {
+                    warningEl.classList.remove('d-none');
+                    submitBtn.disabled = true;
+                } else {
+                    warningEl.classList.add('d-none');
+                    submitBtn.disabled = false;
+                }
+
+                // Configurar días en dinero (máximo 50%)
+                const maxDinero = Math.floor(diasDisponibles * 0.5);
+                const infoEl = document.getElementById('maxDineroInfo');
+                const diasDineroInput = document.getElementById('diasEnDinero');
+
+                if (infoEl) infoEl.textContent = `Máximo permitido: ${maxDinero} días`;
+                if (diasDineroInput) {
+                    diasDineroInput.max = maxDinero;
+                    diasDineroInput.oninput = function () {
+                        let valor = parseInt(this.value) || 0;
+                        if (valor > maxDinero) this.value = maxDinero;
+                    };
+                }
+            } 
+            else {
+                // Limpiar cuando no hay rango completo
+                document.getElementById('totalDiasDisplay').value = '';
+                document.getElementById('inputTotalDias').value = '';
+                document.getElementById('diasRestantesDisplay').value = '';
+            }
+
+            renderCalendario();
         }
-
-        // Validación de días disponibles
-        const warningEl = document.getElementById('vacWarning');
-        const submitBtn = document.getElementById('vacSubmit');
-
-        if (disponibles < diff) {
-            if (warningEl) warningEl.classList.remove('d-none');
-            if (submitBtn) submitBtn.disabled = true;
-        } else {
-            if (warningEl) warningEl.classList.add('d-none');
-            if (submitBtn) submitBtn.disabled = false;
-        }
-
-        // Días en Dinero (máximo 50%)
-        const maxDinero = Math.floor(disponibles * 0.5);
-        const infoEl = document.getElementById('maxDineroInfo');
-        if (infoEl) infoEl.textContent = `Máximo permitido: ${maxDinero} días`;
-
-        const diasDineroInput = document.getElementById('diasEnDinero');
-        if (diasDineroInput) {
-            diasDineroInput.max = maxDinero;
-            diasDineroInput.oninput = function () {
-                if (parseInt(this.value || 0) > maxDinero) this.value = maxDinero;
-            };
-        }
-    } else {
-        // Limpiar cuando no hay rango completo
-        document.getElementById('totalDiasDisplay').value = '';
-        document.getElementById('inputTotalDias').value = '';
-        const restantesEl = document.getElementById('diasRestantesDisplay');
-        if (restantesEl) restantesEl.value = '';
-    }
-
-    renderCalendario();
-}
 
         function countWorkingDays(startDate, endDate, includeSaturday) {
             if (!startDate || !endDate) return 0;
@@ -402,7 +396,7 @@
             return count;
         }
 
-        // Funciones de Permiso
+        // ==================== FUNCIONES DE PERMISO ====================
         window.calcularHoras = function () {
             const inicio = document.getElementById('horaInicioP').value;
             const fin = document.getElementById('horaFinP').value;
@@ -410,19 +404,18 @@
                 const [h1, m1] = inicio.split(':').map(Number);
                 const [h2, m2] = fin.split(':').map(Number);
                 const totalMin = (h2 * 60 + m2) - (h1 * 60 + m1);
-                document.getElementById('totalHorasP').value = totalMin > 0 ? (totalMin / 60).toFixed(1) : '';
+                document.getElementById('totalHorasP').value = totalMin > 0 ? (totalMin / 60).toFixed(1) : '0';
             }
         };
 
         window.calcularDiasPermiso = function () {
             const inicio = document.getElementById('fechaInicioP').value;
             const fin = document.getElementById('fechaFinP').value;
-
             if (inicio && fin && fin >= inicio) {
-                const diff = Math.round((new Date(fin) - new Date(inicio)) / (1000*60*60*24)) + 1;
+                const diff = Math.round((new Date(fin) - new Date(inicio)) / (1000 * 60 * 60 * 24)) + 1;
                 document.getElementById('totalDiasP').value = diff;
             } else {
-                document.getElementById('totalDiasP').value = '0';   // ← Importante: 0 cuando no hay rango de fechas
+                document.getElementById('totalDiasP').value = '0';
             }
         };
     </script>
