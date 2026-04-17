@@ -16,18 +16,19 @@ public class ExpedientesRRHHController : Controller
     private readonly ExcelService _excel;
 
     public ExpedientesRRHHController(Farmacol1Context context,
-        IWebHostEnvironment env, 
+        IWebHostEnvironment env,
         DocumentoService docSvc,
         AuditService audit,
         ExcelService excel)
     {
-        _context = context; 
-        _env = env; 
-        _docSvc = docSvc; 
+        _context = context;
+        _env = env;
+        _docSvc = docSvc;
         _audit = audit;
         _excel = excel;
     }
 
+    // ─── INDEX ────────────────────────────────────────────────────────────────
     public async Task<IActionResult> Index(string? busqueda, string? area)
     {
         var query = _context.Tbpersonals.AsQueryable();
@@ -49,17 +50,31 @@ public class ExpedientesRRHHController : Controller
         var docsRecientes = (await _context.TbExpedientes
             .Where(d => ccs.Contains(d.CC) && d.Modulo == "RRHH")
             .OrderByDescending(d => d.FechaSubida).ToListAsync())
-            .GroupBy(d => d.CC).ToDictionary(g => g.Key, g => g.Take(3).ToList());
+            .GroupBy(d => d.CC).ToDictionary(g => g.Key, g => g.ToList());
 
-        ViewBag.Busqueda = busqueda ?? ""; ViewBag.Area = area ?? "";
+        // Carpetas raíz por CC (sin padre)
+        var carpetasPorCC = (await _context.TbCarpetas
+            .Where(c => ccs.Contains(c.CC) && c.Modulo == "RRHH")
+            .Include(c => c.SubCarpetas)
+            .OrderBy(c => c.Nombre)
+            .ToListAsync())
+            .GroupBy(c => c.CC)
+            .ToDictionary(g => g.Key, g => g.ToList());
+
+        ViewBag.Busqueda = busqueda ?? "";
+        ViewBag.Area = area ?? "";
         ViewBag.Areas = await _context.Tbpersonals.Where(p => p.Area != null)
                                .Select(p => p.Area!).Distinct().OrderBy(a => a).ToListAsync();
-        ViewBag.Conteo = conteo; ViewBag.Personal = personal; ViewBag.DocsRecientes = docsRecientes;
+        ViewBag.Conteo = conteo;
+        ViewBag.Personal = personal;
+        ViewBag.DocsRecientes = docsRecientes;
+        ViewBag.CarpetasPorCC = carpetasPorCC;
         ViewBag.Plantillas = await _context.TbPlantillas
                                .Where(p => p.Modulo == "RRHH" && p.Activa).ToListAsync();
         return View();
     }
 
+    // ─── GENERAR DOCX ─────────────────────────────────────────────────────────
     [HttpPost]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> Generar(int cc, string tipoDocumento)
@@ -68,7 +83,11 @@ public class ExpedientesRRHHController : Controller
         if (personal == null) return NotFound();
         var plantilla = await _context.TbPlantillas
             .FirstOrDefaultAsync(p => p.TipoDocumento == tipoDocumento && p.Modulo == "RRHH" && p.Activa);
-        if (plantilla == null) { TempData["Error"] = $"No hay plantilla activa para '{tipoDocumento}'."; return RedirectToAction(nameof(Index)); }
+        if (plantilla == null)
+        {
+            TempData["Error"] = $"No hay plantilla activa para '{tipoDocumento}'.";
+            return RedirectToAction(nameof(Index));
+        }
 
         var rutaFisica = Path.Combine(_env.WebRootPath,
             plantilla.RutaArchivo.TrimStart('/').Replace('/', Path.DirectorySeparatorChar));
@@ -79,10 +98,11 @@ public class ExpedientesRRHHController : Controller
             $"{nombreBase}.docx");
     }
 
+    // ─── SUBIR INDIVIDUAL ─────────────────────────────────────────────────────
     [HttpPost]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> Subir(int cc, IFormFile archivo,
-        string? tipoDocumento, string? nombrePersonalizado)
+        string? tipoDocumento, string? nombrePersonalizado, int? carpetaId)
     {
         if (archivo == null || Path.GetExtension(archivo.FileName).ToLower() != ".pdf")
         { TempData["Error"] = "Solo PDF."; return RedirectToAction(nameof(Index)); }
@@ -99,15 +119,16 @@ public class ExpedientesRRHHController : Controller
             TipoDocumento = tipoDocumento,
             RutaArchivo = ruta,
             FechaSubida = DateTime.Now,
-            SubidoPor = User.Identity?.Name ?? ""
+            SubidoPor = User.Identity?.Name ?? "",
+            Visible = true,
+            CarpetaId = carpetaId == 0 ? null : carpetaId
         });
         await _context.SaveChangesAsync();
 
         try
         {
             await _audit.RegistrarAsync(AuditService.MOD_EXPEDIENTES, AuditService.ACC_SUBIR,
-            $"Documento '{nombreDoc}' subido al expediente CC:{cc} (RRHH)",
-            cc.ToString());
+            $"Documento '{nombreDoc}' subido al expediente CC:{cc} (RRHH)", cc.ToString());
         }
         catch { }
 
@@ -115,6 +136,7 @@ public class ExpedientesRRHHController : Controller
         return RedirectToAction(nameof(Index));
     }
 
+    // ─── SUBIDA MASIVA ────────────────────────────────────────────────────────
     [HttpPost]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> SubirMasivo(string ccs, IFormFile archivo,
@@ -141,7 +163,8 @@ public class ExpedientesRRHHController : Controller
                 TipoDocumento = tipoDocumento,
                 RutaArchivo = ruta,
                 FechaSubida = DateTime.Now,
-                SubidoPor = User.Identity?.Name ?? ""
+                SubidoPor = User.Identity?.Name ?? "",
+                Visible = true
             });
         }
         await _context.SaveChangesAsync();
@@ -155,6 +178,7 @@ public class ExpedientesRRHHController : Controller
         return RedirectToAction(nameof(Index));
     }
 
+    // ─── VER PDF ──────────────────────────────────────────────────────────────
     public async Task<IActionResult> Ver(int id)
     {
         var doc = await _context.TbExpedientes.FindAsync(id);
@@ -165,6 +189,29 @@ public class ExpedientesRRHHController : Controller
         return PhysicalFile(full, "application/pdf");
     }
 
+    // ─── TOGGLE VISIBLE ───────────────────────────────────────────────────────
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> ToggleVisible(int id)
+    {
+        var doc = await _context.TbExpedientes.FindAsync(id);
+        if (doc == null) return NotFound();
+
+        doc.Visible = !doc.Visible;
+        await _context.SaveChangesAsync();
+
+        try
+        {
+            await _audit.RegistrarAsync(AuditService.MOD_EXPEDIENTES, "TOGGLE_VISIBLE",
+                $"Documento '{doc.NombreArchivo}' → {(doc.Visible ? "visible" : "oculto")} (CC:{doc.CC})",
+                id.ToString());
+        }
+        catch { }
+
+        return RedirectToAction(nameof(Index));
+    }
+
+    // ─── ELIMINAR DOCUMENTO ───────────────────────────────────────────────────
     [HttpPost]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> Eliminar(int id)
@@ -188,6 +235,98 @@ public class ExpedientesRRHHController : Controller
         return RedirectToAction(nameof(Index));
     }
 
+    // ─── MOVER DOCUMENTO A CARPETA ────────────────────────────────────────────
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> MoverDoc(int docId, int? carpetaId)
+    {
+        var doc = await _context.TbExpedientes.FindAsync(docId);
+        if (doc == null) return NotFound();
+        doc.CarpetaId = carpetaId == 0 ? null : carpetaId;
+        await _context.SaveChangesAsync();
+        return RedirectToAction(nameof(Index));
+    }
+
+    // ─── CREAR CARPETA ────────────────────────────────────────────────────────
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> CrearCarpeta(int cc, string nombre, int? carpetaPadreId)
+    {
+        if (string.IsNullOrWhiteSpace(nombre))
+        { TempData["Error"] = "El nombre de la carpeta no puede estar vacío."; return RedirectToAction(nameof(Index)); }
+
+        _context.TbCarpetas.Add(new TbCarpeta
+        {
+            CC = cc,
+            Nombre = nombre.Trim(),
+            Modulo = "RRHH",
+            CarpetaPadreId = carpetaPadreId == 0 ? null : carpetaPadreId,
+            FechaCreacion = DateTime.Now,
+            CreadoPor = User.Identity?.Name ?? ""
+        });
+        await _context.SaveChangesAsync();
+        TempData["Exito"] = $"📁 Carpeta '{nombre}' creada.";
+        return RedirectToAction(nameof(Index));
+    }
+
+    // ─── RENOMBRAR CARPETA ────────────────────────────────────────────────────
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> RenombrarCarpeta(int carpetaId, string nuevoNombre)
+    {
+        var carpeta = await _context.TbCarpetas.FindAsync(carpetaId);
+        if (carpeta == null) return NotFound();
+        if (string.IsNullOrWhiteSpace(nuevoNombre))
+        { TempData["Error"] = "Nombre vacío."; return RedirectToAction(nameof(Index)); }
+        carpeta.Nombre = nuevoNombre.Trim();
+        await _context.SaveChangesAsync();
+        TempData["Exito"] = "Carpeta renombrada.";
+        return RedirectToAction(nameof(Index));
+    }
+
+    // ─── ELIMINAR CARPETA ─────────────────────────────────────────────────────
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> EliminarCarpeta(int carpetaId)
+    {
+        var carpeta = await _context.TbCarpetas
+            .Include(c => c.SubCarpetas)
+            .Include(c => c.Expedientes)
+            .FirstOrDefaultAsync(c => c.Id == carpetaId);
+        if (carpeta == null) return NotFound();
+
+        // Mover documentos a raíz antes de eliminar
+        foreach (var doc in carpeta.Expedientes)
+            doc.CarpetaId = null;
+
+        // Mover subcarpetas a raíz
+        foreach (var sub in carpeta.SubCarpetas)
+            sub.CarpetaPadreId = null;
+
+        _context.TbCarpetas.Remove(carpeta);
+        await _context.SaveChangesAsync();
+        TempData["Exito"] = "Carpeta eliminada. Los documentos fueron movidos a la raíz.";
+        return RedirectToAction(nameof(Index));
+    }
+
+    // ─── EXPORTAR EXCEL ───────────────────────────────────────────────────────
+    [HttpGet]
+    public async Task<IActionResult> ExportarExcel(string? busqueda, string? area, bool todo = false)
+    {
+        IQueryable<TbExpediente> query = _context.TbExpedientes.Where(d => d.Modulo == "RRHH");
+        if (!todo)
+        {
+            if (!string.IsNullOrEmpty(busqueda))
+                query = query.Where(d => d.NombreArchivo.Contains(busqueda) ||
+                    (d.TipoDocumento != null && d.TipoDocumento.Contains(busqueda)));
+        }
+        var datos = await query.OrderByDescending(d => d.FechaSubida).ToListAsync();
+        var bytes = _excel.ExportarExpedientes(datos);
+        return File(bytes, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+            $"ExpedientesRRHH_{DateTime.Now:yyyyMMdd_HHmm}.xlsx");
+    }
+
+    // ─── HELPERS ──────────────────────────────────────────────────────────────
     private async Task<string> GuardarPdf(IFormFile archivo, int cc)
     {
         var carpeta = Path.Combine(_env.WebRootPath, "expedientes", "rrhh", cc.ToString());
@@ -206,21 +345,4 @@ public class ExpedientesRRHHController : Controller
         await System.IO.File.WriteAllBytesAsync(Path.Combine(carpeta, nombre), contenido);
         return $"/expedientes/rrhh/{cc}/{nombre}";
     }
-
-    [HttpGet]
-    public async Task<IActionResult> ExportarExcel(string? busqueda, string? area, bool todo = false)
-    {
-        IQueryable<TbExpediente> query = _context.TbExpedientes.Where(d => d.Modulo == "RRHH");
-        if (!todo)
-        {
-            if (!string.IsNullOrEmpty(busqueda))
-                query = query.Where(d => d.NombreArchivo.Contains(busqueda) ||
-                    (d.TipoDocumento != null && d.TipoDocumento.Contains(busqueda)));
-        }
-        var datos = await query.OrderByDescending(d => d.FechaSubida).ToListAsync();
-        var bytes = _excel.ExportarExpedientes(datos);
-        return File(bytes, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-            $"ExpedientesRRHH_{DateTime.Now:yyyyMMdd_HHmm}.xlsx");
-    }
-
 }

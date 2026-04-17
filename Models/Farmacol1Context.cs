@@ -30,6 +30,7 @@ public partial class Farmacol1Context : IdentityDbContext<IdentityUser, Identity
     public virtual DbSet<TbReservaSala> TbReservasSalas { get; set; }
     public virtual DbSet<TbAnuncio> TbAnuncios { get; set; }
     public virtual DbSet<TbRequisicione> TbRequisiciones { get; set; }
+    public virtual DbSet<TbCarpeta> TbCarpetas { get; set; }
 
     //protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
     //    => optionsBuilder.UseSqlServer("Server=DARIANO\\SQLEXPRESS03;database=Farmacol1;integrated security=true;TrustServerCertificate=True;");

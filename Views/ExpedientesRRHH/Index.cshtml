@@ -5,6 +5,7 @@
     var docsRec = ViewBag.DocsRecientes as Dictionary<int, List<Farmacol.Models.TbExpediente>> ?? new();
     var areas = ViewBag.Areas as List<string> ?? new List<string>();
     var plantillas = ViewBag.Plantillas as List<Farmacol.Models.TbPlantilla> ?? new();
+    var carpetasPorCC = ViewBag.CarpetasPorCC as Dictionary<int, List<Farmacol.Models.TbCarpeta>> ?? new();
 }
 
 <h1>📂 Expedientes RRHH</h1>
@@ -98,9 +99,16 @@ else
             var cc = (int)p.CC;
             var totalDocs = conteo.ContainsKey(cc) ? conteo[cc] : 0;
             var colId = $"rrhh{cc}";
-            var docs = docsRec.ContainsKey(cc) ? docsRec[cc] : new List<Farmacol.Models.TbExpediente>();
-            var visibles = docs.Count(d => d.Visible);
-            var ocultos = docs.Count(d => !d.Visible);
+            var todosLosDocs = docsRec.ContainsKey(cc) ? docsRec[cc] : new List<Farmacol.Models.TbExpediente>();
+            var visibles = todosLosDocs.Count(d => d.Visible);
+            var ocultos = todosLosDocs.Count(d => !d.Visible);
+            var carpetas = carpetasPorCC.ContainsKey(cc)
+                ? carpetasPorCC[cc].OrderBy(c => c.CarpetaPadreId).ThenBy(c => c.Nombre).ToList()
+                : new List<Farmacol.Models.TbCarpeta>();
+
+            // Documentos sin carpeta (raíz)
+            var docsRaiz = todosLosDocs.Where(d => d.CarpetaId == null)
+                                       .OrderByDescending(d => d.FechaSubida).ToList();
 
             <div class="accordion-item border-0 mb-2 shadow-sm">
                 <h2 class="accordion-header">
@@ -125,6 +133,10 @@ else
                             else
                             {
                                 <span class="badge bg-light text-muted border">Sin docs</span>
+                            }
+                            @if (carpetas.Any())
+                            {
+                                <span class="badge bg-warning text-dark rounded-pill">@carpetas.Count carpeta(s)</span>
                             }
                         </div>
                     </button>
@@ -178,21 +190,253 @@ else
                                 </div>
                             }
 
-                            <!-- ── DOCUMENTOS: tabla completa ── -->
+                            <!-- ════════════════════════════════════════════════
+                                 EXPLORADOR DE CARPETAS
+                            ═══════════════════════════════════════════════════ -->
+                            <div class="col-12">
+                                <div class="card border-0">
+                                    <div class="card-header text-white fw-semibold d-flex justify-content-between align-items-center"
+                                         style="background:#fd7e14">
+                                        <span>📁 Explorador de carpetas</span>
+                                        <button type="button" class="btn btn-sm btn-light"
+                                                data-bs-toggle="modal" data-bs-target="#modalCarpeta@(cc)">
+                                            + Nueva carpeta
+                                        </button>
+                                    </div>
+                                    <div class="card-body p-2" style="background:#fff8f0">
+
+                                        <!-- Árbol de carpetas -->
+                                        <div class="file-tree" id="tree@(cc)">
+
+                                            @* ── RAÍZ ── *@
+                                            <div class="tree-folder tree-root"
+                                                 data-cc="@cc" data-carpetaid="0"
+                                                 ondragover="ev.preventDefault()"
+                                                 ondrop="dropDoc(event, @cc, 0)">
+                                                <span class="folder-icon">📂</span>
+                                                <span class="folder-name fw-semibold">Raíz</span>
+                                                <span class="badge bg-secondary ms-1 small">@docsRaiz.Count</span>
+                                            </div>
+
+                                            @* Docs en raíz *@
+                                            @if (docsRaiz.Any())
+                                            {
+                                                <div class="tree-docs-raiz ms-4">
+                                                    @foreach (var doc in docsRaiz)
+                                                    {
+                                                        <div class="tree-doc d-flex align-items-center gap-1 py-1"
+                                                             draggable="true"
+                                                             ondragstart="dragDoc(event, @doc.Id)"
+                                                             id="doc@(doc.Id)">
+                                                            <span style="font-size:12px">📄</span>
+                                                            <span class="small flex-grow-1 text-truncate" style="max-width:220px" title="@doc.NombreArchivo">
+                                                                @doc.NombreArchivo
+                                                                @if (!doc.Visible)
+                                                                {
+                                                                    <span class="badge bg-secondary" style="font-size:.6rem">Oculto</span>
+                                                                }
+                                                            </span>
+                                                            <a asp-action="Ver" asp-route-id="@doc.Id" target="_blank"
+                                                               class="btn btn-link btn-sm p-0" title="Ver">👁️</a>
+                                                            <form asp-action="ToggleVisible" method="post" class="d-inline m-0">
+                                                                @Html.AntiForgeryToken()
+                                                                <input type="hidden" name="id" value="@doc.Id" />
+                                                                <button type="submit" class="btn btn-link btn-sm p-0"
+                                                                        title="@(doc.Visible ? "Ocultar" : "Mostrar")">
+                                                                    @(doc.Visible ? "🟢" : "⚫")
+                                                                </button>
+                                                            </form>
+                                                            <form asp-action="Eliminar" method="post" class="d-inline m-0">
+                                                                @Html.AntiForgeryToken()
+                                                                <input type="hidden" name="id" value="@doc.Id" />
+                                                                <button type="submit" class="btn btn-link btn-sm p-0 text-danger"
+                                                                        onclick="return confirm('¿Eliminar «@doc.NombreArchivo»?')"
+                                                                        title="Eliminar">🗑️</button>
+                                                            </form>
+                                                        </div>
+                                                    }
+                                                </div>
+                                            }
+
+                                            @* ── CARPETAS ── *@
+                                            @foreach (var carpeta in carpetas.Where(c => c.CarpetaPadreId == null))
+                                            {
+                                                var docsEnCarpeta = todosLosDocs
+                                                    .Where(d => d.CarpetaId == carpeta.Id)
+                                                    .OrderByDescending(d => d.FechaSubida).ToList();
+                                                var subCarpetas = carpetas.Where(c => c.CarpetaPadreId == carpeta.Id).ToList();
+                                                var folderId = $"folder{cc}_{carpeta.Id}";
+
+                                                <div class="ms-0 mt-1">
+                                                    @* Cabecera carpeta *@
+                                                    <div class="tree-folder d-flex align-items-center gap-1 py-1 px-2 rounded"
+                                                         style="cursor:pointer; background:#fff3e0"
+                                                         data-cc="@cc" data-carpetaid="@carpeta.Id"
+                                                         ondragover="ev.preventDefault()"
+                                                         ondrop="dropDoc(event, @cc, @carpeta.Id)"
+                                                         onclick="toggleFolder('@folderId')">
+                                                        <span class="folder-toggle" id="toggle@(folderId)">▶</span>
+                                                        <span>📁</span>
+                                                        <span class="fw-semibold small flex-grow-1">@carpeta.Nombre</span>
+                                                        <span class="badge bg-warning text-dark" style="font-size:.65rem">
+                                                            @(docsEnCarpeta.Count + subCarpetas.Count)
+                                                        </span>
+                                                        <button type="button" class="btn btn-link btn-sm p-0 ms-1"
+                                                                onclick="event.stopPropagation(); abrirRenombrar(@carpeta.Id, '@carpeta.Nombre.Replace("'", "\\'")', @cc)"
+                                                                title="Renombrar">✏️</button>
+                                                        <form asp-action="EliminarCarpeta" method="post" class="d-inline m-0"
+                                                              onclick="event.stopPropagation()">
+                                                            @Html.AntiForgeryToken()
+                                                            <input type="hidden" name="carpetaId" value="@carpeta.Id" />
+                                                            <button type="submit" class="btn btn-link btn-sm p-0 text-danger"
+                                                                    onclick="return confirm('¿Eliminar carpeta «@carpeta.Nombre»? Los docs volverán a raíz.')"
+                                                                    title="Eliminar carpeta">🗑️</button>
+                                                        </form>
+                                                    </div>
+
+                                                    @* Contenido de la carpeta (colapsable) *@
+                                                    <div id="@folderId" class="folder-content ms-4" style="display:none">
+
+                                                        @* Botón nueva subcarpeta *@
+                                                        <div class="my-1">
+                                                            <button type="button" class="btn btn-link btn-sm p-0 text-muted small"
+                                                                    onclick="abrirSubcarpeta(@carpeta.Id, @cc)">
+                                                                + subcarpeta
+                                                            </button>
+                                                        </div>
+
+                                                        @* Documentos en la carpeta *@
+                                                        @foreach (var doc in docsEnCarpeta)
+                                                        {
+                                                            <div class="tree-doc d-flex align-items-center gap-1 py-1"
+                                                                 draggable="true"
+                                                                 ondragstart="dragDoc(event, @doc.Id)"
+                                                                 id="doc@(doc.Id)">
+                                                                <span style="font-size:12px">📄</span>
+                                                                <span class="small flex-grow-1 text-truncate" style="max-width:200px" title="@doc.NombreArchivo">
+                                                                    @doc.NombreArchivo
+                                                                    @if (!doc.Visible)
+                                                                    {
+                                                                        <span class="badge bg-secondary" style="font-size:.6rem">Oculto</span>
+                                                                    }
+                                                                </span>
+                                                                <a asp-action="Ver" asp-route-id="@doc.Id" target="_blank"
+                                                                   class="btn btn-link btn-sm p-0" title="Ver">👁️</a>
+                                                                <form asp-action="ToggleVisible" method="post" class="d-inline m-0">
+                                                                    @Html.AntiForgeryToken()
+                                                                    <input type="hidden" name="id" value="@doc.Id" />
+                                                                    <button type="submit" class="btn btn-link btn-sm p-0"
+                                                                            title="@(doc.Visible ? "Ocultar" : "Mostrar")">
+                                                                        @(doc.Visible ? "🟢" : "⚫")
+                                                                    </button>
+                                                                </form>
+                                                                <form asp-action="Eliminar" method="post" class="d-inline m-0">
+                                                                    @Html.AntiForgeryToken()
+                                                                    <input type="hidden" name="id" value="@doc.Id" />
+                                                                    <button type="submit" class="btn btn-link btn-sm p-0 text-danger"
+                                                                            onclick="return confirm('¿Eliminar «@doc.NombreArchivo»?')"
+                                                                            title="Eliminar">🗑️</button>
+                                                                </form>
+                                                            </div>
+                                                        }
+
+                                                        @* Subcarpetas *@
+                                                        @foreach (var sub in subCarpetas)
+                                                        {
+                                                            var docsEnSub = todosLosDocs
+                                                                .Where(d => d.CarpetaId == sub.Id)
+                                                                .OrderByDescending(d => d.FechaSubida).ToList();
+                                                            var subFolderId = $"folder{cc}_{sub.Id}";
+
+                                                            <div class="mt-1">
+                                                                <div class="tree-folder d-flex align-items-center gap-1 py-1 px-2 rounded"
+                                                                     style="cursor:pointer; background:#fce8c3"
+                                                                     data-cc="@cc" data-carpetaid="@sub.Id"
+                                                                     ondragover="ev.preventDefault()"
+                                                                     ondrop="dropDoc(event, @cc, @sub.Id)"
+                                                                     onclick="toggleFolder('@subFolderId')">
+                                                                    <span class="folder-toggle" id="toggle@(subFolderId)">▶</span>
+                                                                    <span>📁</span>
+                                                                    <span class="small fw-semibold flex-grow-1">@sub.Nombre</span>
+                                                                    <span class="badge bg-warning text-dark" style="font-size:.65rem">@docsEnSub.Count</span>
+                                                                    <button type="button" class="btn btn-link btn-sm p-0 ms-1"
+                                                                            onclick="event.stopPropagation(); abrirRenombrar(@sub.Id, '@sub.Nombre.Replace("'", "\\'")', @cc)"
+                                                                            title="Renombrar">✏️</button>
+                                                                    <form asp-action="EliminarCarpeta" method="post" class="d-inline m-0"
+                                                                          onclick="event.stopPropagation()">
+                                                                        @Html.AntiForgeryToken()
+                                                                        <input type="hidden" name="carpetaId" value="@sub.Id" />
+                                                                        <button type="submit" class="btn btn-link btn-sm p-0 text-danger"
+                                                                                onclick="return confirm('¿Eliminar subcarpeta «@sub.Nombre»?')"
+                                                                                title="Eliminar">🗑️</button>
+                                                                    </form>
+                                                                </div>
+                                                                <div id="@subFolderId" class="folder-content ms-4" style="display:none">
+                                                                    @foreach (var doc in docsEnSub)
+                                                                    {
+                                                                        <div class="tree-doc d-flex align-items-center gap-1 py-1"
+                                                                             draggable="true"
+                                                                             ondragstart="dragDoc(event, @doc.Id)"
+                                                                             id="doc@(doc.Id)">
+                                                                            <span style="font-size:12px">📄</span>
+                                                                            <span class="small flex-grow-1 text-truncate" style="max-width:190px" title="@doc.NombreArchivo">
+                                                                                @doc.NombreArchivo
+                                                                                @if (!doc.Visible)
+                                                                                {
+                                                                                    <span class="badge bg-secondary" style="font-size:.6rem">Oculto</span>
+                                                                                }
+                                                                            </span>
+                                                                            <a asp-action="Ver" asp-route-id="@doc.Id" target="_blank"
+                                                                               class="btn btn-link btn-sm p-0" title="Ver">👁️</a>
+                                                                            <form asp-action="ToggleVisible" method="post" class="d-inline m-0">
+                                                                                @Html.AntiForgeryToken()
+                                                                                <input type="hidden" name="id" value="@doc.Id" />
+                                                                                <button type="submit" class="btn btn-link btn-sm p-0"
+                                                                                        title="@(doc.Visible ? "Ocultar" : "Mostrar")">
+                                                                                    @(doc.Visible ? "🟢" : "⚫")
+                                                                                </button>
+                                                                            </form>
+                                                                            <form asp-action="Eliminar" method="post" class="d-inline m-0">
+                                                                                @Html.AntiForgeryToken()
+                                                                                <input type="hidden" name="id" value="@doc.Id" />
+                                                                                <button type="submit" class="btn btn-link btn-sm p-0 text-danger"
+                                                                                        onclick="return confirm('¿Eliminar «@doc.NombreArchivo»?')"
+                                                                                        title="Eliminar">🗑️</button>
+                                                                            </form>
+                                                                        </div>
+                                                                    }
+                                                                </div>
+                                                            </div>
+                                                        }
+                                                    </div>
+                                                </div>
+                                            }
+
+                                        </div><!-- /file-tree -->
+
+                                        @* Área de drop para mover documentos (via AJAX) *@
+                                        <div class="mt-2">
+                                            <small class="text-muted">💡 Arrastra un documento sobre una carpeta para moverlo.</small>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Tabla completa de documentos (vista admin) -->
                             <div class="col-12">
                                 <div class="card border-0">
                                     <div class="card-header text-white fw-semibold d-flex justify-content-between align-items-center"
                                          style="background:#198754">
-                                        <span>📁 Documentos (@totalDocs)</span>
+                                        <span>📋 Todos los documentos (@totalDocs)</span>
                                         @if (totalDocs > 0)
                                         {
                                             <small class="fw-normal opacity-75">
-                                                @visibles visible(s) para el usuario · @ocultos oculto(s)
+                                                @visibles visible(s) · @ocultos oculto(s)
                                             </small>
                                         }
                                     </div>
                                     <div class="card-body p-0" style="background:#edfaf3">
-                                        @if (!docs.Any())
+                                        @if (!todosLosDocs.Any())
                                         {
                                             <p class="text-muted small p-3 mb-0">Sin documentos.</p>
                                         }
@@ -204,14 +448,16 @@ else
                                                         <tr>
                                                             <th>Documento</th>
                                                             <th>Tipo</th>
+                                                            <th>Carpeta</th>
                                                             <th>Fecha subida</th>
-                                                            <th class="text-center">Visible usuario</th>
+                                                            <th class="text-center">Visible</th>
                                                             <th class="text-center">Acciones</th>
                                                         </tr>
                                                     </thead>
                                                     <tbody>
-                                                        @foreach (var doc in docs.OrderByDescending(d => d.FechaSubida))
+                                                        @foreach (var doc in todosLosDocs.OrderByDescending(d => d.FechaSubida))
                                                         {
+                                                            var carpetaDoc = carpetas.FirstOrDefault(c => c.Id == doc.CarpetaId);
                                                             <tr class="@(!doc.Visible ? "table-secondary" : "")">
                                                                 <td>
                                                                     <span>📄</span>
@@ -222,6 +468,16 @@ else
                                                                     }
                                                                 </td>
                                                                 <td><small class="text-muted">@(doc.TipoDocumento ?? "—")</small></td>
+                                                                <td>
+                                                                    @if (carpetaDoc != null)
+                                                                    {
+                                                                        <span class="badge bg-warning text-dark">📁 @carpetaDoc.Nombre</span>
+                                                                    }
+                                                                    else
+                                                                    {
+                                                                        <span class="text-muted small">Raíz</span>
+                                                                    }
+                                                                </td>
                                                                 <td><small class="text-muted">@doc.FechaSubida.ToString("dd/MM/yyyy HH:mm")</small></td>
                                                                 <td class="text-center">
                                                                     <form asp-action="ToggleVisible" method="post" class="d-inline">
@@ -265,7 +521,7 @@ else
                                             @Html.AntiForgeryToken()
                                             <input type="hidden" name="cc" value="@cc" />
                                             <div class="row g-2 align-items-end">
-                                                <div class="col-md-3">
+                                                <div class="col-md-2">
                                                     <select name="tipoDocumento" class="form-select form-select-sm">
                                                         <option value="">Sin categoría</option>
                                                         <option>Contrato</option>
@@ -278,8 +534,21 @@ else
                                                         <option>Otros RRHH</option>
                                                     </select>
                                                 </div>
-                                                <div class="col-md-3">
-                                                    <input type="text" name="nombrePersonalizado" class="form-control form-control-sm" placeholder="Nombre del documento" />
+                                                <div class="col-md-2">
+                                                    <input type="text" name="nombrePersonalizado" class="form-control form-control-sm" placeholder="Nombre del doc." />
+                                                </div>
+                                                <div class="col-md-2">
+                                                    <select name="carpetaId" class="form-select form-select-sm">
+                                                        <option value="0">📂 Raíz</option>
+                                                        @foreach (var c in carpetas.Where(x => x.CarpetaPadreId == null))
+                                                        {
+                                                            <option value="@c.Id">📁 @c.Nombre</option>
+                                                            @foreach (var sub in carpetas.Where(x => x.CarpetaPadreId == c.Id))
+                                                            {
+                                                                <option value="@sub.Id">  └ @sub.Nombre</option>
+                                                            }
+                                                        }
+                                                    </select>
                                                 </div>
                                                 <div class="col-md-4">
                                                     <input type="file" name="archivo" accept=".pdf" class="form-control form-control-sm" required />
@@ -297,23 +566,137 @@ else
                     </div>
                 </div>
             </div>
+
+            <!-- Modal: nueva carpeta raíz -->
+            <div class="modal fade" id="modalCarpeta@(cc)" tabindex="-1">
+                <div class="modal-dialog modal-sm">
+                    <div class="modal-content">
+                        <div class="modal-header py-2">
+                            <h6 class="modal-title">📁 Nueva carpeta</h6>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                        </div>
+                        <div class="modal-body">
+                            <form asp-action="CrearCarpeta" method="post">
+                                @Html.AntiForgeryToken()
+                                <input type="hidden" name="cc" value="@cc" />
+                                <input type="hidden" name="carpetaPadreId" value="0" id="padreId@(cc)" />
+                                <div class="mb-2">
+                                    <label class="form-label small">Nombre</label>
+                                    <input type="text" name="nombre" class="form-control form-control-sm" required autofocus />
+                                </div>
+                                <button type="submit" class="btn btn-warning btn-sm w-100">Crear</button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
         }
     </div>
 }
 
+<!-- Modal global: renombrar carpeta -->
+<div class="modal fade" id="modalRenombrar" tabindex="-1">
+    <div class="modal-dialog modal-sm">
+        <div class="modal-content">
+            <div class="modal-header py-2">
+                <h6 class="modal-title">✏️ Renombrar carpeta</h6>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form asp-action="RenombrarCarpeta" method="post" id="formRenombrar">
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" name="carpetaId" id="renCarpetaId" />
+                    <div class="mb-2">
+                        <input type="text" name="nuevoNombre" id="renNombre" class="form-control form-control-sm" required />
+                    </div>
+                    <button type="submit" class="btn btn-primary btn-sm w-100">Guardar</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Formulario oculto para mover docs via drag & drop -->
+<form id="formMover" asp-action="MoverDoc" method="post" style="display:none">
+    @Html.AntiForgeryToken()
+    <input type="hidden" name="docId" id="moverDocId" />
+    <input type="hidden" name="carpetaId" id="moverCarpetaId" />
+</form>
+
 @section Scripts {
-    <script>
-        var chkTodos = document.getElementById('chkTodosRRHH');
-        var ccsInput = document.getElementById('ccsRRHH');
-        var lblSel   = document.getElementById('lblSelRRHH');
-        var btnMas   = document.getElementById('btnMasivoRRHH');
-        function actualizarSel() {
-            var sel = Array.from(document.querySelectorAll('.chk-rrhh:checked')).map(c => c.value);
-            ccsInput.value = sel.join(','); lblSel.textContent = sel.length; btnMas.disabled = sel.length === 0;
+<style>
+    .file-tree { font-size: .85rem; }
+    .tree-folder { border-radius: 4px; padding: 4px 8px; }
+    .tree-folder:hover { filter: brightness(.97); }
+    .tree-doc { border-bottom: 1px solid #f0f0f0; padding-left: 8px; }
+    .tree-doc:hover { background: #fff3e0; border-radius: 4px; }
+    .folder-content { border-left: 2px solid #fd7e1440; margin-left: 8px; padding-left: 6px; }
+    .drag-over { outline: 2px dashed #fd7e14; background: #fff3e0 !important; }
+    .tree-root { background: #fff8f0; border: 1px solid #fde8c8; }
+</style>
+<script>
+    // ── Selección masiva ─────────────────────────────────
+    var chkTodos = document.getElementById('chkTodosRRHH');
+    var ccsInput = document.getElementById('ccsRRHH');
+    var lblSel   = document.getElementById('lblSelRRHH');
+    var btnMas   = document.getElementById('btnMasivoRRHH');
+    function actualizarSel() {
+        var sel = Array.from(document.querySelectorAll('.chk-rrhh:checked')).map(c => c.value);
+        ccsInput.value = sel.join(','); lblSel.textContent = sel.length; btnMas.disabled = sel.length === 0;
+    }
+    if (chkTodos) chkTodos.addEventListener('change', function() {
+        document.querySelectorAll('.chk-rrhh').forEach(c => c.checked = chkTodos.checked); actualizarSel();
+    });
+    document.querySelectorAll('.chk-rrhh').forEach(c => c.addEventListener('change', actualizarSel));
+
+    // ── Explorador: colapsar/expandir carpeta ────────────
+    function toggleFolder(id) {
+        var el = document.getElementById(id);
+        var tog = document.getElementById('toggle' + id);
+        if (!el) return;
+        if (el.style.display === 'none') {
+            el.style.display = 'block';
+            if (tog) tog.textContent = '▼';
+        } else {
+            el.style.display = 'none';
+            if (tog) tog.textContent = '▶';
         }
-        if (chkTodos) chkTodos.addEventListener('change', function() {
-            document.querySelectorAll('.chk-rrhh').forEach(c => c.checked = chkTodos.checked); actualizarSel();
-        });
-        document.querySelectorAll('.chk-rrhh').forEach(c => c.addEventListener('change', actualizarSel));
-    </script>
+    }
+
+    // ── Drag & Drop ──────────────────────────────────────
+    var _dragDocId = null;
+    function dragDoc(ev, docId) {
+        _dragDocId = docId;
+        ev.dataTransfer.effectAllowed = 'move';
+    }
+    function dropDoc(ev, cc, carpetaId) {
+        ev.preventDefault();
+        ev.stopPropagation();
+        if (_dragDocId === null) return;
+        // Resaltar la carpeta drop brevemente
+        ev.currentTarget.classList.remove('drag-over');
+        document.getElementById('moverDocId').value = _dragDocId;
+        document.getElementById('moverCarpetaId').value = carpetaId;
+        document.getElementById('formMover').submit();
+    }
+    // Resaltar al arrastrar sobre carpeta
+    document.querySelectorAll('.tree-folder').forEach(function(el) {
+        el.addEventListener('dragover', function(e) { e.preventDefault(); el.classList.add('drag-over'); });
+        el.addEventListener('dragleave', function()  { el.classList.remove('drag-over'); });
+        el.addEventListener('drop',     function()   { el.classList.remove('drag-over'); });
+    });
+
+    // ── Modal: renombrar ─────────────────────────────────
+    function abrirRenombrar(carpetaId, nombre, cc) {
+        document.getElementById('renCarpetaId').value = carpetaId;
+        document.getElementById('renNombre').value = nombre;
+        new bootstrap.Modal(document.getElementById('modalRenombrar')).show();
+    }
+
+    // ── Modal: subcarpeta ────────────────────────────────
+    function abrirSubcarpeta(padreId, cc) {
+        document.getElementById('padreId' + cc).value = padreId;
+        new bootstrap.Modal(document.getElementById('modalCarpeta' + cc)).show();
+    }
+</script>
 }
