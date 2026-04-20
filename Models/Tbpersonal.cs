@@ -18,7 +18,7 @@ public partial class Tbpersonal
     public string? Gerencia { get; set; }
     public DateOnly? FechaIngreso { get; set; }
     public DateOnly? VencimientoPeriodoPrueba { get; set; }
-    public int? AniosAntiguedad { get; set; }
+    public int? AñosAntiguedad { get; set; }
     public int? MesesAntiguedad { get; set; }
     public decimal? SalarioEnero2020 { get; set; }
     public decimal? SalarioFeb2020 { get; set; }
