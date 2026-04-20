@@ -4,47 +4,118 @@
     ViewData["Title"] = "Administrar Anuncios";
 }
 
-<h2>Administrar Anuncios</h2>
+<div class="d-flex align-items-center justify-content-between mb-4">
+    <div>
+        <h2 class="mb-0">Administrar anuncios</h2>
+        <p class="text-muted small mb-0">Gestiona los anuncios visibles en la plataforma</p>
+    </div>
+    <a class="btn btn-dark" asp-action="Create">
+        <i class="bi bi-plus me-1"></i> Nuevo anuncio
+    </a>
+</div>
 
-<p>
-    <a class="btn btn-primary" asp-action="Create">Crear nuevo anuncio</a>
-</p>
+<!-- Tarjetas de resumen -->
+<div class="row g-3 mb-4">
+    <div class="col-4">
+        <div class="bg-light rounded-3 p-3">
+            <div class="text-muted small">Total anuncios</div>
+            <div class="fs-3 fw-medium">@Model.Count</div>
+        </div>
+    </div>
+    <div class="col-4">
+        <div class="bg-light rounded-3 p-3">
+            <div class="text-muted small">Activos</div>
+            <div class="fs-3 fw-medium text-success">@Model.Count(a => a.Activo == true)</div>
+        </div>
+    </div>
+    <div class="col-4">
+        <div class="bg-light rounded-3 p-3">
+            <div class="text-muted small">Inactivos</div>
+            <div class="fs-3 fw-medium text-secondary">@Model.Count(a => a.Activo != true)</div>
+        </div>
+    </div>
+</div>
 
-<table class="table table-striped">
-    <thead>
-        <tr>
-            <th>Título</th>
-            <th>Mensaje</th>
-            <th>Tipo</th>
-            <th>Activo</th>
-            <th>Imagen</th>
-            <th></th>
-        </tr>
-    </thead>
-    <tbody>
-    @foreach (var a in Model)
-    {
-        <tr>
-            <td>@a.Titulo</td>
-            <td>@a.Mensaje</td>
-            <td>@a.Tipo</td>
-            <td>@a.Activo</td>
-            <td>
-                @if (!string.IsNullOrEmpty(a.Imagen))
-                {
-                    <img src="@a.Imagen" alt="Imagen" style="max-height:80px;" />
-                }
-            </td>
-            <td>
-                <a class="btn btn-sm btn-secondary" asp-action="Edit" asp-route-id="@a.Id">Editar</a>
-                <form asp-action="Delete" asp-route-id="@a.Id" method="post" style="display:inline">
-                    <button type="submit" class="btn btn-sm btn-danger" onclick="return confirm('¿Eliminar anuncio?')">Eliminar</button>
-                </form>
-                <form asp-action="ToggleActivo" asp-route-id="@a.Id" method="post" style="display:inline">
-                    <button type="submit" class="btn btn-sm btn-warning">Toggle Activo</button>
-                </form>
-            </td>
-        </tr>
-    }
-    </tbody>
-</table>
+<!-- Tabla -->
+<div class="card border shadow-none">
+    <table class="table table-hover align-middle mb-0">
+        <thead class="table-light">
+            <tr>
+                <th class="text-muted small fw-medium ps-3">Imagen</th>
+                <th class="text-muted small fw-medium">Título</th>
+                <th class="text-muted small fw-medium">Mensaje</th>
+                <th class="text-muted small fw-medium">Estado</th>
+                <th class="text-muted small fw-medium">Acciones</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var a in Model)
+            {
+                <tr>
+                    <td class="ps-3">
+                        @if (!string.IsNullOrEmpty(a.Imagen))
+                        {
+                            <img src="@a.Imagen" alt="Imagen"
+                                 class="rounded-2 border"
+                                 style="width:60px;height:60px;object-fit:cover;" />
+                        }
+                        else
+                        {
+                            <div class="rounded-2 border bg-light d-flex align-items-center justify-content-center"
+                                 style="width:60px;height:60px;">
+                                <i class="bi bi-image text-secondary"></i>
+                            </div>
+                        }
+                    </td>
+                    <td class="fw-medium">@a.Titulo</td>
+                    <td class="text-muted" style="max-width:220px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">
+                        @a.Mensaje
+                    </td>
+                    <td>
+                        @if (a.Activo == true)
+                        {
+                            <span class="badge rounded-pill bg-success-subtle text-success">
+                                <span class="me-1">●</span> Activo
+                            </span>
+                        }
+                        else
+                        {
+                            <span class="badge rounded-pill bg-secondary-subtle text-secondary">
+                                <span class="me-1">○</span> Inactivo
+                            </span>
+                        }
+                    </td>
+                    <td>
+                        <div class="d-flex gap-2">
+                            <a class="btn btn-sm btn-outline-secondary" asp-action="Edit" asp-route-id="@a.Id">
+                                <i class="bi bi-pencil me-1"></i> Editar
+                            </a>
+
+                            <form asp-action="ToggleActivo" asp-route-id="@a.Id" method="post">
+                                @if (a.Activo == true)
+                                {
+                                    <button type="submit" class="btn btn-sm btn-outline-warning">
+                                        <i class="bi bi-pause-circle me-1"></i> Desactivar
+                                    </button>
+                                }
+                                else
+                                {
+                                    <button type="submit" class="btn btn-sm btn-outline-success">
+                                        <i class="bi bi-check-circle me-1"></i> Activar
+                                    </button>
+                                }
+                            </form>
+
+                            <form asp-action="Delete" asp-route-id="@a.Id" method="post">
+                                <button type="submit" class="btn btn-sm btn-outline-danger"
+                                        onclick="return confirm('¿Eliminar este anuncio?')">
+                                    <i class="bi bi-trash"></i>
+                                </button>
+                            </form>
+                        </div>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>

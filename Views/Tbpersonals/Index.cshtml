@@ -3,54 +3,118 @@
     ViewData["Title"] = "Personal";
 }
 
-<h1>Personal</h1>
+<style>
+    .emp-avatar {
+        width: 34px; height: 34px; border-radius: 50%;
+        display: inline-flex; align-items: center; justify-content: center;
+        font-size: 12px; font-weight: 500; flex-shrink: 0;
+    }
+    .modal-backdrop-custom {
+        position: fixed; inset: 0; background: rgba(0,0,0,.45);
+        z-index: 1055; display: flex; align-items: flex-start;
+        justify-content: center; padding-top: 60px;
+    }
+    .modal-panel {
+        background: #fff; border-radius: 16px; width: 860px;
+        max-width: 95vw; max-height: 85vh; display: flex;
+        flex-direction: column; overflow: hidden;
+    }
+    .modal-panel-header {
+        padding: 18px 24px; border-bottom: 1px solid #e9ecef;
+        display: flex; align-items: center; justify-content: space-between;
+        flex-shrink: 0;
+    }
+    .modal-panel-body {
+        overflow-y: auto; padding: 24px; flex: 1;
+    }
+    .modal-panel-footer {
+        padding: 14px 24px; border-top: 1px solid #e9ecef;
+        display: flex; gap: 8px; justify-content: flex-end; flex-shrink: 0;
+    }
+    .detail-section { margin-bottom: 24px; }
+    .detail-section-title {
+        font-size: 11px; font-weight: 600; text-transform: uppercase;
+        letter-spacing: .06em; color: #6c757d;
+        border-bottom: 1px solid #f0f0f0; padding-bottom: 6px; margin-bottom: 12px;
+    }
+    .detail-grid {
+        display: grid; grid-template-columns: repeat(auto-fill, minmax(170px, 1fr));
+        gap: 10px 20px;
+    }
+    .detail-field-label { font-size: 11px; color: #9ca3af; margin-bottom: 2px; }
+    .detail-field-val { font-size: 13px; color: #111; }
+    .salary-grid {
+        display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+        gap: 8px;
+    }
+    .salary-card {
+        background: #f8f9fa; border-radius: 8px;
+        padding: 8px 12px; border: 1px solid #e9ecef;
+    }
+    .salary-card small { font-size: 10px; color: #9ca3af; display: block; }
+    .salary-card strong { font-size: 13px; }
+</style>
 
-<div class="d-flex gap-2 mb-3">
-    <a asp-action="Create" class="btn btn-primary">+ Nuevo</a>
-    <a asp-action="ImportarExcel" class="btn btn-success">📥 Importar Excel</a>
-</div>
-<div class="d-flex gap-2 mb-3">
-    <!-- Exportar con filtros -->
-    <a asp-action="ExportarExcel"
-       asp-route-busqueda="@ViewBag.Busqueda"
-       asp-route-estado="@ViewBag.Estado"
-       class="btn btn-success btn-sm">
-        📥 Exportar filtrado
-    </a>
-    <!-- Exportar todo -->
-    <a asp-action="ExportarExcel" asp-route-todo="true"
-       class="btn btn-outline-success btn-sm">
-        📥 Exportar todo
-    </a>
+<div class="d-flex align-items-center justify-content-between mb-4">
+    <div>
+        <h2 class="mb-0">Personal</h2>
+        <p class="text-muted small mb-0">Directorio de colaboradores</p>
+    </div>
+    <div class="d-flex gap-2">
+        <a asp-action="ImportarExcel" class="btn btn-outline-secondary btn-sm">
+            <i class="bi bi-file-earmark-excel me-1"></i> Importar Excel
+        </a>
+        <div class="dropdown">
+            <button class="btn btn-outline-secondary btn-sm dropdown-toggle" data-bs-toggle="dropdown">
+                <i class="bi bi-download me-1"></i> Exportar
+            </button>
+            <ul class="dropdown-menu dropdown-menu-end">
+                <li>
+                    <a class="dropdown-item" asp-action="ExportarExcel"
+                       asp-route-busqueda="@ViewBag.Busqueda" asp-route-estado="@ViewBag.Estado">
+                        Exportar filtrado
+                    </a>
+                </li>
+                <li>
+                    <a class="dropdown-item" asp-action="ExportarExcel" asp-route-todo="true">
+                        Exportar todo
+                    </a>
+                </li>
+            </ul>
+        </div>
+        <a asp-action="Create" class="btn btn-dark btn-sm">
+            <i class="bi bi-plus me-1"></i> Nuevo
+        </a>
+    </div>
 </div>
 
-<form method="get" class="mb-3">
-    <div class="row g-2">
+<form method="get" class="mb-4">
+    <div class="row g-2 align-items-end">
         <div class="col-md-3">
             <input type="text" name="busqueda" value="@ViewBag.Busqueda"
-                   class="form-control" placeholder="🔍 Buscar en todo..." />
+                   class="form-control form-control-sm" placeholder="Buscar en todo..." />
         </div>
         <div class="col-md-2">
             <input type="text" name="cedula" value="@ViewBag.Cedula"
-                   class="form-control" placeholder="CC" />
+                   class="form-control form-control-sm" placeholder="C.C." />
         </div>
         <div class="col-md-2">
             <input type="text" name="nombre" value="@ViewBag.Nombre"
-                   class="form-control" placeholder="Nombre" />
+                   class="form-control form-control-sm" placeholder="Nombre" />
         </div>
         <div class="col-md-2">
             <input type="text" name="cargo" value="@ViewBag.Cargo"
-                   class="form-control" placeholder="Cargo" />
+                   class="form-control form-control-sm" placeholder="Cargo" />
         </div>
-        <div class="col-md-2">
+        <div class="col-md-1">
             <input type="text" name="ciudad" value="@ViewBag.Ciudad"
-                   class="form-control" placeholder="Ciudad" />
+                   class="form-control form-control-sm" placeholder="Ciudad" />
         </div>
-        <div class="col-md-1">
-            <button type="submit" class="btn btn-secondary w-100">Filtrar</button>
+        <div class="col-auto">
+            <button type="submit" class="btn btn-secondary btn-sm">Filtrar</button>
         </div>
-        <div class="col-md-1">
-            <a asp-action="Index" class="btn btn-outline-secondary w-100">✕</a>
+        <div class="col-auto">
+            <a asp-action="Index" class="btn btn-outline-secondary btn-sm">Limpiar</a>
         </div>
     </div>
 </form>
@@ -61,274 +125,286 @@
 }
 else
 {
-    <div class="accordion" id="acordeonPersonal">
-        @foreach (var item in Model)
-        {
-            var colId = $"p{item.CC}";
-            <div class="accordion-item border-0 mb-2 shadow-sm">
-
-                <h2 class="accordion-header">
-                    <button class="accordion-button collapsed py-2"
-                            type="button"
-                            data-bs-toggle="collapse"
-                            data-bs-target="#@colId">
-                        <div class="d-flex flex-wrap gap-3 align-items-center w-100 small">
-                            <span class="fw-bold" style="min-width:180px">
-                                @item.NombreColaborador
-                            </span>
-                            <span class="badge bg-secondary">@item.CC</span>
-                            <span class="text-muted" style="min-width:160px">
-                                @item.Cargo
-                            </span>
-                            <span class="badge bg-primary">@item.Area</span>
-                            <span class="text-muted">@item.CiudadTrabajo</span>
-                        </div>
-                    </button>
-                </h2>
-
-                <div id="@colId" class="accordion-collapse collapse"
-                     data-bs-parent="">
-                    <div class="accordion-body pt-2 pb-3">
-
-                        <div class="d-flex gap-2 mb-3">
-                            <a asp-action="Edit" asp-route-id="@item.CC"
-                               class="btn btn-sm btn-outline-warning">✏️ Editar</a>
-                            <a asp-action="Delete" asp-route-id="@item.CC"
-                               class="btn btn-sm btn-outline-danger">🗑️ Eliminar</a>
-                        </div>
-
-                        <div class="row g-3">
-
-                            <div class="col-12">
-                                <div class="card border-0">
-                                    <div class="card-header text-white fw-semibold"
-                                         style="background:#343a40">
-                                        🪪 Identificación
-                                    </div>
-                                    <div class="card-body bg-light">
-                                        <div class="row row-cols-2 row-cols-md-4 g-2 small">
-                                            <div class="col">
-                                                <span class="text-muted">Cédula:</span>
-                                                <strong>@item.CC</strong>
-                                            </div>
-                                            <div class="col">
-                                                <span class="text-muted">Exp.:</span>
-                                                @item.ExpedicionCiudad
-                                            </div>
-                                            <div class="col">
-                                                <span class="text-muted">Nacimiento:</span>
-                                                @item.FechaNacimiento
-                                            </div>
-                                            <div class="col">
-                                                <span class="text-muted">Ciudad nac.:</span>
-                                                @item.CiudadNacimiento
-                                            </div>
-                                            <div class="col">
-                                                <span class="text-muted">Edad:</span>
-                                                @item.Edad a. @item.MesesEdad m.
-                                            </div>
-                                            <div class="col">
-                                                <span class="text-muted">Género:</span>
-                                                @item.Genero
-                                            </div>
-                                            <div class="col">
-                                                <span class="text-muted">Estado civil:</span>
-                                                @item.EstadoCivil
-                                            </div>
-                                            <div class="col">
-                                                <span class="text-muted">RH:</span>
-                                                @item.Rh
-                                            </div>
-                                            <div class="col">
-                                                <span class="text-muted">Generación:</span>
-                                                @item.Generacion
-                                            </div>
-                                        </div>
-                                    </div>
+    <div class="card border shadow-none">
+        <table class="table table-hover align-middle mb-0" style="font-size:13px">
+            <thead class="table-light">
+                <tr>
+                    <th class="ps-3">Colaborador</th>
+                    <th>C.C.</th>
+                    <th>Cargo</th>
+                    <th>Área</th>
+                    <th>Ciudad trabajo</th>
+                    <th>Fecha ingreso</th>
+                    <th>Antigüedad</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var item in Model)
+                {
+                    var initials = string.Join("", (item.NombreColaborador ?? "?").Split(' ')
+                        .Take(2).Select(w => w.Length > 0 ? w[0].ToString() : ""));
+                    <tr style="cursor:pointer"
+                        onclick="abrirDetalle(@item.CC)">
+                        <td class="ps-3">
+                            <div class="d-flex align-items-center gap-2">
+                                <div class="emp-avatar bg-primary-subtle text-primary">
+                                    @initials
                                 </div>
+                                <span class="fw-medium">@item.NombreColaborador</span>
                             </div>
-
-                            <div class="col-12">
-                                <div class="card border-0">
-                                    <div class="card-header text-white fw-semibold"
-                                         style="background:#0d6efd">
-                                        💼 Cargo y Área
-                                    </div>
-                                    <div class="card-body" style="background:#eef3ff">
-                                        <div class="row row-cols-2 row-cols-md-4 g-2 small">
-                                            <div class="col">
-                                                <span class="text-muted">Cargo:</span>
-                                                <strong>@item.Cargo</strong>
-                                            </div>
-                                            <div class="col">
-                                                <span class="text-muted">Área:</span>
-                                                @item.Area
-                                            </div>
-                                            <div class="col">
-                                                <span class="text-muted">Gerencia:</span>
-                                                @item.Gerencia
-                                            </div>
-                                            <div class="col">
-                                                <span class="text-muted">Centro costos:</span>
-                                                @item.NombreCentroCostos (@item.CodCeco)
-                                            </div>
-                                            <div class="col">
-                                                <span class="text-muted">Contrato:</span>
-                                                @item.TipoContrato
-                                            </div>
-                                            <div class="col">
-                                                <span class="text-muted">Ingreso:</span>
-                                                @item.FechaIngreso
-                                            </div>
-                                            <div class="col">
-                                                <span class="text-muted">Venc. prueba:</span>
-                                                @item.VencimientoPeriodoPrueba
-                                            </div>
-                                            <div class="col">
-                                                <span class="text-muted">Antigüedad:</span>
-                                                @item.AniosAntiguedad a. @item.MesesAntiguedad m.
-                                            </div>
-                                            <div class="col">
-                                                <span class="text-muted">Ciudad trabajo:</span>
-                                                @item.CiudadTrabajo
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
+                        </td>
+                        <td>
+                            <span class="badge bg-secondary-subtle text-secondary border">@item.CC</span>
+                        </td>
+                        <td class="text-muted">@item.Cargo</td>
+                        <td>
+                            <span class="badge bg-primary-subtle text-primary border-0">@item.Area</span>
+                        </td>
+                        <td class="text-muted">@item.CiudadTrabajo</td>
+                        <td class="text-muted">@item.FechaIngreso?.ToString("dd/MM/yyyy")</td>
+                        <td class="text-muted">@item.AniosAntiguedad a. @item.MesesAntiguedad m.</td>
+                        <td onclick="event.stopPropagation()">
+                            <div class="d-flex gap-2">
+                                <a asp-action="Edit" asp-route-id="@item.CC"
+                                   class="btn btn-sm btn-outline-warning py-8 px-8">
+                                    <i class="bi bi-pencil"></i>Editar
+                                </a>
+                                <a asp-action="Delete" asp-route-id="@item.CC"
+                                   class="btn btn-sm btn-outline-danger py-8 px-8">
+                                    <i class="bi bi-trash"></i>Eliminar
+                                </a>
                             </div>
-
-                            <div class="col-md-6">
-                                <div class="card border-0 h-100">
-                                    <div class="card-header text-white fw-semibold"
-                                         style="background:#198754">
-                                        📞 Contacto
-                                    </div>
-                                    <div class="card-body" style="background:#edfaf3">
-                                        <div class="row row-cols-1 row-cols-md-2 g-2 small">
-                                            <div class="col">
-                                                <span class="text-muted">Celular:</span>
-                                                @item.Contacto
-                                            </div>
-                                            <div class="col">
-                                                <span class="text-muted">Correo personal:</span>
-                                                @item.CorreoPersonal
-                                            </div>
-                                            <div class="col">
-                                                <span class="text-muted">Dirección:</span>
-                                                @item.DireccionResidencia
-                                            </div>
-                                            <div class="col">
-                                                <span class="text-muted">Barrio:</span>
-                                                @item.Barrio
-                                            </div>
-                                            <div class="col">
-                                                <span class="text-muted">Emergencia:</span>
-                                                @item.ContactoEmergencia
-                                            </div>
-                                            <div class="col">
-                                                <span class="text-muted">Parentesco:</span>
-                                                @item.Parentesco
-                                            </div>
-                                            <div class="col">
-                                                <span class="text-muted">Tel. emergencia:</span>
-                                                @item.TelefonoEmergencia
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <div class="col-md-6">
-                                <div class="card border-0 h-100">
-                                    <div class="card-header text-white fw-semibold"
-                                         style="background:#dc3545">
-                                        🏥 Seguridad Social
-                                    </div>
-                                    <div class="card-body" style="background:#fff0f0">
-                                        <div class="row row-cols-1 row-cols-md-2 g-2 small">
-                                            <div class="col">
-                                                <span class="text-muted">EPS:</span>
-                                                @item.Eps
-                                            </div>
-                                            <div class="col">
-                                                <span class="text-muted">Pensiones:</span>
-                                                @item.FondoPensiones
-                                            </div>
-                                            <div class="col">
-                                                <span class="text-muted">Cesantías:</span>
-                                                @item.FondoCesantias
-                                            </div>
-                                            <div class="col">
-                                                <span class="text-muted">Caja comp.:</span>
-                                                @item.CajaCompensacion
-                                            </div>
-                                            <div class="col">
-                                                <span class="text-muted">ARL:</span>
-                                                @item.Arl
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <div class="col-md-6">
-                                <div class="card border-0 h-100">
-                                    <div class="card-header text-white fw-semibold"
-                                         style="background:#6f42c1">
-                                        🏦 Cuenta Bancaria
-                                    </div>
-                                    <div class="card-body" style="background:#f3eeff">
-                                        <div class="row row-cols-1 row-cols-md-2 g-2 small">
-                                            <div class="col">
-                                                <span class="text-muted">Banco:</span>
-                                                @item.Banco
-                                            </div>
-                                            <div class="col">
-                                                <span class="text-muted">Tipo cuenta:</span>
-                                                @item.TipoCuenta
-                                            </div>
-                                            <div class="col">
-                                                <span class="text-muted">No. cuenta:</span>
-                                                @item.NumeroCuenta
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <div class="col-md-6">
-                                <div class="card border-0 h-100">
-                                    <div class="card-header text-white fw-semibold"
-                                         style="background:#fd7e14">
-                                        🔐 Acceso al Sistema
-                                    </div>
-                                    <div class="card-body" style="background:#fff8f0">
-                                        <div class="row row-cols-1 g-2 small">
-                                            <div class="col">
-                                                <span class="text-muted">Correo corp.:</span>
-                                                @item.CorreoCorporativo
-                                            </div>
-                                            <div class="col">
-                                                <span class="text-muted">Usuario corp.:</span>
-                                                @item.UsuarioCorporativo
-                                            </div>
-                                            <div class="col">
-                                                <span class="text-muted">Talla camisa:</span>
-                                                @item.TallaCamisa
-                                            </div>
-                                            <div class="col">
-                                                <span class="text-muted">Grupo:</span>
-                                                @item.Grupo
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-
-                        </div>
-                    </div>
-                </div>
-            </div>
-        }
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
     </div>
 }
+
+<!-- Modal de detalle -->
+<div id="modalDetalle" class="modal-backdrop-custom d-none" onclick="cerrarDetalle(event)">
+    <div class="modal-panel" onclick="event.stopPropagation()">
+        <div class="modal-panel-header">
+            <div class="d-flex align-items-center gap-3">
+                <div class="emp-avatar bg-primary-subtle text-primary" id="modalAvatar"
+                     style="width:44px;height:44px;font-size:15px"></div>
+                <div>
+                    <div class="fw-medium" id="modalNombre" style="font-size:15px"></div>
+                    <div class="text-muted small" id="modalSubtitulo"></div>
+                </div>
+            </div>
+            <div class="d-flex gap-2">
+                <a id="modalEditLink"
+                    class="btn btn-sm btn-outline-warning">
+                    <i class="bi bi-pencil me-1"></i> Editar
+                </a>
+                <button class="btn btn-sm btn-outline-secondary" onclick="cerrarModal()">
+                    <i class="bi bi-x me-1"></i> Cerrar
+                </button>
+            </div>
+        </div>
+
+        <div class="modal-panel-body" id="modalBody">
+            <div class="text-center text-muted py-5">Cargando...</div>
+        </div>
+    </div>
+</div>
+
+<!-- Data JSON embebida para JS -->
+<script>
+    const personalData = {
+        @foreach (var item in Model)
+        {
+            @:@item.CC: {
+            @:  cc: @item.CC,
+            @:  nombre: "@Html.Raw((item.NombreColaborador ?? "").Replace("\"","\\\""))",
+            @:  cargo: "@Html.Raw((item.Cargo ?? "").Replace("\"","\\\""))",
+            @:  area: "@Html.Raw((item.Area ?? "").Replace("\"","\\\""))",
+            @:  gerencia: "@Html.Raw((item.Gerencia ?? "").Replace("\"","\\\""))",
+            @:  codCeco: "@Html.Raw((item.CodCeco?.ToString() ?? ""))",
+            @:  nombreCeco: "@Html.Raw((item.NombreCentroCostos ?? "").Replace("\"","\\\""))",
+            @:  ciudadTrabajo: "@Html.Raw((item.CiudadTrabajo ?? "").Replace("\"","\\\""))",
+            @:  expedicion: "@Html.Raw((item.ExpedicionCiudad ?? "").Replace("\"","\\\""))",
+            @:  nacimiento: "@(item.FechaNacimiento?.ToString("dd/MM/yyyy") ?? "")",
+            @:  ciudadNac: "@Html.Raw((item.CiudadNacimiento ?? "").Replace("\"","\\\""))",
+            @:  edad: "@item.Edad a. @item.MesesEdad m.",
+            @:  genero: "@Html.Raw((item.Genero ?? "").Replace("\"","\\\""))",
+            @:  estadoCivil: "@Html.Raw((item.EstadoCivil ?? "").Replace("\"","\\\""))",
+            @:  rh: "@Html.Raw((item.Rh ?? "").Replace("\"","\\\""))",
+            @:  generacion: "@Html.Raw((item.Generacion ?? "").Replace("\"","\\\""))",
+            @:  tipoContrato: "@Html.Raw((item.TipoContrato ?? "").Replace("\"","\\\""))",
+            @:  ingreso: "@(item.FechaIngreso?.ToString("dd/MM/yyyy") ?? "")",
+            @:  prueba: "@(item.VencimientoPeriodoPrueba?.ToString("dd/MM/yyyy") ?? "")",
+            @:  antiguedad: "@item.AniosAntiguedad a. @item.MesesAntiguedad m.",
+            @:  celular: "@Html.Raw((item.Contacto ?? "").Replace("\"","\\\""))",
+            @:  correoPersonal: "@Html.Raw((item.CorreoPersonal ?? "").Replace("\"","\\\""))",
+            @:  direccion: "@Html.Raw((item.DireccionResidencia ?? "").Replace("\"","\\\""))",
+            @:  barrio: "@Html.Raw((item.Barrio ?? "").Replace("\"","\\\""))",
+            @:  contEmergencia: "@Html.Raw((item.ContactoEmergencia ?? "").Replace("\"","\\\""))",
+            @:  parentesco: "@Html.Raw((item.Parentesco ?? "").Replace("\"","\\\""))",
+            @:  telEmergencia: "@Html.Raw((item.TelefonoEmergencia ?? "").Replace("\"","\\\""))",
+            @:  eps: "@Html.Raw((item.Eps ?? "").Replace("\"","\\\""))",
+            @:  pensiones: "@Html.Raw((item.FondoPensiones ?? "").Replace("\"","\\\""))",
+            @:  cesantias: "@Html.Raw((item.FondoCesantias ?? "").Replace("\"","\\\""))",
+            @:  caja: "@Html.Raw((item.CajaCompensacion ?? "").Replace("\"","\\\""))",
+            @:  arl: "@Html.Raw((item.Arl ?? "").Replace("\"","\\\""))",
+            @:  banco: "@Html.Raw((item.Banco ?? "").Replace("\"","\\\""))",
+            @:  tipoCuenta: "@Html.Raw((item.TipoCuenta ?? "").Replace("\"","\\\""))",
+            @:  numeroCuenta: "@Html.Raw((item.NumeroCuenta ?? "").Replace("\"","\\\""))",
+            @:  tallaCamisa: "@Html.Raw((item.TallaCamisa ?? "").Replace("\"","\\\""))",
+            @:  grupo: "@Html.Raw((item.Grupo ?? "").Replace("\"","\\\""))",
+            @:  concepto: "@Html.Raw((item.Concepto ?? "").Replace("\"","\\\""))",
+            @:  correoCorp: "@Html.Raw((item.CorreoCorporativo ?? "").Replace("\"","\\\""))",
+            @:  usuarioCorp: "@Html.Raw((item.UsuarioCorporativo ?? "").Replace("\"","\\\""))",
+            @:  sal2020: "@Html.Raw((item.SalarioEnero2020?.ToString("N0") ?? ""))",
+            @:  sal2020b: "@Html.Raw((item.SalarioFeb2020?.ToString("N0") ?? ""))",
+            @:  sal2021: "@Html.Raw((item.SalarioFeb2021?.ToString("N0") ?? ""))",
+            @:  sal2022: "@Html.Raw((item.SalarioFeb2022?.ToString("N0") ?? ""))",
+            @:  sal2023: "@Html.Raw((item.SalarioFeb2023?.ToString("N0") ?? ""))",
+            @:  sal2024a: "@Html.Raw((item.SalarioEneFeb2024?.ToString("N0") ?? ""))",
+            @:  sal2024b: "@Html.Raw((item.SalarioMar2024?.ToString("N0") ?? ""))",
+            @:  sal2025: "@Html.Raw((item.SalarioFeb2025?.ToString("N0") ?? ""))",
+            @:  sal2026: "@Html.Raw((item.SalarioFeb2026?.ToString("N0") ?? ""))",
+            @:  auxAlim2020: "@Html.Raw((item.AuxAlimentacion2020?.ToString("N0") ?? ""))",
+            @:  auxAlim2021: "@Html.Raw((item.AuxAlimentacion2021?.ToString("N0") ?? ""))",
+            @:  auxAlim2022: "@Html.Raw((item.AuxAlimentacion2022?.ToString("N0") ?? ""))",
+            @:  auxAlim2023: "@Html.Raw((item.AuxAlimentacion2023?.ToString("N0") ?? ""))",
+            @:  auxGas2021: "@Html.Raw((item.AuxGasolina2021?.ToString("N0") ?? ""))",
+            @:  auxGas2023: "@Html.Raw((item.AuxGasolina20222023?.ToString("N0") ?? ""))",
+            @:  rodamiento: "@Html.Raw((item.AuxRodamiento?.ToString("N0") ?? ""))",
+            @:  rodamiento2: "@Html.Raw((item.AuxRodamiento20222023?.ToString("N0") ?? ""))",
+            @:  baseIncentivo: "@Html.Raw((item.BaseIncentivo20222023?.ToString("N0") ?? ""))",
+            @:  prepagada: "@Html.Raw((item.MedicinaPrepagada?.ToString("N0") ?? ""))",
+            @:  snac: "@Html.Raw((item.LlaveSnacBebidas?.ToString("N0") ?? ""))",
+            @:},
+        }
+    };
+
+    function getInitials(name) {
+        return (name || '?').split(' ').slice(0,2).map(w => w[0] || '').join('').toUpperCase();
+    }
+
+    function field(label, val) {
+        if (!val) return '';
+        return `<div>
+            <div class="detail-field-label">${label}</div>
+            <div class="detail-field-val">${val}</div>
+        </div>`;
+    }
+
+    function salCard(label, val) {
+        if (!val) return '';
+        return `<div class="salary-card">
+            <small>${label}</small>
+            <strong>$${val}</strong>
+        </div>`;
+    }
+
+    function abrirDetalle(cc) {
+        const d = personalData[cc];
+        if (!d) return;
+
+        document.getElementById('modalAvatar').textContent = getInitials(d.nombre);
+        document.getElementById('modalNombre').textContent = d.nombre;
+        document.getElementById('modalSubtitulo').textContent = `${d.cargo} · ${d.area}`;
+        document.getElementById('modalEditLink').href = `/Tbpersonals/Edit/${cc}`;
+
+        document.getElementById('modalBody').innerHTML = `
+            <div class="detail-section">
+                <div class="detail-section-title">Identificación</div>
+                <div class="detail-grid">
+                    ${field('C.C.', d.cc)} ${field('Expedición', d.expedicion)}
+                    ${field('Nacimiento', d.nacimiento)} ${field('Ciudad nac.', d.ciudadNac)}
+                    ${field('Edad', d.edad)} ${field('Género', d.genero)}
+                    ${field('Estado civil', d.estadoCivil)} ${field('RH', d.rh)}
+                    ${field('Generación', d.generacion)}
+                </div>
+            </div>
+            <div class="detail-section">
+                <div class="detail-section-title">Cargo y área</div>
+                <div class="detail-grid">
+                    ${field('Cargo', d.cargo)} ${field('Área', d.area)}
+                    ${field('Gerencia', d.gerencia)} ${field('Cod. CECO', d.codCeco)}
+                    ${field('Centro costos', d.nombreCeco)} ${field('Contrato', d.tipoContrato)}
+                    ${field('Ingreso', d.ingreso)} ${field('Venc. prueba', d.prueba)}
+                    ${field('Antigüedad', d.antiguedad)} ${field('Ciudad trabajo', d.ciudadTrabajo)}
+                </div>
+            </div>
+            <div class="detail-section">
+                <div class="detail-section-title">Salarios históricos</div>
+                <div class="salary-grid">
+                    ${salCard('Hasta ene 2020', d.sal2020)}
+                    ${salCard('Feb 2020', d.sal2020b)}
+                    ${salCard('Feb 2021', d.sal2021)}
+                    ${salCard('Feb 2022', d.sal2022)}
+                    ${salCard('Feb 2023', d.sal2023)}
+                    ${salCard('Ene–Feb 2024', d.sal2024a)}
+                    ${salCard('Mar 2024', d.sal2024b)}
+                    ${salCard('Feb 2025', d.sal2025)}
+                    ${salCard('Feb 2026', d.sal2026)}
+                </div>
+            </div>
+            <div class="detail-section">
+                <div class="detail-section-title">Auxilios y beneficios</div>
+                <div class="detail-grid">
+                    ${field('Aliment. 2020', d.auxAlim2020 ? '$'+d.auxAlim2020 : '')}
+                    ${field('Aliment. 2021', d.auxAlim2021 ? '$'+d.auxAlim2021 : '')}
+                    ${field('Aliment. 2022', d.auxAlim2022 ? '$'+d.auxAlim2022 : '')}
+                    ${field('Aliment. 2023', d.auxAlim2023 ? '$'+d.auxAlim2023 : '')}
+                    ${field('Gasolina 2021', d.auxGas2021 ? '$'+d.auxGas2021 : '')}
+                    ${field('Gasolina 2022–23', d.auxGas2023 ? '$'+d.auxGas2023 : '')}
+                    ${field('Rodamiento', d.rodamiento ? '$'+d.rodamiento : '')}
+                    ${field('Rodamiento 22–23', d.rodamiento2 ? '$'+d.rodamiento2 : '')}
+                    ${field('Base incentivo', d.baseIncentivo ? '$'+d.baseIncentivo : '')}
+                    ${field('Med. prepagada', d.prepagada ? '$'+d.prepagada : '')}
+                    ${field('SNAC y bebidas', d.snac ? '$'+d.snac : '')}
+                </div>
+            </div>
+            <div class="detail-section">
+                <div class="detail-section-title">Contacto</div>
+                <div class="detail-grid">
+                    ${field('Celular', d.celular)} ${field('Correo personal', d.correoPersonal)}
+                    ${field('Dirección', d.direccion)} ${field('Barrio', d.barrio)}
+                    ${field('Contacto emergencia', d.contEmergencia)}
+                    ${field('Parentesco', d.parentesco)} ${field('Tel. emergencia', d.telEmergencia)}
+                </div>
+            </div>
+            <div class="detail-section">
+                <div class="detail-section-title">Seguridad social</div>
+                <div class="detail-grid">
+                    ${field('EPS', d.eps)} ${field('Pensiones', d.pensiones)}
+                    ${field('Cesantías', d.cesantias)} ${field('Caja comp.', d.caja)}
+                    ${field('ARL', d.arl)}
+                </div>
+            </div>
+            <div class="detail-section">
+                <div class="detail-section-title">Cuenta bancaria y otros</div>
+                <div class="detail-grid">
+                    ${field('Banco', d.banco)} ${field('Tipo cuenta', d.tipoCuenta)}
+                    ${field('No. cuenta', d.numeroCuenta)} ${field('Talla camisa', d.tallaCamisa)}
+                    ${field('Grupo', d.grupo)} ${field('Concepto', d.concepto)}
+                </div>
+            </div>
+            <div class="detail-section" style="margin-bottom:0">
+                <div class="detail-section-title">Acceso al sistema</div>
+                <div class="detail-grid">
+                    ${field('Correo corporativo', d.correoCorp)}
+                    ${field('Usuario corporativo', d.usuarioCorp)}
+                </div>
+            </div>`;
+
+        document.getElementById('modalDetalle').classList.remove('d-none');
+        document.body.style.overflow = 'hidden';
+    }
+
+    function cerrarModal() {
+        document.getElementById('modalDetalle').classList.add('d-none');
+        document.body.style.overflow = '';
+    }
+
+    function cerrarDetalle(e) {
+        if (e.target === document.getElementById('modalDetalle')) cerrarModal();
+    }
+</script>
