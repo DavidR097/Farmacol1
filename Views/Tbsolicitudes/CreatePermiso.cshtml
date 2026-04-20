@@ -1,0 +1,248 @@
+﻿@model Farmacol.Models.Tbsolicitude
+@{
+    ViewData["Title"] = "Nueva Solicitud de Permiso";
+    bool esAdminRRHH = User.IsInRole("Administrador") || User.IsInRole("RRHH");
+}
+
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-xl-10">
+            <div class="card shadow-xl border-0 rounded-4 overflow-hidden">
+                <div class="card-header bg-primary text-white py-4 px-5">
+                    <div class="d-flex align-items-center">
+                        <span class="display-4 me-4">🕐</span>
+                        <div>
+                            <h2 class="fw-bold mb-1">Nueva Solicitud de Permiso</h2>
+                            <p class="mb-0 opacity-90">Solicita permiso por horas o días</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card-body p-5">
+                    @if (!ViewData.ModelState.IsValid)
+                    {
+                        <div class="alert alert-danger">
+                            @foreach (var error in ViewData.ModelState.Values.SelectMany(v => v.Errors))
+                            {
+                                <div>@error.ErrorMessage</div>
+                            }
+                        </div>
+                    }
+
+                    <form asp-action="Create" method="post" enctype="multipart/form-data">
+                        @Html.AntiForgeryToken()
+
+                        <input type="hidden" name="TipoSolicitud" value="Permiso" />
+                        <input type="hidden" name="Estado" value="En proceso" />
+                        <input type="hidden" name="FechaSolicitud"
+                               value="@((Model?.FechaSolicitud ?? DateOnly.FromDateTime(DateTime.Today)).ToString("yyyy-MM-dd"))" />
+
+                        <div class="row g-4">
+                            <!-- Columna Izquierda -->
+                            <div class="col-lg-6">
+                                <h5 class="fw-bold text-primary mb-3">Datos del Solicitante</h5>
+
+                                <div class="mb-3">
+                                    <label class="form-label fw-semibold">Cédula (CC)</label>
+                                    <input name="CC" class="form-control form-control-lg"
+                                           value="@(Model?.CC > 0 ? Model.CC : ViewBag.CedulaActual)"
+                                    @(esAdminRRHH ? "" : "readonly") />
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label fw-semibold">Nombre Completo</label>
+                                    <input name="Nombre" class="form-control form-control-lg"
+                                           value="@(Model?.Nombre ?? ViewBag.NombreActual)"
+                                    @(esAdminRRHH ? "" : "readonly") />
+                                </div>
+                                <div class="mb-4">
+                                    <label class="form-label fw-semibold">Cargo</label>
+                                    <input name="Cargo" class="form-control form-control-lg"
+                                           value="@(Model?.Cargo ?? ViewBag.CargoActual)"
+                                    @(esAdminRRHH ? "" : "readonly") />
+                                </div>
+
+                                <div class="mb-4">
+                                    <label class="form-label fw-bold">Tipo de Permiso</label>
+                                    <select name="SubtipoPermiso" id="subtipoPermiso"
+                                            class="form-select form-select-lg" required>
+                                        <option value="">-- Selecciona un tipo --</option>
+                                        @if (ViewBag.SubtiposPermiso != null)
+                                        {
+                                            foreach (var s in ViewBag.SubtiposPermiso)
+                                            {
+                                                <option value="@s.Nombre"
+                                                        selected="@(Model?.SubtipoPermiso == s.Nombre)">
+                                                    @s.Nombre
+                                                </option>
+                                            }
+                                        }
+                                    </select>
+                                </div>
+
+                                <div class="mb-4">
+                                    <label class="form-label fw-bold" id="labelMotivo">Motivo</label>
+                                    <select name="Motivo" id="motivoSelect"
+                                            class="form-select form-select-lg" required>
+                                        <option value="">-- Selecciona un motivo --</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <!-- Columna Derecha - Detalles del Permiso -->
+                            <div class="col-lg-6">
+                                <h5 class="fw-bold text-primary mb-3">Detalles del Permiso</h5>
+
+                                <div class="row g-3">
+                                    <div class="col-6">
+                                        <label class="form-label fw-semibold">Hora Inicio</label>
+                                        <input name="HoraInicio" id="horaInicioP" type="time"
+                                               class="form-control form-control-lg"
+                                               value="@(Model?.HoraInicio?.ToString(@"hh\:mm") ?? "")"
+                                               oninput="calcularTodo()" required />
+                                    </div>
+                                    <div class="col-6">
+                                        <label class="form-label fw-semibold">Hora Fin</label>
+                                        <input name="HoraFin" id="horaFinP" type="time"
+                                               class="form-control form-control-lg"
+                                               value="@(Model?.HoraFin?.ToString(@"hh\:mm") ?? "")"
+                                               oninput="calcularTodo()" required />
+                                    </div>
+                                </div>
+
+                                <div class="mb-3">
+                                    <label class="form-label fw-semibold">Total Horas</label>
+                                    <input name="TotalHoras" id="totalHorasP"
+                                           class="form-control form-control-lg" readonly
+                                           value="@Model?.TotalHoras" />
+                                </div>
+
+                                <div class="row g-3">
+                                    <div class="col-6">
+                                        <label class="form-label fw-semibold">Fecha Inicio (opcional)</label>
+                                        <input name="FechaInicio" id="fechaInicioP" type="date"
+                                               class="form-control"
+                                               value="@Model?.FechaInicio?.ToString("yyyy-MM-dd")"
+                                               oninput="calcularTodo()" />
+                                    </div>
+                                    <div class="col-6">
+                                        <label class="form-label fw-semibold">Fecha Fin (opcional)</label>
+                                        <input name="FechaFin" id="fechaFinP" type="date"
+                                               class="form-control"
+                                               value="@Model?.FechaFin?.ToString("yyyy-MM-dd")"
+                                               oninput="calcularTodo()" />
+                                    </div>
+                                </div>
+
+                                <div class="mb-4">
+                                    <label class="form-label fw-bold">Total Días (Calculado)</label>
+                                    <input name="TotalDias" id="totalDiasP"
+                                           class="form-control form-control-lg fw-bold" readonly
+                                           value="@(Model?.TotalDias ?? 0)" />
+                                </div>
+
+                                <div class="mb-4">
+                                    <label class="form-label fw-semibold">Anexo (PDF)</label>
+                                    <input type="file" name="archivoAnexo" accept=".pdf" class="form-control" />
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Observaciones -->
+                        <div class="mt-4">
+                            <label class="form-label fw-bold">Observaciones (Opcional)</label>
+                            <textarea name="Observaciones" class="form-control" rows="3"
+                                      placeholder="Detalles adicionales...">@Model?.Observaciones</textarea>
+                        </div>
+
+                        <div class="mt-5">
+                            <button type="submit" class="btn btn-primary btn-lg px-5 shadow-sm">
+                                Enviar Solicitud de Permiso
+                            </button>
+                            <a asp-action="Create" class="btn btn-outline-secondary btn-lg px-5 ms-3">
+                                Cambiar tipo de solicitud
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        const motivoData = {
+            "Permisos": [
+                "Acompañamiento Tramites Medicos Familiares",
+                "Citas Medicas Con Especialista",
+                "Votacion",
+                "Exequias Compañeros",
+                "Cargos Oficiales Transitorios",
+                "Citaciones Judiciales",
+                "Comisiones Sindicales",
+                "Obligaciones Escolares Como Acudiente (Citación Oficial)"
+            ],
+            "Licencias": [
+                "Licencia Por Luto",
+                "Licencia De Maternidad",
+                "Licencia De Paternidad",
+                "Cuidado De La Niñez",
+                "Calamidad Domestica",
+                "Incapacidad Medica",
+                "Licencias Remuneradas Obligatorias",
+                "Licencia No Remunerada Aprobada",
+                "Licencia No Remunerada No Aprobada",
+                "Accidente De Trabajo",
+                "Accidente De Transito"
+            ],
+            "Otros": [
+                "Citas Medicas / Medicina General",
+                "Grado Academico De Familiar O Propio",
+                "Cumpleaños",
+                "Tramites Notariales",
+                "Asuntos Personales"
+            ]
+        };
+
+        const subtipoGuardado = "@(Model?.SubtipoPermiso ?? "")";
+        const motivoGuardado = "@(Model?.Motivo ?? "")";
+
+        function poblarMotivos(subtipo) {
+            const motivoSelect = document.getElementById('motivoSelect');
+            motivoSelect.innerHTML = '<option value="">-- Selecciona un motivo --</option>';
+            if (motivoData[subtipo]) {
+                motivoData[subtipo].forEach(motivo => {
+                    const opt = document.createElement('option');
+                    opt.value = motivo;
+                    opt.textContent = motivo;
+                    if (motivo === motivoGuardado) opt.selected = true;
+                    motivoSelect.appendChild(opt);
+                });
+            }
+        }
+
+        document.getElementById('subtipoPermiso').addEventListener('change', function() {
+            poblarMotivos(this.value.trim());
+        });
+
+        if (subtipoGuardado) poblarMotivos(subtipoGuardado);
+
+        window.calcularTodo = function() {
+            const inicio = document.getElementById('horaInicioP').value;
+            const fin = document.getElementById('horaFinP').value;
+            let totalHoras = 0;
+            if (inicio && fin) {
+                const [h1, m1] = inicio.split(':').map(Number);
+                const [h2, m2] = fin.split(':').map(Number);
+                const totalMin = (h2 * 60 + m2) - (h1 * 60 + m1);
+                totalHoras = totalMin > 0 ? totalMin / 60 : 0;
+                document.getElementById('totalHorasP').value = totalHoras.toFixed(2);
+            } else {
+                document.getElementById('totalHorasP').value = '0';
+            }
+            const horasPorDia = 9.25;
+            document.getElementById('totalDiasP').value =
+                totalHoras > 0 ? (totalHoras / horasPorDia).toFixed(2) : '0';
+        };
+    </script>
+}

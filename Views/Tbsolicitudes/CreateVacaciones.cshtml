@@ -1,0 +1,284 @@
+﻿@model Farmacol.Models.Tbsolicitude
+@{
+    ViewData["Title"] = "Nueva Solicitud de Vacaciones";
+    bool esAdminRRHH = User.IsInRole("Administrador") || User.IsInRole("RRHH");
+    var diasDispo = (double)(ViewBag.Vacaciones?.DiasDisponibles ?? 0);
+}
+
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-xl-11">
+            <div class="card shadow-xl border-0 rounded-4 overflow-hidden">
+                <div class="card-header bg-success text-white py-4 px-5">
+                    <div class="d-flex align-items-center">
+                        <span class="display-4 me-4">🏖️</span>
+                        <div>
+                            <h2 class="fw-bold mb-1">Nueva Solicitud de Vacaciones</h2>
+                            <p class="mb-0 opacity-90">Elige tus fechas y configura los detalles</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card-body p-5">
+
+                    @* Errores del servidor *@
+                    @if (!ViewData.ModelState.IsValid)
+                    {
+                        <div class="alert alert-danger">
+                            @foreach (var error in ViewData.ModelState.Values.SelectMany(v => v.Errors))
+                            {
+                                <div>@error.ErrorMessage</div>
+                            }
+                        </div>
+                    }
+
+                    <form asp-action="Create" method="post" enctype="multipart/form-data" id="formVacaciones">
+                        @Html.AntiForgeryToken()
+
+                        @* Campos ocultos obligatorios *@
+                        <input type="hidden" name="TipoSolicitud"  value="Vacaciones" />
+                        <input type="hidden" name="Estado"         value="En proceso" />
+                        <input type="hidden" name="CC"             value="@(Model?.CC > 0 ? Model.CC : ViewBag.CedulaActual)" />
+                        <input type="hidden" name="Nombre"         value="@(Model?.Nombre ?? ViewBag.NombreActual)" />
+                        <input type="hidden" name="Cargo"          value="@(Model?.Cargo  ?? ViewBag.CargoActual)" />
+                        <input type="hidden" name="FechaSolicitud"
+                               value="@((Model?.FechaSolicitud ?? DateOnly.FromDateTime(DateTime.Today)).ToString("yyyy-MM-dd"))" />
+
+                        @* Estos tres son llenados por JS y son los que valida el controlador *@
+                        <input type="hidden" name="FechaInicio" id="inputFechaInicio"
+                               value="@Model?.FechaInicio?.ToString("yyyy-MM-dd")" />
+                        <input type="hidden" name="FechaFin"    id="inputFechaFin"
+                               value="@Model?.FechaFin?.ToString("yyyy-MM-dd")" />
+                        <input type="hidden" name="TotalDias"   id="inputTotalDias"
+                               value="@(Model?.TotalDias ?? 0)" />
+
+                        <div class="row g-5">
+                            <!-- Panel izquierdo -->
+                            <div class="col-lg-5">
+                                <div class="mb-5">
+                                    <h5 class="fw-bold text-success mb-3">📊 Resumen de Vacaciones</h5>
+                                    <div class="row g-3 text-center">
+                                        <div class="col-6">
+                                            <div class="p-4 border rounded-3 bg-light">
+                                                <small class="text-muted d-block">Días Disponibles</small>
+                                                <span class="h3 fw-bold text-success">@diasDispo</span>
+                                            </div>
+                                        </div>
+                                        <div class="col-6">
+                                            <div class="p-4 border rounded-3 bg-success-subtle border-success">
+                                                <small class="text-muted d-block">Días a Solicitar</small>
+                                                <span id="totalDiasDisplay" class="h3 fw-bold text-success">
+                                                    @(Model?.TotalDias ?? 0)
+                                                </span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="mb-4">
+                                    <label class="form-label fw-bold">Días en Dinero (Opcional)</label>
+                                    <div class="input-group input-group-lg">
+                                        <input type="number" name="DiasEnDinero" id="diasEnDinero"
+                                               class="form-control" min="0" placeholder="0"
+                                               value="@(Model?.DiasEnDinero ?? 0)" />
+                                        <span class="input-group-text">días</span>
+                                    </div>
+                                    <small id="maxDineroInfo" class="text-muted mt-1">
+                                        Máximo sugerido: @(Math.Floor(diasDispo * 0.5)) días
+                                    </small>
+                                </div>
+
+                                <div class="mb-4">
+                                    <label class="form-label fw-bold">Observaciones (Opcional)</label>
+                                    <textarea name="Observaciones" class="form-control" rows="4"
+                                              placeholder="Ej: Prefiero no tomar el mes de diciembre...">@Model?.Observaciones</textarea>
+                                </div>
+
+                                <button type="submit" id="vacSubmit"
+                                        class="btn btn-success btn-lg w-100 shadow-sm"
+                                        @(Model?.TotalDias > 0 ? "" : "disabled")>
+                                    <i class="bi bi-send"></i> Enviar Solicitud de Vacaciones
+                                </button>
+
+                                <div id="vacWarning" class="alert alert-danger d-none mt-3 text-center">
+                                    <i class="bi bi-exclamation-triangle-fill"></i>
+                                    No tienes suficientes días disponibles para el rango seleccionado.
+                                </div>
+
+                                <a asp-action="Create" class="btn btn-outline-secondary w-100 mt-3">
+                                    ← Cambiar tipo de solicitud
+                                </a>
+                            </div>
+
+                            <!-- Panel derecho: calendario -->
+                            <div class="col-lg-7">
+                                <h5 class="fw-bold text-muted mb-3">📅 Selecciona el Período de Vacaciones</h5>
+                                <div class="d-flex gap-3 mb-3">
+                                    <span class="badge bg-primary px-3 py-2">
+                                        Inicio: <span id="lblInicio" class="fw-normal">
+                                            @(Model?.FechaInicio.HasValue == true
+                                                ? Model.FechaInicio.Value.ToString("dd/MM/yyyy")
+                                                : "No seleccionado")
+                                        </span>
+                                    </span>
+                                    <span class="badge bg-danger px-3 py-2">
+                                        Fin: <span id="lblFin" class="fw-normal">
+                                            @(Model?.FechaFin.HasValue == true
+                                                ? Model.FechaFin.Value.ToString("dd/MM/yyyy")
+                                                : "No seleccionado")
+                                        </span>
+                                    </span>
+                                </div>
+                                <div id="calendarioVacaciones"
+                                     class="border rounded-4 p-4 bg-white shadow-sm"></div>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <style>
+        .cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 8px; }
+        .cal-header-row { display: grid; grid-template-columns: repeat(7, 1fr); gap: 8px; margin-bottom: 12px; }
+        .cal-day {
+            padding: 14px 8px; text-align: center; border-radius: 12px; cursor: pointer;
+            border: 1px solid #dee2e6; font-size: 1rem; transition: all 0.2s;
+        }
+        .cal-day:hover { background: #f8f9fa; transform: scale(1.05); }
+        .cal-day.inicio { background: #0d6efd !important; color: white !important; border-color: #0d6efd; }
+        .cal-day.fin    { background: #dc3545 !important; color: white !important; border-color: #dc3545; }
+        .cal-day.rango  { background: #cfe2ff; border-color: #9ec5fe; }
+        .cal-day.vacio  { border: none; cursor: default; background: transparent; }
+        .cal-nav {
+            display: flex; justify-content: space-between; align-items: center;
+            margin-bottom: 16px; font-weight: 600;
+        }
+    </style>
+
+    <script>
+        // Restaurar selección si venimos de un error del servidor
+        let fechaInicio = "@(Model?.FechaInicio?.ToString("yyyy-MM-dd") ?? "")";
+        let fechaFin    = "@(Model?.FechaFin?.ToString("yyyy-MM-dd") ?? "")";
+        if (fechaInicio === "") fechaInicio = null;
+        if (fechaFin    === "") fechaFin    = null;
+
+        let calYear  = fechaInicio ? Number(fechaInicio.split('-')[0]) : new Date().getFullYear();
+        let calMonth = fechaInicio ? Number(fechaInicio.split('-')[1]) - 1 : new Date().getMonth();
+
+        const meses    = ['Enero','Febrero','Marzo','Abril','Mayo','Junio',
+                          'Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+        const diasSem  = ['Dom','Lun','Mar','Mié','Jue','Vie','Sáb'];
+        const diasDisponibles = Number(@diasDispo);
+        const esPlanta        = Boolean(@((ViewBag.Vacaciones?.EsPlanta ?? false).ToString().ToLower()));
+
+        document.addEventListener('DOMContentLoaded', () => renderCalendario());
+
+        function renderCalendario() {
+            const cont = document.getElementById('calendarioVacaciones');
+            if (!cont) return;
+
+            const primerDia = new Date(calYear, calMonth, 1).getDay();
+            const totalDias = new Date(calYear, calMonth + 1, 0).getDate();
+
+            let html = `
+                <div class="cal-nav">
+                    <button type="button" class="btn btn-sm btn-outline-secondary"
+                            onclick="cambiarMes(-1)">◀ Anterior</button>
+                    <strong>${meses[calMonth]} ${calYear}</strong>
+                    <button type="button" class="btn btn-sm btn-outline-secondary"
+                            onclick="cambiarMes(1)">Siguiente ▶</button>
+                </div>
+                <div class="cal-header-row">
+                    ${diasSem.map(d => `<div class="text-center fw-bold small text-muted">${d}</div>`).join('')}
+                </div>
+                <div class="cal-grid">`;
+
+            for (let i = 0; i < primerDia; i++)
+                html += `<div class="cal-day vacio"></div>`;
+
+            for (let d = 1; d <= totalDias; d++) {
+                const fechaStr = `${calYear}-${String(calMonth + 1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+                let clase = 'cal-day';
+                if (fechaInicio && fechaStr === fechaInicio)                    clase += ' inicio';
+                else if (fechaFin && fechaStr === fechaFin)                     clase += ' fin';
+                else if (fechaInicio && fechaFin
+                         && fechaStr > fechaInicio && fechaStr < fechaFin)      clase += ' rango';
+
+                html += `<div class="${clase}" onclick="seleccionarFecha('${fechaStr}')">${d}</div>`;
+            }
+            html += `</div>`;
+            cont.innerHTML = html;
+        }
+
+        function cambiarMes(dir) {
+            calMonth += dir;
+            if (calMonth > 11) { calMonth = 0; calYear++; }
+            if (calMonth <  0) { calMonth = 11; calYear--; }
+            renderCalendario();
+        }
+
+        function seleccionarFecha(fechaStr) {
+            if (!fechaInicio || fechaFin) {
+                fechaInicio = fechaStr;
+                fechaFin    = null;
+            } else if (fechaStr < fechaInicio) {
+                fechaFin    = fechaInicio;
+                fechaInicio = fechaStr;
+            } else {
+                fechaFin = fechaStr;
+            }
+
+            document.getElementById('inputFechaInicio').value = fechaInicio || '';
+            document.getElementById('inputFechaFin').value    = fechaFin    || '';
+
+            document.getElementById('lblInicio').textContent = fechaInicio
+                ? fechaInicio.split('-').reverse().join('/') : 'No seleccionado';
+            document.getElementById('lblFin').textContent    = fechaFin
+                ? fechaFin.split('-').reverse().join('/')    : 'No seleccionado';
+
+            if (fechaInicio && fechaFin) {
+                const diff = countWorkingDays(new Date(fechaInicio), new Date(fechaFin), esPlanta);
+                document.getElementById('totalDiasDisplay').textContent = diff;
+                document.getElementById('inputTotalDias').value         = diff;
+
+                const warningEl  = document.getElementById('vacWarning');
+                const submitBtn  = document.getElementById('vacSubmit');
+
+                if (diff > diasDisponibles) {
+                    warningEl.classList.remove('d-none');
+                    submitBtn.disabled = true;
+                } else {
+                    warningEl.classList.add('d-none');
+                    submitBtn.disabled = false;
+                }
+
+                const maxDinero = Math.floor(diasDisponibles * 0.5);
+                document.getElementById('maxDineroInfo').textContent =
+                    `Máximo sugerido: ${maxDinero} días`;
+            } else {
+                document.getElementById('totalDiasDisplay').textContent = '0';
+                document.getElementById('inputTotalDias').value         = '0';
+                document.getElementById('vacSubmit').disabled = true;
+            }
+
+            renderCalendario();
+        }
+
+        function countWorkingDays(startDate, endDate, includeSaturday) {
+            if (!startDate || !endDate) return 0;
+            let count   = 0;
+            let current = new Date(startDate);
+            const end   = new Date(endDate);
+            while (current <= end) {
+                const dow = current.getDay();
+                if (dow !== 0 && (dow !== 6 || includeSaturday)) count++;
+                current.setDate(current.getDate() + 1);
+            }
+            return count;
+        }
+    </script>
+}

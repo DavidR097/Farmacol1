@@ -16,12 +16,11 @@ public partial class Tbsolicitude
 
     public string TipoSolicitud { get; set; } = null!;
 
-    public int? HoraInicio { get; set; }
+    public TimeSpan? HoraInicio { get; set; }
 
-    public int? HoraFin { get; set; }
+    public TimeSpan? HoraFin { get; set; }
 
-    public int? TotalHoras { get; set; }
-
+    public decimal? TotalHoras { get; set; }
     public DateOnly? FechaInicio { get; set; }
 
     public DateOnly? FechaFin { get; set; }
@@ -44,7 +43,7 @@ public partial class Tbsolicitude
 
     public string? Estado { get; set; }
 
-    public int? TotalDias { get; set; }
+    public decimal? TotalDias { get; set; }
 
     public string? SubtipoPermiso { get; set; }
 

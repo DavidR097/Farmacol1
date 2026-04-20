@@ -1048,12 +1048,12 @@ namespace Farmacol.Migrations
                         .HasColumnType("date")
                         .HasColumnName("Fecha_Solicitud");
 
-                    b.Property<int?>("HoraFin")
-                        .HasColumnType("int")
+                    b.Property<TimeSpan?>("HoraFin")
+                        .HasColumnType("time")
                         .HasColumnName("Hora_Fin");
 
-                    b.Property<int?>("HoraInicio")
-                        .HasColumnType("int")
+                    b.Property<TimeSpan?>("HoraInicio")
+                        .HasColumnType("time")
                         .HasColumnName("Hora_Inicio");
 
                     b.Property<string>("JefeInmediato")
@@ -1156,12 +1156,12 @@ namespace Farmacol.Migrations
                         .HasColumnType("varchar(200)")
                         .HasColumnName("Tipo_Solicitud");
 
-                    b.Property<int?>("TotalDias")
-                        .HasColumnType("int")
+                    b.Property<decimal?>("TotalDias")
+                        .HasColumnType("decimal(18,2)")
                         .HasColumnName("Total_Dias");
 
-                    b.Property<int?>("TotalHoras")
-                        .HasColumnType("int")
+                    b.Property<decimal?>("TotalHoras")
+                        .HasColumnType("decimal(18,2)")
                         .HasColumnName("Total_Horas");
 
                     b.Property<int?>("TotalPasos")

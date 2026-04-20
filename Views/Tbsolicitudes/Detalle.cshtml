@@ -3,13 +3,14 @@
     ViewData["Title"] = $"Solicitud #{Model.IdSolicitud}";
 }
 
-<h2>📋 Solicitud #@Model.IdSolicitud</h2>
+<h2 class="mb-4">📋 Solicitud #@Model.IdSolicitud</h2>
 <hr />
 
 @{
     var esRRHH = User.IsInRole("RRHH") || User.IsInRole("Administrador");
     var esSolicitante = false;
     var identity = User.Identity?.Name ?? "";
+
     if (!string.IsNullOrEmpty(identity))
     {
         if (string.Equals(identity, (ViewBag.SolicitanteUsuario as string) ?? "", StringComparison.OrdinalIgnoreCase)
@@ -25,114 +26,89 @@
     {
         @if (Model.Estado?.Trim().Equals("Aprobada", StringComparison.OrdinalIgnoreCase) == true)
         {
-            <a asp-controller="Tbsolicitudes"
-                   asp-action="DescargarDocumento"
-                   asp-route-id="@Model.IdSolicitud"
+            <a asp-controller="Tbsolicitudes" asp-action="DescargarDocumento" asp-route-id="@Model.IdSolicitud"
                    class="btn btn-success">
                 <i class="bi bi-file-earmark-word-fill"></i> Descargar Documento Oficial
             </a>
         }
         else
         {
-            <button class="btn btn-secondary" disabled
-                    title="Solo disponible cuando la solicitud está Aprobada">
+            <button class="btn btn-secondary" disabled title="Solo disponible cuando la solicitud está Aprobada">
                 <i class="bi bi-file-earmark-word"></i> Descargar Documento
             </button>
         }
     }
 </div>
-<div class="row g-4">
 
+<div class="row g-4">
+    <!-- Datos del Solicitante -->
     <div class="col-12">
         <div class="card border-0 shadow-sm">
-            <div class="card-header text-white fw-semibold"
-                 style="background:#343a40">
+            <div class="card-header text-white fw-semibold" style="background:#343a40">
                 👤 Datos del Solicitante
             </div>
             <div class="card-body" style="background:#f8f9fa">
                 <div class="row row-cols-2 row-cols-md-4 g-3 small">
-                    <div class="col">
-                        <span class="text-muted">Nombre:</span>
-                        <strong class="d-block">@Model.Nombre</strong>
-                    </div>
-                    <div class="col">
-                        <span class="text-muted">CC:</span>
-                        <strong class="d-block">@Model.CC</strong>
-                    </div>
-                    <div class="col">
-                        <span class="text-muted">Cargo:</span>
-                        <span class="d-block">@Model.Cargo</span>
-                    </div>
-                    <div class="col">
-                        <span class="text-muted">Fecha solicitud:</span>
-                        <span class="d-block">@Model.FechaSolicitud</span>
-                    </div>
+                    <div class="col"><span class="text-muted">Nombre:</span> <strong class="d-block">@Model.Nombre</strong></div>
+                    <div class="col"><span class="text-muted">CC:</span> <strong class="d-block">@Model.CC</strong></div>
+                    <div class="col"><span class="text-muted">Cargo:</span> <span class="d-block">@Model.Cargo</span></div>
+                    <div class="col"><span class="text-muted">Fecha solicitud:</span> <span class="d-block">@Model.FechaSolicitud?.ToString("dd/MM/yyyy")</span></div>
                 </div>
             </div>
         </div>
     </div>
 
+    <!-- Detalle de la Solicitud -->
     <div class="col-md-6">
         <div class="card border-0 shadow-sm h-100">
-            <div class="card-header text-white fw-semibold"
-                 style="background:#0d6efd">
+            <div class="card-header text-white fw-semibold" style="background:#0d6efd">
                 📝 Detalle de la Solicitud
             </div>
             <div class="card-body" style="background:#eef3ff">
                 <div class="row g-3 small">
-                    <div class="col-6">
-                        <span class="text-muted">Tipo:</span>
-                        <strong class="d-block">@Model.TipoSolicitud</strong>
-                    </div>
+                    <div class="col-6"><span class="text-muted">Tipo:</span> <strong class="d-block">@Model.TipoSolicitud</strong></div>
                     @if (!string.IsNullOrEmpty(Model.SubtipoPermiso))
                     {
-                        <div class="col-6">
-                            <span class="text-muted">Subtipo:</span>
-                            <span class="d-block">@Model.SubtipoPermiso</span>
-                        </div>
+                        <div class="col-6"><span class="text-muted">Subtipo:</span> <span class="d-block">@Model.SubtipoPermiso</span></div>
                     }
+
                     @if (Model.HoraInicio.HasValue || Model.HoraFin.HasValue)
                     {
                         <div class="col-4">
                             <span class="text-muted">Hora inicio:</span>
-                            <span class="d-block">
-                                @(Model.HoraInicio.HasValue
-                                                            ? $"{Model.HoraInicio / 100:D2}:{Model.HoraInicio % 100:D2}"
-                                                            : "—")
-                            </span>
+                            <span class="d-block">@(Model.HoraInicio?.ToString(@"hh\:mm") ?? "—")</span>
                         </div>
                         <div class="col-4">
                             <span class="text-muted">Hora fin:</span>
-                            <span class="d-block">
-                                @(Model.HoraFin.HasValue
-                                                            ? $"{Model.HoraFin / 100:D2}:{Model.HoraFin % 100:D2}"
-                                                            : "—")
-                            </span>
+                            <span class="d-block">@(Model.HoraFin?.ToString(@"hh\:mm") ?? "—")</span>
                         </div>
                         <div class="col-4">
                             <span class="text-muted">Total horas:</span>
                             <span class="d-block">@Model.TotalHoras</span>
                         </div>
                     }
+
                     @if (Model.FechaInicio.HasValue || Model.FechaFin.HasValue)
                     {
                         <div class="col-4">
                             <span class="text-muted">Fecha inicio:</span>
-                            <span class="d-block">@Model.FechaInicio</span>
+                            <span class="d-block">@Model.FechaInicio?.ToString("dd/MM/yyyy")</span>
                         </div>
                         <div class="col-4">
                             <span class="text-muted">Fecha fin:</span>
-                            <span class="d-block">@Model.FechaFin</span>
+                            <span class="d-block">@Model.FechaFin?.ToString("dd/MM/yyyy")</span>
                         </div>
                         <div class="col-4">
                             <span class="text-muted">Total días:</span>
                             <span class="d-block">@Model.TotalDias</span>
                         </div>
                     }
+
                     <div class="col-12">
                         <span class="text-muted">Motivo:</span>
                         <p class="d-block mb-0">@Model.Motivo</p>
                     </div>
+
                     @if (!string.IsNullOrEmpty(Model.Observaciones))
                     {
                         <div class="col-12">
@@ -140,6 +116,7 @@
                             <p class="d-block mb-0">@Model.Observaciones</p>
                         </div>
                     }
+
                     <div class="col-6">
                         <span class="text-muted">Estado:</span>
                         @{
@@ -152,9 +129,7 @@
                                 _ => "bg-warning text-dark"
                             };
                         }
-                        <span class="badge @badge d-block" style="width:fit-content">
-                            @Model.Estado
-                        </span>
+                        <span class="badge @badge d-block" style="width:fit-content">@Model.Estado</span>
                     </div>
                     <div class="col-6">
                         <span class="text-muted">Etapa actual:</span>
@@ -165,37 +140,30 @@
         </div>
     </div>
 
+    <!-- Historial de Aprobación -->
     <div class="col-md-6">
         <div class="card border-0 shadow-sm h-100">
-            <div class="card-header text-white fw-semibold"
-                 style="background:#198754">
+            <div class="card-header text-white fw-semibold" style="background:#198754">
                 🔄 Historial de Aprobación
             </div>
             <div class="card-body" style="background:#edfaf3">
                 @for (int i = 1; i <= (Model.TotalPasos ?? 0); i++)
                 {
-                    var cargo = i == 1 ? Model.Paso1Aprobador
-                    : i == 2 ? Model.Paso2Aprobador
-                    : Model.Paso3Aprobador;
-                    var estado = i == 1 ? Model.Paso1Estado
-                    : i == 2 ? Model.Paso2Estado
-                    : Model.Paso3Estado;
-                    var obs = i == 1 ? Model.Paso1Obs
-                    : i == 2 ? Model.Paso2Obs
-                    : Model.Paso3Obs;
+                    var cargo = i == 1 ? Model.Paso1Aprobador : i == 2 ? Model.Paso2Aprobador : Model.Paso3Aprobador;
+                    var estado = i == 1 ? Model.Paso1Estado : i == 2 ? Model.Paso2Estado : Model.Paso3Estado;
+                    var obs = i == 1 ? Model.Paso1Obs : i == 2 ? Model.Paso2Obs : Model.Paso3Obs;
 
                     var badgeClass = estado == "Aprobado" ? "bg-success" :
-                    estado == "Rechazado" ? "bg-danger" :
-                    estado == "Devuelta" ? "bg-warning text-dark" :
-                    estado == "Pendiente" ? "bg-warning text-dark" :
-                                                                                                              "bg-secondary";
-                    var icono = estado == "Aprobado" ? "✅" :
-                    estado == "Rechazado" ? "❌" :
-                    estado == "Devuelta" ? "↩️" :
-                    estado == "Pendiente" ? "⏳" : "🔒";
+                                     estado == "Rechazado" ? "bg-danger" :
+                                     estado == "Devuelta" ? "bg-warning text-dark" :
+                                     estado == "Pendiente" ? "bg-warning text-dark" : "bg-secondary";
 
-                    <div class="card border-0 mb-2 shadow-sm
-                        @(i == Model.PasoActual ? "border-start border-primary border-3" : "")">
+                    var icono = estado == "Aprobado" ? "✅" :
+                                estado == "Rechazado" ? "❌" :
+                                estado == "Devuelta" ? "↩️" :
+                                estado == "Pendiente" ? "⏳" : "🔒";
+
+                    <div class="card border-0 mb-2 shadow-sm @(i == Model.PasoActual ? "border-start border-primary border-3" : "")">
                         <div class="card-body py-2 px-3 small">
                             <div class="d-flex justify-content-between align-items-center">
                                 <span>
@@ -206,8 +174,7 @@
                             </div>
                             @if (!string.IsNullOrEmpty(obs))
                             {
-                                <div class="mt-1 p-2 rounded"
-                                     style="background:#f0f0f0">
+                                <div class="mt-1 p-2 rounded" style="background:#f0f0f0">
                                     <span class="text-muted">💬 Observación:</span>
                                     <span>@obs</span>
                                 </div>
@@ -219,10 +186,8 @@
                 @if (Model.Estado == "Devuelta" && Model.FechaDevolucion != null)
                 {
                     <div class="alert alert-warning small mt-2 mb-0">
-                        ↩️ Devuelta el
-                        <strong>@Model.FechaDevolucion?.ToString("dd/MM/yyyy HH:mm")</strong>
-                        — Vence el
-                        <strong>@Model.FechaDevolucion?.AddDays(3).ToString("dd/MM/yyyy")</strong>
+                        ↩️ Devuelta el <strong>@Model.FechaDevolucion?.ToString("dd/MM/yyyy HH:mm")</strong> —
+                        Vence el <strong>@Model.FechaDevolucion?.AddDays(3).ToString("dd/MM/yyyy")</strong>
                     </div>
                 }
             </div>
@@ -233,17 +198,14 @@
     {
         <div class="col-12">
             <div class="card border-0 shadow-sm">
-                <div class="card-header text-white fw-semibold"
-                     style="background:#6f42c1">
+                <div class="card-header text-white fw-semibold" style="background:#6f42c1">
                     📎 Documento Adjunto
                 </div>
                 <div class="card-body" style="background:#f3eeff">
-                    <div class="border rounded" style="height:500px;">
-                        <iframe src="@Model.Anexos" width="100" height="100"
-                                style="border:none;"></iframe>
+                    <div class="border rounded" style="height:500px; overflow:hidden;">
+                        <iframe src="@Model.Anexos" width="100%" height="100%" style="border:none;"></iframe>
                     </div>
-                    <a href="@Model.Anexos" target="_blank"
-                           class="btn btn-sm btn-outline-secondary mt-2 me-2">
+                    <a href="@Model.Anexos" target="_blank" class="btn btn-sm btn-outline-secondary mt-2 me-2">
                         🔗 Abrir en nueva pestaña
                     </a>
                     <a asp-action="DescargarAnexo" asp-route-id="@Model.IdSolicitud" class="btn btn-sm btn-outline-primary mt-2">
@@ -253,7 +215,6 @@
             </div>
         </div>
     }
-
 </div>
 
 <div class="mt-4">

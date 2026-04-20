@@ -260,9 +260,13 @@ namespace Farmacol.Controllers
         }
 
         // ── CREATE GET ────────────────────────────────────────────────────
+        // ── CREATE GET ────────────────────────────────────────────────────
+        [HttpGet]
         public async Task<IActionResult> Create(string? tipo = null)
         {
             var personal = await BuscarPersonalActual();
+            if (personal == null)
+                return RedirectToAction(nameof(Index));
 
             var hoy = DateTime.Today;
             bool vacacionesInhabilitadas = hoy.Day >= 11;
@@ -270,131 +274,144 @@ namespace Farmacol.Controllers
             ViewBag.VacacionesInhabilitadas = vacacionesInhabilitadas;
             ViewBag.MesActual = hoy.ToString("MMMM yyyy", new System.Globalization.CultureInfo("es-CO"));
             ViewBag.MesSiguiente = hoy.AddMonths(1).ToString("MMMM yyyy", new System.Globalization.CultureInfo("es-CO"));
-
             ViewBag.SubtiposPermiso = await _context.TbsubtiposPermisos.ToListAsync();
-            ViewBag.CedulaActual = personal?.CC;
-            ViewBag.NombreActual = personal?.NombreColaborador;
-            ViewBag.CargoActual = personal?.Cargo;
-            ViewBag.AreaActual = personal?.Area;
 
-            // Calcular vacaciones siempre (se mostrará cuando se elija Vacaciones)
-            if (personal != null)
+            ViewBag.CedulaActual = personal.CC;
+            ViewBag.NombreActual = personal.NombreColaborador;
+            ViewBag.CargoActual = personal.Cargo;
+            ViewBag.AreaActual = personal.Area;
+
+            try
             {
-                try
-                {
-                    var vac = await _VacacionesService.CalcularVacacionesAsync(personal.CC);
-                    ViewBag.Vacaciones = vac;
-                }
-                catch { ViewBag.Vacaciones = null; }
+                ViewBag.Vacaciones = await _VacacionesService.CalcularVacacionesAsync(personal.CC);
+            }
+            catch
+            {
+                ViewBag.Vacaciones = null;
             }
 
-            return View();
+            // === Routing a la vista correcta ===
+            if (tipo?.ToLower() == "vacaciones")
+                return View("CreateVacaciones");
+
+            if (tipo?.ToLower() == "permiso")
+                return View("CreatePermiso");
+
+            // Por defecto: mostrar selector de tipo
+            return View();   // Create.cshtml
         }
 
 
-        // ── CREATE POST ───────────────────────────────────────────────────
-[HttpPost]
-[ValidateAntiForgeryToken]
-public async Task<IActionResult> Create(
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Create(
     [Bind("CC,Nombre,Cargo,TipoSolicitud,SubtipoPermiso,HoraInicio,HoraFin,TotalHoras," +
           "FechaInicio,FechaFin,TotalDias,Motivo,FechaSolicitud,Observaciones,DiasEnDinero")]
     Tbsolicitude tbsolicitude, IFormFile? archivoAnexo)
-{
-    // Remover campos que no deben validarse manualmente
-    ModelState.Remove("Estado");
-    ModelState.Remove("EtapaAprobacion");
-    ModelState.Remove("ObservacionJefe");
-    ModelState.Remove("ObservacionRRHH");
-    ModelState.Remove("AprobJinmediato");
-    ModelState.Remove("AprobCh");
-    ModelState.Remove("JefeInmediato");
-    ModelState.Remove("CargoJinmediato");
-    ModelState.Remove("Paso1Aprobador");
-    ModelState.Remove("Paso2Aprobador");
-    ModelState.Remove("Paso3Aprobador");
-    ModelState.Remove("NivelSolicitante");
-    ModelState.Remove("TipoFlujo");
-    ModelState.Remove("DocumentoSolicitado");
-
-    // Helper local para volver con error (esto faltaba en tu código)
-    async Task<IActionResult> VolverConError(string errorMsg)
-    {
-        ModelState.AddModelError("", errorMsg);
-
-        var p = await BuscarPersonalActual();
-        ViewBag.SubtiposPermiso = await _context.TbsubtiposPermisos.ToListAsync();
-        ViewBag.CedulaActual = p?.CC;
-        ViewBag.NombreActual = p?.NombreColaborador;
-        ViewBag.CargoActual = p?.Cargo;
-        ViewBag.AreaActual = p?.Area;
-
-        if (p != null)
         {
-            try { ViewBag.Vacaciones = await _VacacionesService.CalcularVacacionesAsync(p.CC); }
-            catch { ViewBag.Vacaciones = null; }
+            // Helper para volver con error manteniendo la vista correcta
+            async Task<IActionResult> VolverConError(string errorMsg = "")
+            {
+                if (!string.IsNullOrEmpty(errorMsg))
+                    ModelState.AddModelError("", errorMsg);
+
+                var p = await BuscarPersonalActual();
+                ViewBag.SubtiposPermiso = await _context.TbsubtiposPermisos.ToListAsync();
+                ViewBag.CedulaActual = p?.CC;
+                ViewBag.NombreActual = p?.NombreColaborador;
+                ViewBag.CargoActual = p?.Cargo;
+                ViewBag.AreaActual = p?.Area;
+
+                if (p != null)
+                {
+                    try { ViewBag.Vacaciones = await _VacacionesService.CalcularVacacionesAsync(p.CC); }
+                    catch { ViewBag.Vacaciones = null; }
+                }
+
+                string vista = tbsolicitude.TipoSolicitud?.Equals("Vacaciones", StringComparison.OrdinalIgnoreCase) == true
+                    ? "CreateVacaciones"
+                    : "CreatePermiso";
+
+                return View(vista, tbsolicitude);
+            }
+
+            // Conversión manual de campos (obligatorio porque el modelo usa TimeSpan y decimal)
+            if (TimeSpan.TryParse(Request.Form["HoraInicio"], out TimeSpan hi))
+                tbsolicitude.HoraInicio = hi;
+
+            if (TimeSpan.TryParse(Request.Form["HoraFin"], out TimeSpan hf))
+                tbsolicitude.HoraFin = hf;
+
+            if (decimal.TryParse(Request.Form["TotalHoras"], out decimal th))
+                tbsolicitude.TotalHoras = th;
+
+            if (decimal.TryParse(Request.Form["TotalDias"], out decimal td))
+                tbsolicitude.TotalDias = td;
+
+            if (!ModelState.IsValid)
+                return await VolverConError("Por favor verifica los datos ingresados.");
+
+            // Validar archivo PDF
+            if (archivoAnexo != null && archivoAnexo.Length > 0)
+            {
+                if (Path.GetExtension(archivoAnexo.FileName).ToLower() != ".pdf")
+                    return await VolverConError("Solo se permiten archivos PDF como anexo.");
+
+                var nombreArchivo = $"anexo_{DateTime.Now.Ticks}.pdf";
+                var carpeta = Path.Combine(_env.WebRootPath ?? "wwwroot", "anexos");
+                Directory.CreateDirectory(carpeta);
+
+                using var stream = new FileStream(Path.Combine(carpeta, nombreArchivo), FileMode.Create);
+                await archivoAnexo.CopyToAsync(stream);
+                tbsolicitude.Anexos = $"/anexos/{nombreArchivo}";
+            }
+
+            var solicitante = await _context.Tbpersonals.FirstOrDefaultAsync(p => p.CC == tbsolicitude.CC);
+            if (solicitante == null)
+                return await VolverConError("No se encontró el perfil del solicitante.");
+
+            // Validación específica para Vacaciones
+            if (tbsolicitude.TipoSolicitud?.Equals("Vacaciones", StringComparison.OrdinalIgnoreCase) == true)
+            {
+                var diasSolicitados = tbsolicitude.TotalDias ?? 0m;
+                var diasEnDinero = tbsolicitude.DiasEnDinero ?? 0;
+
+                var vac = await _VacacionesService.CalcularVacacionesAsync(solicitante.CC);
+                var disponibles = (int)Math.Floor(vac.DiasDisponibles);
+
+                if (diasSolicitados + diasEnDinero > disponibles)
+                    return await VolverConError($"No tienes suficientes días disponibles. Disponibles: {disponibles}.");
+
+                var maxDinero = (int)Math.Floor(disponibles * 0.5);
+                if (diasEnDinero > maxDinero)
+                    return await VolverConError($"No puedes solicitar más de {maxDinero} días en dinero.");
+
+                if (diasSolicitados <= 0)
+                    return await VolverConError("Debes seleccionar un rango válido de fechas.");
+            }
+
+            // Procesar y guardar
+            tbsolicitude = await _flujo.InicializarFlujo(tbsolicitude, solicitante);
+
+            _context.Add(tbsolicitude);
+            await _context.SaveChangesAsync();
+
+            await NotificarAprobador(tbsolicitude, 1);
+
+            try { await _email.NotificarSolicitudCreadaAsync(tbsolicitude); } catch { }
+            try
+            {
+                await _audit.RegistrarAsync(AuditService.MOD_SOLICITUDES, AuditService.ACC_CREAR,
+                    $"{tbsolicitude.Nombre} creó solicitud de {tbsolicitude.TipoSolicitud}",
+                    tbsolicitude.IdSolicitud.ToString());
+            }
+            catch { }
+
+            TempData["Exito"] = $"✅ Solicitud enviada. Pendiente de: {tbsolicitude.Paso1Aprobador}.";
+            return RedirectToAction(nameof(Index));
         }
 
-        return View(tbsolicitude);
-    }
 
-    if (!ModelState.IsValid)
-        return await VolverConError("Por favor verifica los datos ingresados.");
-
-    // Validar archivo PDF
-    if (archivoAnexo != null && archivoAnexo.Length > 0)
-    {
-        if (Path.GetExtension(archivoAnexo.FileName).ToLower() != ".pdf")
-            return await VolverConError("Solo se permiten archivos PDF como anexo.");
-
-        var nombreArchivo = $"anexo_{DateTime.Now.Ticks}.pdf";
-        var carpeta = Path.Combine(_env.WebRootPath ?? "wwwroot", "anexos");
-        Directory.CreateDirectory(carpeta);
-
-        using var stream = new FileStream(Path.Combine(carpeta, nombreArchivo), FileMode.Create);
-        await archivoAnexo.CopyToAsync(stream);
-        tbsolicitude.Anexos = $"/anexos/{nombreArchivo}";
-    }
-
-    var solicitante = await _context.Tbpersonals.FirstOrDefaultAsync(p => p.CC == tbsolicitude.CC);
-    if (solicitante == null)
-        return await VolverConError("No se encontró el perfil del solicitante.");
-
-    // === VALIDACIÓN VACACIONES ===
-    if (tbsolicitude.TipoSolicitud?.Equals("Vacaciones", StringComparison.OrdinalIgnoreCase) == true)
-    {
-        var diasSolicitados = tbsolicitude.TotalDias ?? 0;
-        var diasEnDinero = tbsolicitude.DiasEnDinero ?? 0;
-
-        var vac = await _VacacionesService.CalcularVacacionesAsync(solicitante.CC);
-        var disponibles = (int)Math.Floor(vac.DiasDisponibles);
-
-        if (diasSolicitados + diasEnDinero > disponibles)
-            return await VolverConError($"No tienes suficientes días disponibles. Disponibles: {disponibles}. " +
-                                        $"Solicitaste {diasSolicitados} días + {diasEnDinero} en dinero.");
-
-        var maxDinero = (int)Math.Floor(disponibles * 0.5);
-        if (diasEnDinero > maxDinero)
-            return await VolverConError($"No puedes solicitar más de {maxDinero} días en dinero (50% del disponible).");
-
-        if (diasSolicitados <= 0)
-            return await VolverConError("Debes seleccionar un rango válido de fechas.");
-    }
-
-    // Inicializar flujo de aprobación
-    tbsolicitude = await _flujo.InicializarFlujo(tbsolicitude, solicitante);
-
-    _context.Add(tbsolicitude);
-    await _context.SaveChangesAsync();
-
-    await NotificarAprobador(tbsolicitude, 1);
-
-    try { await _email.NotificarSolicitudCreadaAsync(tbsolicitude); } catch { }
-    try { await _audit.RegistrarAsync(AuditService.MOD_SOLICITUDES, AuditService.ACC_CREAR, 
-        $"{tbsolicitude.Nombre} creó solicitud de {tbsolicitude.TipoSolicitud}", tbsolicitude.IdSolicitud.ToString()); } catch { }
-
-    TempData["Exito"] = $"✅ Solicitud enviada. Pendiente de: {tbsolicitude.Paso1Aprobador}.";
-    return RedirectToAction(nameof(Index));
-}
 
         // ── REVISAR ───────────────────────────────────────────────────────
         public async Task<IActionResult> Revisar(int id)
@@ -631,32 +648,46 @@ public async Task<IActionResult> Create(
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Reenviar(int id, IFormFile? archivoAnexo,
-            string? observaciones, string? Motivo, string? SubtipoPermiso,
-            string? HoraInicio, string? HoraFin, string? TotalHoras,
-            string? FechaInicio, string? FechaFin, string? TotalDias)
+    string? observaciones, string? Motivo, string? SubtipoPermiso,
+    string? HoraInicio, string? HoraFin, string? TotalHoras,
+    string? FechaInicio, string? FechaFin, string? TotalDias)
         {
             var solicitud = await _context.Tbsolicitudes.FindAsync(id);
             if (solicitud == null) return NotFound();
             if (solicitud.Estado != "Devuelta") return RedirectToAction(nameof(Index));
 
+            // Actualizar campos simples
             if (!string.IsNullOrWhiteSpace(Motivo)) solicitud.Motivo = Motivo;
             if (!string.IsNullOrWhiteSpace(SubtipoPermiso)) solicitud.SubtipoPermiso = SubtipoPermiso;
             if (!string.IsNullOrWhiteSpace(observaciones)) solicitud.Observaciones = observaciones;
 
-            if (!string.IsNullOrWhiteSpace(HoraInicio) && TimeSpan.TryParse(HoraInicio, out var tsI))
-                solicitud.HoraInicio = tsI.Hours * 100 + tsI.Minutes;
-            if (!string.IsNullOrWhiteSpace(HoraFin) && TimeSpan.TryParse(HoraFin, out var tsF))
-                solicitud.HoraFin = tsF.Hours * 100 + tsF.Minutes;
-            if (int.TryParse(TotalHoras, out var th)) solicitud.TotalHoras = th;
-            if (int.TryParse(TotalDias, out var td)) solicitud.TotalDias = td;
+            // ==================== CONVERSIÓN CORRECTA ====================
+            // HoraInicio y HoraFin: "HH:mm" → TimeSpan
+            if (!string.IsNullOrWhiteSpace(HoraInicio) && TimeSpan.TryParse(HoraInicio, out TimeSpan tsInicio))
+                solicitud.HoraInicio = tsInicio;
 
+            if (!string.IsNullOrWhiteSpace(HoraFin) && TimeSpan.TryParse(HoraFin, out TimeSpan tsFin))
+                solicitud.HoraFin = tsFin;
+
+            // TotalHoras y TotalDias: string decimal → decimal?
+            if (decimal.TryParse(TotalHoras, out decimal totalH))
+                solicitud.TotalHoras = totalH;
+
+            if (decimal.TryParse(TotalDias, out decimal totalD))
+                solicitud.TotalDias = totalD;
+
+            // Fechas
             if (DateOnly.TryParseExact(FechaInicio, "yyyy-MM-dd",
                 System.Globalization.CultureInfo.InvariantCulture,
-                System.Globalization.DateTimeStyles.None, out var fi)) solicitud.FechaInicio = fi;
+                System.Globalization.DateTimeStyles.None, out var fi))
+                solicitud.FechaInicio = fi;
+
             if (DateOnly.TryParseExact(FechaFin, "yyyy-MM-dd",
                 System.Globalization.CultureInfo.InvariantCulture,
-                System.Globalization.DateTimeStyles.None, out var ff)) solicitud.FechaFin = ff;
+                System.Globalization.DateTimeStyles.None, out var ff))
+                solicitud.FechaFin = ff;
 
+            // Archivo Anexo
             if (archivoAnexo != null && archivoAnexo.Length > 0)
             {
                 if (Path.GetExtension(archivoAnexo.FileName).ToLower() != ".pdf")
@@ -664,9 +695,11 @@ public async Task<IActionResult> Create(
                     TempData["Error"] = "Solo se permiten archivos PDF.";
                     return RedirectToAction(nameof(Editar), new { id });
                 }
+
                 var nombreArchivo = $"solicitud_{DateTime.Now.Ticks}.pdf";
                 var carpeta = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "anexos");
                 Directory.CreateDirectory(carpeta);
+
                 using var stream = new FileStream(Path.Combine(carpeta, nombreArchivo), FileMode.Create);
                 await archivoAnexo.CopyToAsync(stream);
                 solicitud.Anexos = $"/anexos/{nombreArchivo}";
@@ -679,17 +712,20 @@ public async Task<IActionResult> Create(
                 return RedirectToAction(nameof(Editar), new { id });
             }
 
+            // Re-inicializar flujo y guardar
             solicitud = await _flujo.InicializarFlujo(solicitud, personal);
+
             _context.Update(solicitud);
             await _context.SaveChangesAsync();
 
             await NotificarAprobador(solicitud, 1);
+
             try { await _email.NotificarSolicitudCreadaAsync(solicitud); } catch { }
             try
             {
                 await _audit.RegistrarAsync(AuditService.MOD_SOLICITUDES, AuditService.ACC_REENVIAR,
-                $"Solicitud #{id} reenviada por {User.Identity?.Name}",
-                id.ToString());
+                    $"Solicitud #{id} reenviada por {User.Identity?.Name}",
+                    id.ToString());
             }
             catch { }
 

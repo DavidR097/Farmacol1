@@ -1,7 +1,6 @@
 ﻿using Farmacol.Models;
 using Microsoft.EntityFrameworkCore;
 using System;
-using System.Linq;
 using System.Threading.Tasks;
 
 namespace Farmacol.Services
@@ -21,23 +20,29 @@ namespace Farmacol.Services
                 .FirstOrDefaultAsync(p => p.CC == cc);
 
             if (personal?.FechaIngreso == null)
-                return new VacacionesViewModel { CC = cc, DiasDisponibles = 0, Mensaje = "Fecha de ingreso no registrada" };
+                return new VacacionesViewModel
+                {
+                    CC = cc,
+                    DiasDisponibles = 0,
+                    Mensaje = "Fecha de ingreso no registrada"
+                };
 
             var fechaIngreso = personal.FechaIngreso.Value;
             var hoy = DateOnly.FromDateTime(DateTime.Now);
 
-            // Meses trabajados (aproximado preciso)
-            int mesesTrabajados = ((hoy.Year - fechaIngreso.Year) * 12) + hoy.Month - fechaIngreso.Month;
-            if (hoy.Day < fechaIngreso.Day) mesesTrabajados--;
+            // Cálculo de meses trabajados
+            int mesesTrabajados = ((hoy.Year - fechaIngreso.Year) * 12) + (hoy.Month - fechaIngreso.Month);
+            if (hoy.Day < fechaIngreso.Day)
+                mesesTrabajados--;
 
             decimal diasAcumulados = mesesTrabajados * 1.25m;
 
-            // Días ya disfrutados (de solicitudes aprobadas de tipo Vacaciones)
-            var diasDisfrutados = await _context.Tbsolicitudes
+            // Días ya disfrutados - CORREGIDO (decimal)
+            decimal diasDisfrutados = await _context.Tbsolicitudes
                 .Where(s => s.CC == cc
                          && s.TipoSolicitud == "Vacaciones"
                          && s.Estado == "Aprobada")
-                .SumAsync(s => s.TotalDias ?? 0);
+                .SumAsync(s => s.TotalDias ?? 0m);
 
             decimal diasDisponibles = diasAcumulados - diasDisfrutados;
 
@@ -50,7 +55,7 @@ namespace Farmacol.Services
                 FechaIngreso = fechaIngreso,
                 MesesTrabajados = mesesTrabajados,
                 DiasAcumulados = Math.Round(diasAcumulados, 2),
-                DiasDisfrutados = diasDisfrutados,
+                DiasDisfrutados = Math.Round(diasDisfrutados, 2),
                 DiasDisponibles = Math.Max(0, Math.Round(diasDisponibles, 2)),
                 EsPlanta = esPlanta,
                 Mensaje = esPlanta

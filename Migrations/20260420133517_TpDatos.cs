@@ -6,7 +6,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 namespace Farmacol.Migrations
 {
     /// <inheritdoc />
-    public partial class InitialCreate : Migration
+    public partial class TpDatos : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -108,6 +108,29 @@ namespace Farmacol.Migrations
                 });
 
             migrationBuilder.CreateTable(
+                name: "TbCarpetas",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    CC = table.Column<int>(type: "int", nullable: false),
+                    Nombre = table.Column<string>(type: "nvarchar(200)", maxLength: 200, nullable: false),
+                    Modulo = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    CarpetaPadreId = table.Column<int>(type: "int", nullable: true),
+                    FechaCreacion = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    CreadoPor = table.Column<string>(type: "nvarchar(max)", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_TbCarpetas", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_TbCarpetas_TbCarpetas_CarpetaPadreId",
+                        column: x => x.CarpetaPadreId,
+                        principalTable: "TbCarpetas",
+                        principalColumn: "Id");
+                });
+
+            migrationBuilder.CreateTable(
                 name: "TBDelegaciones",
                 columns: table => new
                 {
@@ -128,27 +151,6 @@ namespace Farmacol.Migrations
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_TBDelegaciones", x => x.Id);
-                });
-
-            migrationBuilder.CreateTable(
-                name: "TBExpedientes",
-                schema: "dbo",
-                columns: table => new
-                {
-                    Id = table.Column<int>(type: "int", nullable: false)
-                        .Annotation("SqlServer:Identity", "1, 1"),
-                    CC = table.Column<int>(type: "int", nullable: false),
-                    NombreArchivo = table.Column<string>(type: "nvarchar(300)", maxLength: 300, nullable: false),
-                    TipoDocumento = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: true),
-                    RutaArchivo = table.Column<string>(type: "nvarchar(500)", maxLength: 500, nullable: false),
-                    Modulo = table.Column<string>(type: "nvarchar(20)", maxLength: 20, nullable: true),
-                    Visible = table.Column<bool>(type: "bit", nullable: false, defaultValue: true),
-                    FechaSubida = table.Column<DateTime>(type: "datetime2", nullable: false, defaultValueSql: "GETDATE()"),
-                    SubidoPor = table.Column<string>(type: "nvarchar(200)", maxLength: 200, nullable: true)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_TBExpedientes", x => x.Id);
                 });
 
             migrationBuilder.CreateTable(
@@ -385,9 +387,9 @@ namespace Farmacol.Migrations
                     Nombre = table.Column<string>(type: "varchar(100)", unicode: false, maxLength: 100, nullable: true),
                     Cargo = table.Column<string>(type: "varchar(100)", unicode: false, maxLength: 100, nullable: true),
                     Tipo_Solicitud = table.Column<string>(type: "varchar(200)", unicode: false, maxLength: 200, nullable: false),
-                    Hora_Inicio = table.Column<int>(type: "int", nullable: true),
-                    Hora_Fin = table.Column<int>(type: "int", nullable: true),
-                    Total_Horas = table.Column<int>(type: "int", nullable: true),
+                    Hora_Inicio = table.Column<TimeSpan>(type: "time", nullable: true),
+                    Hora_Fin = table.Column<TimeSpan>(type: "time", nullable: true),
+                    Total_Horas = table.Column<decimal>(type: "decimal(18,2)", nullable: true),
                     Fecha_Inicio = table.Column<DateOnly>(type: "date", nullable: true),
                     Fecha_Fin = table.Column<DateOnly>(type: "date", nullable: true),
                     Jefe_Inmediato = table.Column<string>(type: "varchar(100)", unicode: false, maxLength: 100, nullable: true),
@@ -399,7 +401,7 @@ namespace Farmacol.Migrations
                     Observaciones = table.Column<string>(type: "varchar(200)", unicode: false, maxLength: 200, nullable: true),
                     Anexos = table.Column<string>(type: "varchar(200)", unicode: false, maxLength: 200, nullable: true),
                     Estado = table.Column<string>(type: "varchar(100)", unicode: false, maxLength: 100, nullable: true),
-                    Total_Dias = table.Column<int>(type: "int", nullable: true),
+                    Total_Dias = table.Column<decimal>(type: "decimal(18,2)", nullable: true),
                     SubtipoPermiso = table.Column<string>(type: "varchar(100)", unicode: false, maxLength: 100, nullable: true),
                     EtapaAprobacion = table.Column<string>(type: "varchar(50)", unicode: false, maxLength: 50, nullable: true),
                     ObservacionJefe = table.Column<string>(type: "varchar(300)", unicode: false, maxLength: 300, nullable: true),
@@ -598,6 +600,33 @@ namespace Farmacol.Migrations
                 });
 
             migrationBuilder.CreateTable(
+                name: "TBExpedientes",
+                schema: "dbo",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    CC = table.Column<int>(type: "int", nullable: false),
+                    NombreArchivo = table.Column<string>(type: "nvarchar(300)", maxLength: 300, nullable: false),
+                    TipoDocumento = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: true),
+                    RutaArchivo = table.Column<string>(type: "nvarchar(500)", maxLength: 500, nullable: false),
+                    Modulo = table.Column<string>(type: "nvarchar(20)", maxLength: 20, nullable: true),
+                    Visible = table.Column<bool>(type: "bit", nullable: false, defaultValue: true),
+                    FechaSubida = table.Column<DateTime>(type: "datetime2", nullable: false, defaultValueSql: "GETDATE()"),
+                    SubidoPor = table.Column<string>(type: "nvarchar(200)", maxLength: 200, nullable: true),
+                    CarpetaId = table.Column<int>(type: "int", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_TBExpedientes", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_TBExpedientes_TbCarpetas_CarpetaId",
+                        column: x => x.CarpetaId,
+                        principalTable: "TbCarpetas",
+                        principalColumn: "Id");
+                });
+
+            migrationBuilder.CreateTable(
                 name: "TBReservasSalas",
                 columns: table => new
                 {
@@ -666,6 +695,17 @@ namespace Farmacol.Migrations
                 column: "NormalizedUserName",
                 unique: true,
                 filter: "[NormalizedUserName] IS NOT NULL");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_TbCarpetas_CarpetaPadreId",
+                table: "TbCarpetas",
+                column: "CarpetaPadreId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_TBExpedientes_CarpetaId",
+                schema: "dbo",
+                table: "TBExpedientes",
+                column: "CarpetaId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_TBReservasSalas_SalaId",
@@ -751,6 +791,9 @@ namespace Farmacol.Migrations
 
             migrationBuilder.DropTable(
                 name: "AspNetUsers");
+
+            migrationBuilder.DropTable(
+                name: "TbCarpetas");
 
             migrationBuilder.DropTable(
                 name: "TBSalas");

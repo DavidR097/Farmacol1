@@ -7,7 +7,7 @@
         public DateOnly FechaIngreso { get; set; }
         public int MesesTrabajados { get; set; }
         public decimal DiasAcumulados { get; set; }
-        public int DiasDisfrutados { get; set; }
+        public decimal DiasDisfrutados { get; set; }
         public decimal DiasDisponibles { get; set; }
         public bool EsPlanta { get; set; }
         public string Mensaje { get; set; } = "";
