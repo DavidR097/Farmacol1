@@ -33,7 +33,7 @@ public partial class Farmacol1Context : IdentityDbContext<IdentityUser, Identity
     public virtual DbSet<TbCarpeta> TbCarpetas { get; set; }
 
     //protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
-    //    => optionsBuilder.UseSqlServer("Server=DARIANO\\SQLEXPRESS03;database=Farmacol1;integrated security=true;TrustServerCertificate=True;");
+    //    => optionsBuilder.UseSqlServer("Server=ZzZ\SQLEXPRESS04;database=Farmacol1;integrated security=true;TrustServerCertificate=True;");
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

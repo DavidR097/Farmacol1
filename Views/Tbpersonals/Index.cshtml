@@ -163,7 +163,7 @@ else
                         </td>
                         <td class="text-muted">@item.CiudadTrabajo</td>
                         <td class="text-muted">@item.FechaIngreso?.ToString("dd/MM/yyyy")</td>
-                        <td class="text-muted">@item.AniosAntiguedad a. @item.MesesAntiguedad m.</td>
+                        <td class="text-muted">@item.AñosAntiguedad a. @item.MesesAntiguedad m.</td>
                         <td onclick="event.stopPropagation()">
                             <div class="d-flex gap-2">
                                 <a asp-action="Edit" asp-route-id="@item.CC"
@@ -237,7 +237,7 @@ else
             @:  tipoContrato: "@Html.Raw((item.TipoContrato ?? "").Replace("\"","\\\""))",
             @:  ingreso: "@(item.FechaIngreso?.ToString("dd/MM/yyyy") ?? "")",
             @:  prueba: "@(item.VencimientoPeriodoPrueba?.ToString("dd/MM/yyyy") ?? "")",
-            @:  antiguedad: "@item.AniosAntiguedad a. @item.MesesAntiguedad m.",
+            @:  antiguedad: "@item.AñosAntiguedad a. @item.MesesAntiguedad m.",
             @:  celular: "@Html.Raw((item.Contacto ?? "").Replace("\"","\\\""))",
             @:  correoPersonal: "@Html.Raw((item.CorreoPersonal ?? "").Replace("\"","\\\""))",
             @:  direccion: "@Html.Raw((item.DireccionResidencia ?? "").Replace("\"","\\\""))",
