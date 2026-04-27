@@ -8,7 +8,7 @@
     var anioActual = hoy.Year;
     bool forzarMesSiguiente = hoy.Day >= 11;
 
-    // Mes inicial: mes actual o siguiente según la regla
+    
     var mesInicial = forzarMesSiguiente ? (hoy.Month % 12) + 1 : hoy.Month;
     var anioInicial = forzarMesSiguiente && hoy.Month == 12 ? hoy.Year + 1 : hoy.Year;
 }
@@ -148,11 +148,11 @@
     </style>
 
     <script>
-        // Serializar valores desde C# a JS usando JSON para evitar problemas de cultura (coma decimal, true/false como strings, etc.)
+        
         let fechaInicio = "@(Model?.FechaInicio?.ToString("yyyy-MM-dd") ?? "")" || null;
         let fechaFin = "@(Model?.FechaFin?.ToString("yyyy-MM-dd") ?? "")" || null;
 
-        // Valores iniciales del calendario (serializados)
+        
         let calYear = @System.Text.Json.JsonSerializer.Serialize(anioInicial);
         let calMonth = @System.Text.Json.JsonSerializer.Serialize(mesInicial - 1);
 
@@ -170,12 +170,12 @@
         document.addEventListener('DOMContentLoaded', () => {
             renderCalendario();
             validarDiasEnDinero();
-            // Mover el binding del input hasta que el DOM esté listo
+            
             const diasEnDineroEl = document.getElementById('diasEnDinero');
             if (diasEnDineroEl) diasEnDineroEl.addEventListener('input', validarDiasEnDinero);
         });
 
-        // ✅ Fix Bug 1: parsear fecha en hora local, no UTC
+        
         function parseFechaLocal(str) {
             const [y, m, d] = str.split('-').map(Number);
             return new Date(y, m - 1, d);

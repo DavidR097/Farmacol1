@@ -1,40 +1,65 @@
-﻿@{
+﻿@model IEnumerable<Farmacol.Models.Tbpersonal>
+
+@{
     ViewData["Title"] = "Expedientes TI";
-    var personal = ViewBag.Personal as IEnumerable<dynamic> ?? new List<dynamic>();
-    var conteo = ViewBag.Conteo as Dictionary<int, int> ?? new Dictionary<int, int>();
-    var docsRec = ViewBag.DocsRecientes as Dictionary<int, List<Farmacol.Models.TbExpediente>> ?? new();
-    var equiposPorCC = ViewBag.EquiposPorCC as Dictionary<int, List<Farmacol.Models.Tbinventario>> ?? new();
-    var areas = ViewBag.Areas as List<string> ?? new List<string>();
-    var plantillas = ViewBag.Plantillas as List<Farmacol.Models.TbPlantilla> ?? new();
+
+    // Corrección principal para evitar problemas con dynamic: usar tipos explícitos
+    IEnumerable<dynamic> personal = ViewBag.Personal as IEnumerable<dynamic> ?? new List<dynamic>();
+    Dictionary<int, int> conteo = ViewBag.Conteo as Dictionary<int, int> ?? new Dictionary<int, int>();
+    Dictionary<int, List<Farmacol.Models.TbExpediente>> docsRec = ViewBag.DocsRecientes as Dictionary<int, List<Farmacol.Models.TbExpediente>> ?? new Dictionary<int, List<Farmacol.Models.TbExpediente>>();
+    Dictionary<int, List<Farmacol.Models.Tbinventario>> equiposPorCC = ViewBag.EquiposPorCC as Dictionary<int, List<Farmacol.Models.Tbinventario>> ?? new Dictionary<int, List<Farmacol.Models.Tbinventario>>();
+    List<string> areas = ViewBag.Areas as List<string> ?? new List<string>();
+    List<Farmacol.Models.TbPlantilla> plantillas = ViewBag.Plantillas as List<Farmacol.Models.TbPlantilla> ?? new List<Farmacol.Models.TbPlantilla>();
 }
 
-<h1>🖥️ Expedientes TI</h1>
+<style>
+    .emp-avatar {
+        width: 34px;
+        height: 34px;
+        border-radius: 50%;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 12px;
+        font-weight: 500;
+        flex-shrink: 0;
+    }
 
-<div class="d-flex gap-2 mb-3">
-    <a asp-action="ExportarExcel" asp-route-busqueda="@ViewBag.Busqueda"
-       class="btn btn-success btn-sm">📥 Exportar filtrado</a>
-    <a asp-action="ExportarExcel" asp-route-todo="true"
-       class="btn btn-outline-success btn-sm">📥 Exportar todo</a>
+    .accordion-button {
+        padding: 12px 16px;
+    }
+</style>
+
+<div class="d-flex align-items-center justify-content-between mb-4">
+    <div>
+        <h2 class="mb-0">🖥️ Expedientes TI</h2>
+        <p class="text-muted small mb-0">Gestión de documentos y equipos de tecnología</p>
+    </div>
+    <div class="d-flex gap-2">
+        <a asp-action="ExportarExcel" asp-route-busqueda="@ViewBag.Busqueda"
+               class="btn btn-outline-success btn-sm">
+            <i class="bi bi-file-earmark-excel me-1"></i> Exportar filtrado
+        </a>
+        <a asp-action="ExportarExcel" asp-route-todo="true"
+               class="btn btn-outline-success btn-sm">
+            <i class="bi bi-file-earmark-excel me-1"></i> Exportar todo
+        </a>
+        <a asp-action="Index" class="btn btn-outline-secondary btn-sm">Limpiar filtros</a>
+    </div>
 </div>
 
-@if (TempData["Exito"] != null)
-{
-    <div class="alert alert-success alert-dismissible fade show">@TempData["Exito"]<button type="button" class="btn-close" data-bs-dismiss="alert"></button></div>
-}
-@if (TempData["Error"] != null)
-{
-    <div class="alert alert-danger alert-dismissible fade show">@TempData["Error"]<button type="button" class="btn-close" data-bs-dismiss="alert"></button></div>
-}
-
 <!-- Subida masiva -->
-<div class="card border-0 shadow-sm mb-3">
-    <div class="card-header fw-semibold text-white" style="background:#0d6efd">📤 Subida masiva</div>
+<div class="card border-0 shadow-sm mb-4">
+    <div class="card-header fw-semibold text-white" style="background:#0d6efd">
+        📤 Subida masiva de documentos
+    </div>
     <div class="card-body" style="background:#eef3ff">
         <form asp-action="SubirMasivo" method="post" enctype="multipart/form-data">
             @Html.AntiForgeryToken()
             <input type="hidden" name="ccs" id="ccsTI" />
-            <div class="row g-2 align-items-end">
-                <div class="col-md-3">
+
+            <div class="row g-3 align-items-end">
+                <div class="col-md-2">
                     <select name="tipoDocumento" class="form-select form-select-sm">
                         <option value="">Sin categoría</option>
                         <option>Responsiva TI</option>
@@ -44,14 +69,15 @@
                     </select>
                 </div>
                 <div class="col-md-3">
-                    <input type="text" name="nombrePersonalizado" class="form-control form-control-sm" placeholder="Nombre del documento" />
+                    <input type="text" name="nombrePersonalizado" class="form-control form-control-sm"
+                           placeholder="Nombre personalizado del documento" />
                 </div>
                 <div class="col-md-4">
                     <input type="file" name="archivo" accept=".pdf" class="form-control form-control-sm" required />
                 </div>
-                <div class="col-md-2">
-                    <button type="submit" class="btn btn-sm btn-primary w-100" id="btnMasivoTI" disabled>
-                        📤 Subir (<span id="lblSelTI">0</span>)
+                <div class="col-md-3">
+                    <button type="submit" class="btn btn-primary w-100" id="btnMasivoTI" disabled>
+                        📤 Subir <span id="lblSelTI">(0 seleccionados)</span>
                     </button>
                 </div>
             </div>
@@ -60,10 +86,11 @@
 </div>
 
 <!-- Filtros -->
-<form method="get" class="mb-3">
-    <div class="row g-2">
+<form method="get" class="mb-4">
+    <div class="row g-3 align-items-end">
         <div class="col-md-4">
-            <input type="text" name="busqueda" value="@ViewBag.Busqueda" class="form-control" placeholder="🔍 Nombre o cargo..." />
+            <input type="text" name="busqueda" value="@ViewBag.Busqueda"
+                   class="form-control" placeholder="🔍 Buscar por nombre o cargo..." />
         </div>
         <div class="col-md-3">
             <select name="area" class="form-select">
@@ -74,16 +101,20 @@
                 }
             </select>
         </div>
-        <div class="col-md-2"><button type="submit" class="btn btn-secondary w-100">Filtrar</button></div>
-        <div class="col-md-1"><a asp-action="Index" class="btn btn-outline-secondary w-100">✕</a></div>
+        <div class="col-md-2">
+            <button type="submit" class="btn btn-secondary w-100">Filtrar</button>
+        </div>
+        <div class="col-md-1">
+            <a asp-action="Index" class="btn btn-outline-secondary w-100">✕ Limpiar</a>
+        </div>
         <div class="col-md-2 d-flex align-items-center gap-2">
             <input type="checkbox" id="chkTodosTI" class="form-check-input" style="width:18px;height:18px" />
-            <label for="chkTodosTI" class="small text-muted">Seleccionar todos</label>
+            <label for="chkTodosTI" class="small text-muted mb-0">Seleccionar todos</label>
         </div>
     </div>
 </form>
 
-@if (!personal.Any())
+@if (personal == null || !personal.Any())
 {
     <div class="alert alert-info">No hay personal registrado.</div>
 }
@@ -92,50 +123,76 @@ else
     <div class="accordion" id="acordeonTI">
         @foreach (var p in personal)
         {
-            var cc = (int)p.CC;
+            var cc = Convert.ToInt32(p.CC);
             var totalDocs = conteo.ContainsKey(cc) ? conteo[cc] : 0;
             var colId = $"ti{cc}";
-            var docs = docsRec.ContainsKey(cc) ? docsRec[cc] : new List<Farmacol.Models.TbExpediente>();
-            var equipos = equiposPorCC.ContainsKey(cc) ? equiposPorCC[cc] : new List<Farmacol.Models.Tbinventario>();
-            var visibles = docs.Count(d => d.Visible);
-            var ocultos = docs.Count(d => !d.Visible);
+            List<Farmacol.Models.TbExpediente> docs = docsRec.ContainsKey(cc) ? docsRec[cc] : new List<Farmacol.Models.TbExpediente>();
+            List<Farmacol.Models.Tbinventario> equipos = equiposPorCC.ContainsKey(cc) ? equiposPorCC[cc] : new List<Farmacol.Models.Tbinventario>();
 
-            <div class="accordion-item border-0 mb-2 shadow-sm">
+            // === Cálculo de iniciales SIN lambda (solución al CS1977) ===
+            string nombreCol = Convert.ToString(p.NombreColaborador) ?? "?";
+            string[] palabras = nombreCol.Split(new char[] { ' ' }, StringSplitOptions.RemoveEmptyEntries);
+            string initials = "";
+            for (int i = 0; i < Math.Min(2, palabras.Length); i++)
+            {
+                if (!string.IsNullOrEmpty(palabras[i]))
+                    initials += char.ToUpper(palabras[i][0]);
+            }
+
+            // Conteo visible/oculto seguro
+            int visibles = docs.Count(d => d.Visible);
+            int ocultos = docs.Count(d => !d.Visible);
+
+            <div class="accordion-item border-0 mb-3 shadow-sm">
                 <h2 class="accordion-header">
                     <button class="accordion-button collapsed py-2" type="button"
                             data-bs-toggle="collapse" data-bs-target="#@colId">
-                        <div class="d-flex flex-wrap gap-3 align-items-center w-100 small">
+                        <div class="d-flex flex-wrap gap-3 align-items-center w-100">
+                            <!-- Checkbox -->
                             <span onclick="event.stopPropagation()">
-                                <input type="checkbox" class="chk-ti form-check-input" value="@cc" style="width:16px;height:16px" />
+                                <input type="checkbox" class="chk-ti form-check-input me-2"
+                                       value="@cc" style="width:18px;height:18px" />
                             </span>
-                            <span class="badge bg-secondary">@cc</span>
-                            <span class="fw-bold" style="min-width:200px">@p.NombreColaborador</span>
-                            <span class="text-muted" style="min-width:150px">@p.Cargo</span>
-                            <span class="badge bg-primary">@p.Area</span>
-                            @if (equipos.Any())
-                            {
-                                <span class="badge bg-info text-dark">@equipos.Count equipo(s)</span>
-                            }
-                            @if (totalDocs > 0)
-                            {
-                                <span class="badge bg-success rounded-pill">@totalDocs doc(s)</span>
-                                @if (ocultos > 0)
+
+                            <!-- Avatar -->
+                            <div class="emp-avatar bg-primary-subtle text-primary">
+                                @initials
+                            </div>
+
+                            <div class="flex-grow-1">
+                                <div class="fw-bold">@p.NombreColaborador</div>
+                                <small class="text-muted">@p.Cargo</small>
+                            </div>
+
+                            <div class="d-flex gap-2 flex-wrap">
+                                <span class="badge bg-secondary">@cc</span>
+                                <span class="badge bg-primary">@p.Area</span>
+                                @if (equipos.Any())
                                 {
-                                    <span class="badge bg-secondary rounded-pill">@ocultos oculto(s)</span>
+                                    <span class="badge bg-info text-dark">@equipos.Count() equipo(s)</span>
                                 }
-                            }
-                            else
-                            {
-                                <span class="badge bg-light text-muted border">Sin docs</span>
-                            }
+                                @if (totalDocs > 0)
+                                {
+                                    <span class="badge bg-success">@totalDocs doc(s)</span>
+                                    @if (ocultos > 0)
+                                    {
+                                        <span class="badge bg-secondary">@ocultos oculto(s)</span>
+                                    }
+                                }
+                                else
+                                {
+                                    <span class="badge bg-light text-muted border">Sin documentos</span>
+                                }
+                            </div>
                         </div>
                     </button>
                 </h2>
+
                 <div id="@colId" class="accordion-collapse collapse">
                     <div class="accordion-body pt-2 pb-3">
-                        <div class="row g-3">
+                        <div class="row g-4">
 
-                            <!-- Identificación -->
+                            <!-- 1. Identificación -->
                             <div class="col-md-6">
                                 <div class="card border-0 h-100">
                                     <div class="card-header text-white fw-semibold" style="background:#343a40">🪪 Identificación</div>
@@ -146,7 +203,7 @@ else
                                 </div>
                             </div>
 
-                            <!-- Cargo -->
+                            <!-- 2. Cargo / Área -->
                             <div class="col-md-6">
                                 <div class="card border-0 h-100">
                                     <div class="card-header text-white fw-semibold" style="background:#0d6efd">💼 Cargo / Área</div>
@@ -157,7 +214,7 @@ else
                                 </div>
                             </div>
 
-                            <!-- Equipos -->
+                            <!-- 3. Equipos asignados -->
                             <div class="col-12">
                                 <div class="card border-0">
                                     <div class="card-header text-white fw-semibold" style="background:#6c757d">🖥️ Equipos asignados</div>
@@ -191,7 +248,7 @@ else
                                 </div>
                             </div>
 
-                            <!-- Generar documentos TI -->
+                            <!-- 4. Generar documento TI (Responsiva) -->
                             @if (plantillas.Any())
                             {
                                 <div class="col-12">
@@ -206,32 +263,91 @@ else
                                                 @foreach (var plt in plantillas)
                                                 {
                                                     <a asp-action="Previo" asp-route-cc="@cc"
-                                                       asp-route-tipoDocumento="@plt.TipoDocumento"
-                                                       class="btn btn-sm" style="border:1px solid #6f42c1;color:#6f42c1">
+                                                           asp-route-tipoDocumento="@plt.TipoDocumento"
+                                                           class="btn btn-sm btn-outline-primary">
                                                         📄 @plt.TipoDocumento
                                                     </a>
+
+                                                    <!-- Botón rápido para generar y descargar sin pasar por la vista Previo -->
+                                                    <form asp-action="Generar" method="post" class="d-inline">
+                                                        @Html.AntiForgeryToken()
+                                                        <input type="hidden" name="cc" value="@cc" />
+                                                        <input type="hidden" name="tipoDocumento" value="@plt.TipoDocumento" />
+                                                        <button type="submit" class="btn btn-sm btn-primary" title="Generar y descargar (sin observaciones)">
+                                                            ⬇️ Generar
+                                                        </button>
+                                                    </form>
                                                 }
                                             </div>
-                                            <small class="text-muted mt-1 d-block">Se descarga .docx con datos del empleado y equipos rellenados.</small>
+                                            <small class="text-muted mt-2 d-block">
+                                                Se descarga un archivo <strong>.docx</strong> con los datos del empleado y equipos.
+                                            </small>
                                         </div>
                                     </div>
                                 </div>
                             }
 
-                            <!-- ── DOCUMENTOS: tabla completa ── -->
+                            <!-- 5. Documentos TI -->
                             <div class="col-12">
                                 <div class="card border-0">
                                     <div class="card-header text-white fw-semibold d-flex justify-content-between align-items-center"
                                          style="background:#198754">
                                         <span>📁 Documentos TI (@totalDocs)</span>
-                                        @if (totalDocs > 0)
-                                        {
-                                            <small class="fw-normal opacity-75">
-                                                @visibles visible(s) · @ocultos oculto(s)
-                                            </small>
-                                        }
+                                        <span class="badge bg-light text-dark ms-2">Plantillas: @plantillas.Count</span>
+                                        <div class="d-flex align-items-center gap-2">
+                                            @* Botón dropdown para generar responsivas directamente desde el recuadro Documentos TI *@
+                                            @if (plantillas.Any())
+                                            {
+                                                <div class="btn-group">
+                                                    <button type="button" class="btn btn-sm btn-light btn-outline-secondary dropdown-toggle"
+                                                            data-bs-toggle="dropdown" aria-expanded="false">Generar</button>
+                                                    <ul class="dropdown-menu dropdown-menu-end">
+                                                        @foreach (var plt in plantillas)
+                                                        {
+                                                            <li>
+                                                                <form asp-action="Generar" method="post" class="px-3 py-1">
+                                                                    @Html.AntiForgeryToken()
+                                                                    <input type="hidden" name="cc" value="@cc" />
+                                                                    <input type="hidden" name="tipoDocumento" value="@plt.TipoDocumento" />
+                                                                    <button type="submit" class="dropdown-item">📄 @plt.TipoDocumento</button>
+                                                                </form>
+                                                            </li>
+                                                        }
+                                                    </ul>
+                                                </div>
+                                            }
+                                            else
+                                            {
+                                                <a asp-controller="Plantillas" asp-action="Index" class="btn btn-sm btn-outline-light">
+                                                    ⚠️ No hay plantillas activas
+                                                </a>
+                                            }
+
+                                            @if (totalDocs > 0)
+                                            {
+                                                <small class="fw-normal opacity-75">
+                                                    @visibles visible(s) · @ocultos oculto(s)
+                                                </small>
+                                            }
+                                        </div>
                                     </div>
                                     <div class="card-body p-0" style="background:#edfaf3">
+                                        @* Controles para generar responsiva dentro del recuadro Documentos TI *@
+                                        @if (plantillas.Any())
+                                        {
+                                            <div class="p-3 d-flex justify-content-end gap-2">
+                                                @foreach (var plt in plantillas)
+                                                {
+                                                    <form asp-action="Generar" method="post" class="d-inline">
+                                                        @Html.AntiForgeryToken()
+                                                        <input type="hidden" name="cc" value="@cc" />
+                                                        <input type="hidden" name="tipoDocumento" value="@plt.TipoDocumento" />
+                                                        <button type="submit" class="btn btn-sm btn-primary">⬇️ @plt.TipoDocumento</button>
+                                                    </form>
+                                                }
+                                            </div>
+                                        }
+
                                         @if (!docs.Any())
                                         {
                                             <p class="text-muted small p-3 mb-0">Sin documentos.</p>
@@ -252,36 +368,37 @@ else
                                                     <tbody>
                                                         @foreach (var doc in docs.OrderByDescending(d => d.FechaSubida))
                                                         {
-                                                            <tr class="@(!doc.Visible ? "table-secondary" : "")">
+                                                            var expediente = doc;
+                                                            <tr class="@(!expediente.Visible ? "table-secondary" : "")">
                                                                 <td>
                                                                     <span>📄</span>
-                                                                    <strong class="ms-1">@doc.NombreArchivo</strong>
-                                                                    @if (!doc.Visible)
+                                                                    <strong class="ms-1">@expediente.NombreArchivo</strong>
+                                                                    @if (!expediente.Visible)
                                                                     {
                                                                         <span class="badge bg-secondary ms-1" style="font-size:.65rem">Oculto</span>
                                                                     }
                                                                 </td>
-                                                                <td><small class="text-muted">@(doc.TipoDocumento ?? "—")</small></td>
-                                                                <td><small class="text-muted">@doc.FechaSubida.ToString("dd/MM/yyyy HH:mm")</small></td>
+                                                                <td><small class="text-muted">@(expediente.TipoDocumento ?? "—")</small></td>
+                                                                <td><small class="text-muted">@expediente.FechaSubida.ToString("dd/MM/yyyy HH:mm")</small></td>
                                                                 <td class="text-center">
                                                                     <form asp-action="ToggleVisible" method="post" class="d-inline">
                                                                         @Html.AntiForgeryToken()
-                                                                        <input type="hidden" name="id" value="@doc.Id" />
+                                                                        <input type="hidden" name="id" value="@expediente.Id" />
                                                                         <button type="submit"
-                                                                                class="btn btn-sm @(doc.Visible ? "btn-success" : "btn-outline-secondary")"
-                                                                                title="@(doc.Visible ? "Visible — clic para ocultar" : "Oculto — clic para mostrar")">
-                                                                            @(doc.Visible ? "👁️ Sí" : "🙈 No")
+                                                                                class="btn btn-sm @(expediente.Visible ? "btn-success" : "btn-outline-secondary")"
+                                                                                title="@(expediente.Visible ? "Visible — clic para ocultar" : "Oculto — clic para mostrar")">
+                                                                            @(expediente.Visible ? "👁️ Sí" : "🙈 No")
                                                                         </button>
                                                                     </form>
                                                                 </td>
                                                                 <td class="text-center">
-                                                                    <a asp-action="Ver" asp-route-id="@doc.Id"
+                                                                    <a asp-action="Ver" asp-route-id="@expediente.Id"
                                                                        target="_blank" class="btn btn-sm btn-outline-primary">👁️</a>
                                                                     <form asp-action="Eliminar" method="post" class="d-inline">
                                                                         @Html.AntiForgeryToken()
-                                                                        <input type="hidden" name="id" value="@doc.Id" />
+                                                                        <input type="hidden" name="id" value="@expediente.Id" />
                                                                         <button type="submit" class="btn btn-sm btn-outline-danger"
-                                                                                onclick="return confirm('¿Eliminar «@doc.NombreArchivo»?')">
+                                                                                onclick="return confirm('¿Eliminar «@expediente.NombreArchivo»?')">
                                                                             🗑️
                                                                         </button>
                                                                     </form>
@@ -296,7 +413,7 @@ else
                                 </div>
                             </div>
 
-                            <!-- Subir individual -->
+                            <!-- 6. Subir documento individual -->
                             <div class="col-12">
                                 <div class="card border-0">
                                     <div class="card-header text-white fw-semibold" style="background:#0d6efd">📤 Subir documento</div>
@@ -341,15 +458,23 @@ else
     <script>
         var chkTodos = document.getElementById('chkTodosTI');
         var ccsInput = document.getElementById('ccsTI');
-        var lblSel   = document.getElementById('lblSelTI');
-        var btnMas   = document.getElementById('btnMasivoTI');
+        var lblSel = document.getElementById('lblSelTI');
+        var btnMas = document.getElementById('btnMasivoTI');
+
         function actualizarSel() {
             var sel = Array.from(document.querySelectorAll('.chk-ti:checked')).map(c => c.value);
-            ccsInput.value = sel.join(','); lblSel.textContent = sel.length; btnMas.disabled = sel.length === 0;
+            ccsInput.value = sel.join(',');
+            lblSel.textContent = `(${sel.length} seleccionados)`;
+            btnMas.disabled = sel.length === 0;
         }
-        if (chkTodos) chkTodos.addEventListener('change', function() {
-            document.querySelectorAll('.chk-ti').forEach(c => c.checked = chkTodos.checked); actualizarSel();
-        });
+
+        if (chkTodos) {
+            chkTodos.addEventListener('change', function() {
+                document.querySelectorAll('.chk-ti').forEach(c => c.checked = chkTodos.checked);
+                actualizarSel();
+            });
+        }
+
         document.querySelectorAll('.chk-ti').forEach(c => c.addEventListener('change', actualizarSel));
     </script>
 }
