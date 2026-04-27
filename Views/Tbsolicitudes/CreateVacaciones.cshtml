@@ -148,26 +148,31 @@
     </style>
 
     <script>
+        // Serializar valores desde C# a JS usando JSON para evitar problemas de cultura (coma decimal, true/false como strings, etc.)
         let fechaInicio = "@(Model?.FechaInicio?.ToString("yyyy-MM-dd") ?? "")" || null;
         let fechaFin = "@(Model?.FechaFin?.ToString("yyyy-MM-dd") ?? "")" || null;
 
-        let calYear = @anioInicial;
-        let calMonth = @mesInicial - 1;
+        // Valores iniciales del calendario (serializados)
+        let calYear = @System.Text.Json.JsonSerializer.Serialize(anioInicial);
+        let calMonth = @System.Text.Json.JsonSerializer.Serialize(mesInicial - 1);
 
         const meses = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
         const diasSem = ['Dom','Lun','Mar','Mié','Jue','Vie','Sáb'];
 
-        const diasDisponibles = @diasDispo;
-        const esPlanta = @((ViewBag.Vacaciones?.EsPlanta ?? false).ToString().ToLower());
-        const forzarMesSiguiente = @forzarMesSiguiente.ToString().ToLower();
-        const mesActual = @mesActual;
-        const anioActual = @anioActual;
-        const mesInicial = @mesInicial;       
-        const anioInicial = @anioInicial;     
+        const diasDisponibles = @System.Text.Json.JsonSerializer.Serialize(diasDispo);
+        const esPlanta = @System.Text.Json.JsonSerializer.Serialize((ViewBag.Vacaciones?.EsPlanta ?? false));
+        const forzarMesSiguiente = @System.Text.Json.JsonSerializer.Serialize(forzarMesSiguiente);
+        const mesActual = @System.Text.Json.JsonSerializer.Serialize(mesActual);
+        const anioActual = @System.Text.Json.JsonSerializer.Serialize(anioActual);
+        const mesInicial = @System.Text.Json.JsonSerializer.Serialize(mesInicial);
+        const anioInicial = @System.Text.Json.JsonSerializer.Serialize(anioInicial);
 
         document.addEventListener('DOMContentLoaded', () => {
             renderCalendario();
             validarDiasEnDinero();
+            // Mover el binding del input hasta que el DOM esté listo
+            const diasEnDineroEl = document.getElementById('diasEnDinero');
+            if (diasEnDineroEl) diasEnDineroEl.addEventListener('input', validarDiasEnDinero);
         });
 
         // ✅ Fix Bug 1: parsear fecha en hora local, no UTC
@@ -291,13 +296,13 @@
         }
 
         function validarDiasEnDinero() {
-            const diasEnDinero = parseFloat(document.getElementById('diasEnDinero').value) || 0;
+            const el = document.getElementById('diasEnDinero');
+            if (!el) return;
+            const diasEnDinero = parseFloat(el.value) || 0;
             const maxPermitido = Math.floor(diasDisponibles * 0.5);
             if (diasEnDinero > maxPermitido) {
-                document.getElementById('diasEnDinero').value = maxPermitido;
+                el.value = maxPermitido;
             }
         }
-
-        document.getElementById('diasEnDinero').addEventListener('input', validarDiasEnDinero);
             </script>
 }

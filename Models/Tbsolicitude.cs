@@ -69,5 +69,6 @@ public partial class Tbsolicitude
     public string? DocumentoSolicitado { get; set; }
     public int? DiasEnDinero { get; set; }
     public DateOnly? FechaReposición { get; set; }
+    //public int? DiasDisponibles { get; set; }
 
 }

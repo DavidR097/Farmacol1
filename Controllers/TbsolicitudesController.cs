@@ -553,7 +553,7 @@ namespace Farmacol.Controllers
 
             var existe = await _context.TbsoliRechazada
                 .AnyAsync(r => r.IdSolicitud == solicitud.IdSolicitud);
-            if (!existe)
+            if (!existe)            
             {
                 _context.TbsoliRechazada.Add(new TbsoliRechazadum
                 {
