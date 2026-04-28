@@ -297,7 +297,7 @@ public class SolicitudRRHHController : Controller
             ws.Cell(fila, 2).Value = s.Nombre ?? "";
             ws.Cell(fila, 3).Value = s.CC;
             ws.Cell(fila, 4).Value = s.Cargo ?? "";
-            ws.Cell(fila, 5).Value = "";  // Área no está en Tbsolicitude directamente
+            ws.Cell(fila, 5).Value = "";  
             ws.Cell(fila, 6).Value = s.DocumentoSolicitado ?? "";
             ws.Cell(fila, 7).Value = s.Motivo ?? "";
             ws.Cell(fila, 8).Value = s.FechaSolicitud?.ToString("dd/MM/yyyy") ?? "";

@@ -18,12 +18,12 @@ public class PlantillasController : Controller
         "Paz y salvo",
         "Carta de retiro",
         "Certificado de ingresos",
-        "Vacaciones",          // ← nuevo
-        "Permisos",            // ← nuevo
-        "Vacaciones/Permisos"  // ← genérica (aplica para ambos)
+        "Vacaciones",          
+        "Permisos",            
+        "Vacaciones/Permisos"  
     };
     private static readonly string[] TiposTI = {
-        "Responsiva TI", "Entrega de equipo", "Devolución de equipo"
+        "Responsiva TI", "Devolución de equipo"
     };
 
     public PlantillasController(Farmacol1Context context,

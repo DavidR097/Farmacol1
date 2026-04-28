@@ -282,29 +282,47 @@ else
         }
     };
 
+function calcularDiferenciaJS(fechaStr) {
+        if (!fechaStr) return "0 a. 0 m.";
+        const partes = fechaStr.split('/');
+        const inicio = new Date(partes[2], partes[1] - 1, partes[0]);
+        const hoy = new Date();
+        
+        let anios = hoy.getFullYear() - inicio.getFullYear();
+        let meses = hoy.getMonth() - inicio.getMonth();
+
+        if (meses < 0 || (meses === 0 && hoy.getDate() < inicio.getDate())) {
+            anios--;
+            meses += 12;
+        }
+        if (hoy.getDate() < inicio.getDate()) {
+            meses--;
+            if (meses < 0) meses = 11;
+        }
+        return `${anios} a. ${meses} m.`;
+    }
+
     function getInitials(name) {
         return (name || '?').split(' ').slice(0,2).map(w => w[0] || '').join('').toUpperCase();
     }
 
     function field(label, val) {
         if (!val) return '';
-        return `<div>
-            <div class="detail-field-label">${label}</div>
-            <div class="detail-field-val">${val}</div>
-        </div>`;
+        return `<div><div class="detail-field-label">${label}</div><div class="detail-field-val">${val}</div></div>`;
     }
 
     function salCard(label, val) {
         if (!val) return '';
-        return `<div class="salary-card">
-            <small>${label}</small>
-            <strong>$${val}</strong>
-        </div>`;
+        return `<div class="salary-card"><small>${label}</small><strong>$${val}</strong></div>`;
     }
 
     function abrirDetalle(cc) {
         const d = personalData[cc];
         if (!d) return;
+
+        // CÁLCULOS AL VUELO
+        const edadActual = calcularDiferenciaJS(d.nacimiento);
+        const antiguedadActual = calcularDiferenciaJS(d.ingreso);
 
         document.getElementById('modalAvatar').textContent = getInitials(d.nombre);
         document.getElementById('modalNombre').textContent = d.nombre;
@@ -315,21 +333,18 @@ else
             <div class="detail-section">
                 <div class="detail-section-title">Identificación</div>
                 <div class="detail-grid">
-                    ${field('C.C.', d.cc)} ${field('Expedición', d.expedicion)}
-                    ${field('Nacimiento', d.nacimiento)} ${field('Ciudad nac.', d.ciudadNac)}
-                    ${field('Edad', d.edad)} ${field('Género', d.genero)}
-                    ${field('Estado civil', d.estadoCivil)} ${field('RH', d.rh)}
-                    ${field('Generación', d.generacion)}
+                    ${field('C.C.', d.cc)}
+                    ${field('Nacimiento', d.nacimiento)}
+                    ${field('Edad Real', `<strong>${edadActual}</strong>`)} 
+                    ${field('Género', d.genero)}
                 </div>
             </div>
             <div class="detail-section">
                 <div class="detail-section-title">Cargo y área</div>
                 <div class="detail-grid">
                     ${field('Cargo', d.cargo)} ${field('Área', d.area)}
-                    ${field('Gerencia', d.gerencia)} ${field('Cod. CECO', d.codCeco)}
-                    ${field('Centro costos', d.nombreCeco)} ${field('Contrato', d.tipoContrato)}
-                    ${field('Ingreso', d.ingreso)} ${field('Venc. prueba', d.prueba)}
-                    ${field('Antigüedad', d.antiguedad)} ${field('Ciudad trabajo', d.ciudadTrabajo)}
+                    ${field('Ingreso', d.ingreso)}
+                    ${field('Antigüedad Real', `<strong class="text-primary">${antiguedadActual}</strong>`)}
                 </div>
             </div>
             <div class="detail-section">

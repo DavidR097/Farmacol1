@@ -144,10 +144,23 @@ namespace Farmacol.Controllers
             if (!TieneAcceso()) return RedirectToAction("Index", "Home");
             if (id != tbpersonal.CC) return NotFound();
 
-            if (ModelState.IsValid)
+            if (ModelState.IsValid) 
             {
                 try
                 {
+                    // --- SOLUCIÓN AL ERROR DE TRACKING ---
+                    // Buscamos si EF ya está rastreando esta CC en el contexto actual
+                    var local = _context.Tbpersonals
+                        .Local
+                        .FirstOrDefault(entry => entry.CC == id);
+
+                    // Si lo está rastreando, le decimos que deje de hacerlo (Detached)
+                    if (local != null)
+                    {
+                        _context.Entry(local).State = Microsoft.EntityFrameworkCore.EntityState.Detached;
+                    }
+                    // ---------------------------------------
+
                     _context.Update(tbpersonal);
                     await _context.SaveChangesAsync();
 
@@ -269,7 +282,6 @@ namespace Farmacol.Controllers
                     return fallback;
                 }
 
-                // según tu encabezado: CC está en columna B (2)
                 var colCC = Col(new[] { "cc", "c.c", "cedula", "cédula" }, 2);
                 var colExped = Col(new[] { "expedicionciudad", "expedicion" }, 3);
                 var colCiudadTrabajo = Col(new[] { "ciudaddetrabajo", "ciudadtrabajo" }, 4);
@@ -281,38 +293,58 @@ namespace Farmacol.Controllers
                 var colGerencia = Col(new[] { "gerencia", "gerencia(reporte)" }, 10);
                 var colFechaIngreso = Col(new[] { "fechaingreso" }, 11);
                 var colVencPrueba = Col(new[] { "vencimientoperiododeprueba", "vencimientoperiodoprueba" }, 12);
-                var colAnio = Col(new[] { "años" }, 13);
+                var colAños = Col(new[] { "años" }, 13);
                 var colMes = Col(new[] { "meses" }, 14);
-                var colSalarioO = 15; // salario columns start 15..23
+                var colSalarioEne2020 = Col(new[] { "salario hasta enero 2020" }, 15);
+                var colSalarioFeb2020 = Col(new[] { "salario a partir feb 2020" }, 16);
+                var colSalarioFeb2021 = Col(new[] { "salario a partir feb 2021" }, 17);
+                var colSalarioFeb2022 = Col(new[] { "salario a partir feb 2022" }, 18);
+                var colSalarioFeb2023 = Col(new[] { "salario a partir feb 2023" }, 19);
+                var colSalarioEneFeb2024 = Col(new[] { "salario a partir enero a febrero 2024" }, 20);
+                var colSalarioMar2024 = Col(new[] { "salario a partir mar 2024" }, 21);
+                var colSalarioFeb2025 = Col(new[] { "salario a partir feb 2025" }, 22);
+                var colSalarioFeb2026 = Col(new[] { "salario a partir feb 2026" }, 23);
+                var colAuxAlim2020 = Col(new[] { "auxilio alimentacion 2020" }, 24);
+                var colAuxAlim2021 = Col(new[] { "auxilio alimentacion 2021" }, 25);
+                var colAuxAlim2022 = Col(new[] { "auxilio alimentacion 2022" }, 26);
+                var colAuxAlim2023 = Col(new[] { "auxilio alimentacion 2023" }, 27);
+                var colAuxGas2021 = Col(new[] { "auxilio gasolina 2021" }, 28);
+                var colAuxGas20222023 = Col(new[] { "auxilio gasolina 2022-2023" }, 29);
+                var colAuxRodamiento = Col(new[] { "auxilio rodamiento" }, 30);
+                var colAuxRodamiento20222023 = Col(new[] { "auxilio rodamiento 2022-2023" }, 31);
+                var colBaseIncentivo20222023 = Col(new[] { "base incentivo 2022-2023" }, 32);
+                var colMedicinaPrepagada = Col(new[] { "medicina prepagada" }, 33);
+                var colLlaveSnacBebidas = Col(new[] { "llave snac y bebidas" }, 34);
                 var colFechaNac = Col(new[] { "fechanac", "fechanacimiento", "fecha nac" }, 35);
-                var colEdad = Col(new[] { "años.1", "años1", "años_1" }, 36);
-                var colMesNacimiento = Col(new[] { "mesdenacimiento", "mesdenac" }, 38);
-                var colGeneracion = Col(new[] { "generacion" }, 39);
+                var colEdad = Col(new[] { "años edad" }, 36);
+                var colMesesEdad = Col(new[] { "meses edad" }, 37);
+                var colMesNacimiento = Col(new[] { "mes de nacimiento" }, 38);
+                var colGeneracion = Col(new[] { "generacion", "generación" }, 39);
                 var colGenero = Col(new[] { "genero" }, 40);
                 var colCiudadNac = Col(new[] { "ciudaddenac", "ciudaddenacimiento", "ciudad nac" }, 41);
-                var colEstadoCivil = Col(new[] { "estadocivil" }, 42);
-                var colCorreoPersonal = Col(new[] { "correopersonal" }, 43);
+                var colEstadoCivil = Col(new[] { "estado civil" }, 42);
+                var colCorreoPersonal = Col(new[] { "correo personal" }, 43);
                 var colContacto = Col(new[] { "contacto" }, 44);
-                var colDireccion = Col(new[] { "direccionresidencia" }, 45);
+                var colDireccion = Col(new[] { "direccion residencia" }, 45);
                 var colBarrio = Col(new[] { "barrio" }, 46);
                 var colRh = Col(new[] { "rh" }, 47);
-                var colContactoEmerg = Col(new[] { "contactoencasodeemergencia", "contactoencasodeemergencia" }, 48);
+                var colContactoEmerg = Col(new[] { "contactoencasodeemergencia", "contacto en caso de emergencia" }, 48);
                 var colParentesco = Col(new[] { "parentesco" }, 49);
-                var colTelefonoEmerg = Col(new[] { "telefono/celularencasodeemergencia", "telefonocelularencasodeemergencia" }, 50);
-                var colTipoContrato = Col(new[] { "tipocontrato" }, 51);
+                var colTelefonoEmerg = Col(new[] { "telefono/celularencasodeemergencia", "telefono/celular en caso de emergencia" }, 50);
+                var colTipoContrato = Col(new[] { "tipo contrato" }, 51);
                 var colEps = Col(new[] { "eps" }, 52);
-                var colFondoPensiones = Col(new[] { "fondopensiones", "fondopensiones" }, 53);
-                var colFondoCesantias = Col(new[] { "fondocesantias" }, 54);
-                var colCajaComp = Col(new[] { "cajadecompensacion", "cajadecompensaciòn" }, 55);
+                var colFondoPensiones = Col(new[] { "fondo pensiones", "fondopensiones" }, 53);
+                var colFondoCesantias = Col(new[] { "fondo cesantias", "fondocesantias" }, 54);
+                var colCajaComp = Col(new[] { "cajadecompensacion", "caja de compensación" }, 55);
                 var colArl = Col(new[] { "arl" }, 56);
-                var colTipoCuenta = Col(new[] { "tipocta", "tipocta" }, 57);
+                var colTipoCuenta = Col(new[] { "tipo cta", "tipocta" }, 57);
                 var colNoCuenta = Col(new[] { "cta.no", "cta.no" }, 58);
                 var colBanco = Col(new[] { "banco" }, 59);
-                var colTallaCamisa = Col(new[] { "tallacamisa" }, 60);
+                var colTallaCamisa = Col(new[] { "talla camisa" }, 60);
                 var colGrupo = Col(new[] { "grupo" }, 61);
                 var colConcepto = Col(new[] { "concepto" }, 62);
-                var colCorreoCorp = Col(new[] { "correocorporativo", "correocorporativo" }, 63);
-                var colUsuarioCorp = Col(new[] { "usuariocorporativo", "usuariocorporativo" }, 64);
+                var colCorreoCorp = Col(new[] { "correocorporativo", "correo corporativo" }, 63);
+                var colUsuarioCorp = Col(new[] { "usuariocorporativo", "usuario corporativo" }, 64);
 
                 var rows = worksheet.RowsUsed().Skip(1).ToList(); // Saltar fila de encabezado
                 var errorDetails = new List<string>();
@@ -343,20 +375,33 @@ namespace Farmacol.Controllers
                         personal.Gerencia = GetString(row.Cell(colGerencia));
                         personal.FechaIngreso = GetDateOnly(row.Cell(colFechaIngreso));
                         personal.VencimientoPeriodoPrueba = GetDateOnly(row.Cell(colVencPrueba));
+                        personal.AñosAntiguedad = GetInt(row.Cell(colAños));
+                        personal.MesesAntiguedad = GetInt(row.Cell(colMes));
 
-                        personal.SalarioEnero2020 = GetDecimal(row.Cell(colSalarioO));
-                        personal.SalarioFeb2020 = GetDecimal(row.Cell(colSalarioO + 1));
-                        personal.SalarioFeb2021 = GetDecimal(row.Cell(colSalarioO + 2));
-                        personal.SalarioFeb2022 = GetDecimal(row.Cell(colSalarioO + 3));
-                        personal.SalarioFeb2023 = GetDecimal(row.Cell(colSalarioO + 4));
-                        personal.SalarioEneFeb2024 = GetDecimal(row.Cell(colSalarioO + 5));
-                        personal.SalarioMar2024 = GetDecimal(row.Cell(colSalarioO + 6));
-                        personal.SalarioFeb2025 = GetDecimal(row.Cell(colSalarioO + 7));
-                        personal.SalarioFeb2026 = GetDecimal(row.Cell(colSalarioO + 8));
+                        personal.SalarioEnero2020 = GetDecimal(row.Cell(colSalarioEne2020));
+                        personal.SalarioFeb2020 = GetDecimal(row.Cell(colSalarioFeb2020));
+                        personal.SalarioFeb2021 = GetDecimal(row.Cell(colSalarioFeb2021));
+                        personal.SalarioFeb2022 = GetDecimal(row.Cell(colSalarioFeb2022));
+                        personal.SalarioFeb2023 = GetDecimal(row.Cell(colSalarioFeb2023));
+                        personal.SalarioEneFeb2024 = GetDecimal(row.Cell(colSalarioEneFeb2024));
+                        personal.SalarioMar2024 = GetDecimal(row.Cell(colSalarioMar2024));
+                        personal.SalarioFeb2025 = GetDecimal(row.Cell(colSalarioFeb2025));
+                        personal.SalarioFeb2026 = GetDecimal(row.Cell(colSalarioFeb2026));
+                        personal.AuxAlimentacion2020 = GetDecimal(row.Cell(colAuxAlim2020));
+                        personal.AuxAlimentacion2021 = GetDecimal(row.Cell(colAuxAlim2021));
+                        personal.AuxAlimentacion2022 = GetDecimal(row.Cell(colAuxAlim2022));
+                        personal.AuxAlimentacion2023 = GetDecimal(row.Cell(colAuxAlim2023));
+                        personal.AuxGasolina2021 = GetDecimal(row.Cell(colAuxGas2021));
+                        personal.AuxGasolina20222023 = GetDecimal(row.Cell(colAuxGas20222023));
+                        personal.AuxRodamiento = GetDecimal(row.Cell(colAuxRodamiento));
+                        personal.AuxRodamiento20222023 = GetDecimal(row.Cell(colAuxRodamiento20222023));
+                        personal.BaseIncentivo20222023 = GetDecimal(row.Cell(colBaseIncentivo20222023));
+                        personal.MedicinaPrepagada = GetDecimal(row.Cell(colMedicinaPrepagada));
+                        personal.LlaveSnacBebidas = GetDecimal(row.Cell(colLlaveSnacBebidas));
 
                         personal.FechaNacimiento = GetDateOnly(row.Cell(colFechaNac));
                         personal.Edad = GetInt(row.Cell(colEdad));
-                        personal.MesesEdad = GetInt(row.Cell(colMes));
+                        personal.MesesEdad = GetInt(row.Cell(colMesesEdad));
                         personal.MesNacimiento = GetString(row.Cell(colMesNacimiento));
                         personal.Generacion = GetString(row.Cell(colGeneracion));
                         personal.Genero = GetString(row.Cell(colGenero));

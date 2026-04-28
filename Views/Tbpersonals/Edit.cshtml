@@ -1,224 +1,269 @@
 ﻿@model Farmacol.Models.Tbpersonal
+
 @{
-    ViewData["Title"] = "Editar Personal";
+    ViewData["Title"] = "Editar Colaborador";
 }
 
-<h1>Editar Personal — <small class="text-muted">CC: @Model.CC</small></h1>
-<hr />
+<style>
+    .emp-avatar {
+        width: 44px; height: 44px; border-radius: 50%;
+        display: inline-flex; align-items: center; justify-content: center;
+        font-size: 15px; font-weight: 500; flex-shrink: 0;
+    }
+    .edit-panel {
+        background: #fff; border-radius: 16px; border: 1px solid #e9ecef;
+        display: flex; flex-direction: column; margin-bottom: 2rem;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+    }
+    .edit-panel-header {
+        padding: 18px 24px; border-bottom: 1px solid #e9ecef;
+        display: flex; align-items: center; justify-content: space-between;
+        background-color: #f8f9fa; border-top-left-radius: 16px; border-top-right-radius: 16px;
+    }
+    .edit-panel-body { padding: 24px; flex: 1; }
+    .detail-section { margin-bottom: 28px; }
+    .detail-section-title {
+        font-size: 11px; font-weight: 600; text-transform: uppercase;
+        letter-spacing: .06em; color: #6c757d;
+        border-bottom: 1px solid #f0f0f0; padding-bottom: 6px; margin-bottom: 16px;
+    }
+    .edit-grid {
+        display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+        gap: 16px 20px;
+    }
+    .form-label-sm { font-size: 11px; color: #9ca3af; margin-bottom: 4px; }
+    .form-control-sm, .form-select-sm { font-size: 13px; border-radius: 6px; }
+    .bg-calc { background-color: #f0f7ff !important; border-color: #cfe2ff !important; font-weight: 600; }
+</style>
 
-<form asp-action="Edit">
-    <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
+<div class="d-flex align-items-center justify-content-between mb-4">
+    <div>
+        <h2 class="mb-0">Editar Colaborador</h2>
+        <p class="text-muted small mb-0">Gestión de ficha técnica de personal</p>
+    </div>
+    <a asp-action="Index" class="btn btn-outline-secondary btn-sm">
+        <i class="bi bi-arrow-left me-1"></i> Volver al Directorio
+    </a>
+</div>
+
+<form asp-action="Edit" id="formPersonal">
+    <div asp-validation-summary="ModelOnly" class="text-danger"></div>
     <input type="hidden" asp-for="CC" />
 
-    <div class="card mb-3">
-        <div class="card-header bg-dark text-white">🪪 Identificación</div>
-        <div class="card-body">
-            <div class="row g-3">
-                <div class="col-md-4">
-                    <label asp-for="NombreColaborador" class="form-label">Nombre completo</label>
-                    <input asp-for="NombreColaborador" class="form-control" />
-                </div>
-                <div class="col-md-4">
-                    <label asp-for="ExpedicionCiudad" class="form-label">Ciudad expedición</label>
-                    <input asp-for="ExpedicionCiudad" class="form-control" />
-                </div>
-                <div class="col-md-3">
-                    <label asp-for="FechaNacimiento" class="form-label">Fecha nacimiento</label>
-                    <input asp-for="FechaNacimiento" type="date" class="form-control"
-                           value="@Model.FechaNacimiento?.ToString("yyyy-MM-dd")" />
-                </div>
-                <div class="col-md-3">
-                    <label asp-for="CiudadNacimiento" class="form-label">Ciudad nacimiento</label>
-                    <input asp-for="CiudadNacimiento" class="form-control" />
-                </div>
-                <div class="col-md-3">
-                    <label asp-for="Genero" class="form-label">Género</label>
-                    <input asp-for="Genero" class="form-control" />
-                </div>
-                <div class="col-md-3">
-                    <label asp-for="EstadoCivil" class="form-label">Estado civil</label>
-                    <input asp-for="EstadoCivil" class="form-control" />
-                </div>
-                <div class="col-md-3">
-                    <label asp-for="Rh" class="form-label">RH</label>
-                    <input asp-for="Rh" class="form-control" />
+    <div class="edit-panel">
+        <div class="edit-panel-header">
+            <div class="d-flex align-items-center gap-3">
+                @{
+                    var initials = string.Join("", (Model.NombreColaborador ?? "?").Split(' ').Take(2).Select(w => w.Length > 0 ? w[0].ToString() : ""));
+                }
+                <div class="emp-avatar bg-primary-subtle text-primary">@initials</div>
+                <div>
+                    <div class="fw-medium">@Model.NombreColaborador</div>
+                    <div class="text-muted small">ID: @Model.CC · @Model.Cargo</div>
                 </div>
             </div>
+            <button type="submit" class="btn btn-primary btn-sm px-4">Guardar Cambios</button>
         </div>
-    </div>
 
-    <div class="card mb-3">
-        <div class="card-header bg-dark text-white">💼 Cargo y Área</div>
-        <div class="card-body">
-            <div class="row g-3">
-                <div class="col-md-4">
-                    <label asp-for="Cargo" class="form-label">Cargo</label>
-                    <input asp-for="Cargo" class="form-control" />
-                </div>
-                <div class="col-md-4">
-                    <label class="form-label">Área</label>
-                    <select name="Area" class="form-select">
-                        <option value="">-- Selecciona --</option>
-                        @foreach (var area in ViewBag.Areas as List<Farmacol.Models.Tbarea> ?? new())
-                        {
-                            <option value="@area.Nombre"
-                                    selected="@(Model.Area == area.Nombre ? "selected" : null)">
-                                @area.Nombre
-                            </option>
-                        }
-                    </select>
-                </div>
-                <div class="col-md-4">
-                    <label asp-for="Gerencia" class="form-label">Gerencia</label>
-                    <input asp-for="Gerencia" class="form-control" />
-                </div>
-                <div class="col-md-4">
-                    <label asp-for="TipoContrato" class="form-label">Tipo contrato</label>
-                    <input asp-for="TipoContrato" class="form-control" />
-                </div>
-                <div class="col-md-4">
-                    <label asp-for="FechaIngreso" class="form-label">Fecha ingreso</label>
-                    <input asp-for="FechaIngreso" type="date" class="form-control"
-                           value="@Model.FechaIngreso?.ToString("yyyy-MM-dd")" />
-                </div>
-                <div class="col-md-4">
-                    <label asp-for="CiudadTrabajo" class="form-label">Ciudad trabajo</label>
-                    <input asp-for="CiudadTrabajo" class="form-control" />
+        <div class="edit-panel-body">
+            
+            @* --- IDENTIFICACIÓN --- *@
+            <div class="detail-section">
+                <div class="detail-section-title">Identificación y Edad</div>
+                <div class="edit-grid">
+                    <div class="form-group">
+                        <label class="form-label-sm">Nombre Colaborador</label>
+                        <input asp-for="NombreColaborador" class="form-control form-control-sm" />
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label-sm">Fecha Nacimiento</label>
+                        <input asp-for="FechaNacimiento" type="date" class="form-control form-control-sm" id="inputNacimiento" />
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label-sm">Edad (Años)</label>
+                        <input asp-for="Edad" class="form-control form-control-sm bg-calc" id="resEdadAnio" readonly />
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label-sm">Edad (Meses)</label>
+                        <input asp-for="MesesEdad" class="form-control form-control-sm bg-calc" id="resEdadMes" readonly />
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label-sm">Ciudad Nacimiento</label>
+                        <input asp-for="CiudadNacimiento" class="form-control form-control-sm" />
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label-sm">Género</label>
+                        <input asp-for="Genero" class="form-control form-control-sm" />
+                    </div>
                 </div>
             </div>
-        </div>
-    </div>
 
-    <div class="card mb-3">
-        <div class="card-header bg-dark text-white">📞 Contacto</div>
-        <div class="card-body">
-            <div class="row g-3">
-                <div class="col-md-4">
-                    <label asp-for="Contacto" class="form-label">Celular</label>
-                    <input asp-for="Contacto" class="form-control" />
-                </div>
-                <div class="col-md-4">
-                    <label asp-for="CorreoPersonal" class="form-label">Correo personal</label>
-                    <input asp-for="CorreoPersonal" class="form-control" />
-                </div>
-                <div class="col-md-4">
-                    <label asp-for="DireccionResidencia" class="form-label">Dirección</label>
-                    <input asp-for="DireccionResidencia" class="form-control" />
-                </div>
-                <div class="col-md-4">
-                    <label asp-for="Barrio" class="form-label">Barrio</label>
-                    <input asp-for="Barrio" class="form-control" />
-                </div>
-                <div class="col-md-4">
-                    <label asp-for="ContactoEmergencia" class="form-label">Contacto emergencia</label>
-                    <input asp-for="ContactoEmergencia" class="form-control" />
-                </div>
-                <div class="col-md-2">
-                    <label asp-for="Parentesco" class="form-label">Parentesco</label>
-                    <input asp-for="Parentesco" class="form-control" />
-                </div>
-                <div class="col-md-2">
-                    <label asp-for="TelefonoEmergencia" class="form-label">Tel. emergencia</label>
-                    <input asp-for="TelefonoEmergencia" class="form-control" />
+            @* --- LABORAL --- *@
+            <div class="detail-section">
+                <div class="detail-section-title">Información Laboral y Antigüedad</div>
+                <div class="edit-grid">
+                    <div class="form-group">
+                        <label class="form-label-sm">Cargo</label>
+                        <input asp-for="Cargo" class="form-control form-control-sm" />
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label-sm">Fecha Ingreso</label>
+                        <input asp-for="FechaIngreso" type="date" class="form-control form-control-sm" id="inputIngreso" />
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label-sm">Años Antigüedad</label>
+                        <input asp-for="AñosAntiguedad" class="form-control form-control-sm bg-calc" id="resAntiAnio" readonly />
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label-sm">Meses Antigüedad</label>
+                        <input asp-for="MesesAntiguedad" class="form-control form-control-sm bg-calc" id="resAntiMes" readonly />
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label-sm">Tipo Contrato</label>
+                        <input asp-for="TipoContrato" class="form-control form-control-sm" />
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label-sm">Ciudad Trabajo</label>
+                        <input asp-for="CiudadTrabajo" class="form-control form-control-sm" />
+                    </div>
                 </div>
             </div>
-        </div>
-    </div>
 
-    <div class="card mb-3">
-        <div class="card-header bg-dark text-white">🏥 Beneficios y Seguridad Social</div>
-        <div class="card-body">
-            <div class="row g-3">
-                <div class="col-md-4">
-                    <label asp-for="Eps" class="form-label">EPS</label>
-                    <input asp-for="Eps" class="form-control" />
-                </div>
-                <div class="col-md-4">
-                    <label asp-for="FondoPensiones" class="form-label">Fondo pensiones</label>
-                    <input asp-for="FondoPensiones" class="form-control" />
-                </div>
-                <div class="col-md-4">
-                    <label asp-for="FondoCesantias" class="form-label">Fondo cesantías</label>
-                    <input asp-for="FondoCesantias" class="form-control" />
-                </div>
-                <div class="col-md-4">
-                    <label asp-for="CajaCompensacion" class="form-label">Caja compensación</label>
-                    <input asp-for="CajaCompensacion" class="form-control" />
-                </div>
-                <div class="col-md-4">
-                    <label asp-for="Arl" class="form-label">ARL</label>
-                    <input asp-for="Arl" class="form-control" />
+            @* --- HISTÓRICO SALARIAL (NUEVO) --- *@
+            <div class="detail-section">
+                <div class="detail-section-title">Evolución Salarial (Histórico)</div>
+                <div class="edit-grid">
+                    <div class="form-group">
+                        <label class="form-label-sm">Salario Feb 2022</label>
+                        <input asp-for="SalarioFeb2022" class="form-control form-control-sm" />
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label-sm">Salario Feb 2023</label>
+                        <input asp-for="SalarioFeb2023" class="form-control form-control-sm" />
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label-sm">Salario Mar 2024</label>
+                        <input asp-for="SalarioMar2024" class="form-control form-control-sm" />
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label-sm">Salario Feb 2025</label>
+                        <input asp-for="SalarioFeb2025" class="form-control form-control-sm" />
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label-sm">Salario Feb 2026</label>
+                        <input asp-for="SalarioFeb2026" class="form-control form-control-sm" />
+                    </div>
                 </div>
             </div>
-        </div>
-    </div>
 
-    <div class="card mb-3">
-        <div class="card-header bg-dark text-white">🏦 Cuenta Bancaria</div>
-        <div class="card-body">
-            <div class="row g-3">
-                <div class="col-md-4">
-                    <label asp-for="Banco" class="form-label">Banco</label>
-                    <input asp-for="Banco" class="form-control" />
-                </div>
-                <div class="col-md-4">
-                    <label asp-for="TipoCuenta" class="form-label">Tipo cuenta</label>
-                    <input asp-for="TipoCuenta" class="form-control" />
-                </div>
-                <div class="col-md-4">
-                    <label asp-for="NumeroCuenta" class="form-label">No. cuenta</label>
-                    <input asp-for="NumeroCuenta" class="form-control" />
+            @* --- AUXILIOS Y BENEFICIOS (NUEVO) --- *@
+            <div class="detail-section">
+                <div class="detail-section-title">Auxilios e Incentivos</div>
+                <div class="edit-grid">
+                    <div class="form-group">
+                        <label class="form-label-sm">Aux. Rodamiento</label>
+                        <input asp-for="AuxRodamiento" class="form-control form-control-sm" />
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label-sm">Base Incentivo</label>
+                        <input asp-for="BaseIncentivo20222023" class="form-control form-control-sm" />
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label-sm">Medicina Prepagada</label>
+                        <input asp-for="MedicinaPrepagada" class="form-control form-control-sm" />
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label-sm">Llave SNAC/Bebidas</label>
+                        <input asp-for="LlaveSnacBebidas" class="form-control form-control-sm" />
+                    </div>
                 </div>
             </div>
-        </div>
-    </div>
 
-    <div class="card mb-3">
-        <div class="card-header bg-dark text-white">👕 Otros</div>
-        <div class="card-body">
-            <div class="row g-3">
-                <div class="col-md-3">
-                    <label asp-for="TallaCamisa" class="form-label">Talla camisa</label>
-                    <input asp-for="TallaCamisa" class="form-control" />
-                </div>
-                <div class="col-md-3">
-                    <label asp-for="Grupo" class="form-label">Grupo</label>
-                    <input asp-for="Grupo" class="form-control" />
-                </div>
-                <div class="col-md-6">
-                    <label asp-for="Concepto" class="form-label">Concepto</label>
-                    <input asp-for="Concepto" class="form-control" />
+            @* --- ACCESO Y CUENTA --- *@
+            <div class="detail-section" style="margin-bottom:0">
+                <div class="detail-section-title">Acceso y Datos Bancarios</div>
+                <div class="edit-grid">
+                    <div class="form-group">
+                        <label class="form-label-sm">Correo Corporativo</label>
+                        <input asp-for="CorreoCorporativo" class="form-control form-control-sm text-primary" />
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label-sm">Usuario Corporativo</label>
+                        <input asp-for="UsuarioCorporativo" class="form-control form-control-sm fw-medium" />
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label-sm">Banco</label>
+                        <input asp-for="Banco" class="form-control form-control-sm" />
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label-sm">Número de Cuenta</label>
+                        <input asp-for="NumeroCuenta" class="form-control form-control-sm" />
+                    </div>
                 </div>
             </div>
-        </div>
-    </div>
 
-    <div class="card mb-3">
-        <div class="card-header bg-dark text-white">🔐 Acceso al Sistema</div>
-        <div class="card-body">
-            <div class="row g-3">
-                <div class="col-md-6">
-                    <label asp-for="CorreoCorporativo" class="form-label">Correo corporativo</label>
-                    <input asp-for="CorreoCorporativo" class="form-control"
-                           placeholder="usuario@farmacol.com" />
-                </div>
-                <div class="col-md-6">
-                    <label asp-for="UsuarioCorporativo" class="form-label">Usuario corporativo</label>
-                    <input asp-for="UsuarioCorporativo" class="form-control"
-                           placeholder="usuario.corporativo" />
-                </div>
-            </div>
         </div>
-    </div>
 
-    <div class="d-flex gap-2 mb-4">
-        <input type="submit" value="💾 Guardar cambios" class="btn btn-primary" />
-        <a asp-action="Index" class="btn btn-secondary">Cancelar</a>
+        <div class="edit-panel-footer bg-light p-3 d-flex justify-content-end gap-2">
+            <a asp-action="Index" class="btn btn-sm btn-outline-secondary px-3">Cancelar</a>
+            <button type="submit" class="btn btn-sm btn-primary px-4">💾 Actualizar Ficha</button>
+        </div>
     </div>
 </form>
 
 @section Scripts {
-    @{
-        await Html.RenderPartialAsync("_ValidationScriptsPartial");
-    }
+    <script>
+        /**
+         * Lógica de Cálculo de Tiempos (Edad y Antigüedad)
+         */
+        function calcularDiferencia(fechaInicio) {
+            if (!fechaInicio) return { anios: 0, meses: 0 };
+            
+            const inicio = new Date(fechaInicio);
+            const hoy = new Date();
+            
+            // Ajuste por zona horaria (evita desfases de un día)
+            inicio.setMinutes(inicio.getMinutes() + inicio.getTimezoneOffset());
+
+            let anios = hoy.getFullYear() - inicio.getFullYear();
+            let meses = hoy.getMonth() - inicio.getMonth();
+
+            if (meses < 0 || (meses === 0 && hoy.getDate() < inicio.getDate())) {
+                anios--;
+                meses += 12;
+            }
+            
+            if (hoy.getDate() < inicio.getDate()) {
+                meses--;
+                if (meses < 0) {
+                    meses = 11;
+                }
+            }
+
+            return { anios: Math.max(0, anios), meses: Math.max(0, meses) };
+        }
+
+        function actualizarEdad() {
+            const result = calcularDiferencia(document.getElementById('inputNacimiento').value);
+            document.getElementById('resEdadAnio').value = result.anios;
+            document.getElementById('resEdadMes').value = result.meses;
+        }
+
+        function actualizarAntiguedad() {
+            const result = calcularDiferencia(document.getElementById('inputIngreso').value);
+            document.getElementById('resAntiAnio').value = result.anios;
+            document.getElementById('resAntiMes').value = result.meses;
+        }
+
+        // Listeners para cambios en tiempo real
+        document.getElementById('inputNacimiento').addEventListener('change', actualizarEdad);
+        document.getElementById('inputIngreso').addEventListener('change', actualizarAntiguedad);
+
+        // Ejecutar al cargar la página para verificar datos actuales
+        window.onload = function() {
+            actualizarEdad();
+            actualizarAntiguedad();
+        };
+    </script>
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
 }

@@ -204,7 +204,7 @@
                 let clase = 'cal-day';
                 if (fechaInicio === fechaStr) clase += ' inicio';
                 else if (fechaFin === fechaStr) clase += ' fin';
-                else if (fechaInicio && fechaFin && fechaStr > fechaInicio && fechaStr < fechaFin) clase += ' rango'; // ✅ espacio antes de 'rango'
+                else if (fechaInicio && fechaFin && fechaStr > fechaInicio && fechaStr < fechaFin) clase += ' rango'; 
 
                 html += `<div class="${clase}" onclick="seleccionarFecha('${fechaStr}')">${d}</div>`;
             }

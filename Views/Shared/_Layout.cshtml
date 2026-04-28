@@ -702,7 +702,8 @@
                 </div>
             }
 
-            @* ── Anuncios: RRHH (sin el resto de Administración) ── *@
+            }
+
             @if (esRRHH && !esAdmin)
             {
                 <div class="sb-divider"></div>
@@ -713,7 +714,6 @@
                 </a>
             }
 
-            @* ── Soporte: TI (solo desbloquear) ── *@
             @if (esTI && !esAdmin)
             {
                 <div class="sb-divider"></div>

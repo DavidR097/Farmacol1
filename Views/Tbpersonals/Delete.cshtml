@@ -1,180 +1,145 @@
-﻿@model Farmacol.Models.Tbpersonal
+﻿@using Microsoft.AspNetCore.Html
+@model Farmacol.Models.Tbpersonal
 
 @{
     ViewData["Title"] = "Eliminar Personal";
+
+    // Lógica de Antigüedad Real (Abril 2026)
+    string antiguedadReal = "0 a. 0 m.";
+    if (Model.FechaIngreso.HasValue)
+    {
+        var hoy = DateTime.Today; // 28/04/2026
+        var inicio = Model.FechaIngreso.Value;
+        int anios = hoy.Year - inicio.Year;
+        int meses = hoy.Month - inicio.Month;
+        if (meses < 0 || (meses == 0 && hoy.Day < inicio.Day)) { anios--; meses += 12; }
+        if (hoy.Day < inicio.Day) { meses--; if (meses < 0) meses = 11; }
+        antiguedadReal = $"{anios} a. {meses} m.";
+    }
+
+    var initials = string.Join("", (Model.NombreColaborador ?? "?").Split(' ')
+                        .Take(2).Select(w => w.Length > 0 ? w[0].ToString() : ""));
 }
 
-<h1 class="mb-4">Confirmar Retiro de Personal</h1>
-
-<div class="row">
-    <div class="col-lg-8 mx-auto">
-        <div class="card shadow-sm">
-            <div class="card-header bg-danger text-white fw-semibold">
-                <i class="bi bi-exclamation-triangle-fill"></i>
-                ¿Estás seguro de que deseas retirar a esta persona?
+<div class="container mt-4 mb-5">
+    <div class="row">
+        <div class="col-lg-10 mx-auto">
+            <div class="d-flex align-items-center justify-content-between mb-4">
+                <div>
+                    <h2 class="text-danger fw-bold mb-0">Confirmar Retiro</h2>
+                    <p class="text-muted mb-0">Proceso de desvinculación de colaborador</p>
+                </div>
+                <a asp-action="Index" class="btn btn-outline-secondary btn-sm">
+                    <i class="bi bi-arrow-left me-1"></i> Volver
+                </a>
             </div>
-            
-            <div class="card-body">
-                <!-- Información resumida del colaborador -->
-                <div class="alert alert-warning">
-                    <div class="d-flex align-items-center gap-3">
+
+            <div class="card border-0 shadow-sm" style="border-radius: 16px; overflow: hidden;">
+                <div class="bg-danger text-white p-3 d-flex align-items-center gap-3">
+                    <i class="bi bi-exclamation-triangle-fill fs-4"></i>
+                    <span class="fw-medium">¿Está seguro de que desea retirar a este colaborador del sistema?</span>
+                </div>
+
+                <div class="card-body p-4">
+                    <div class="d-flex align-items-center gap-4 mb-5 p-4 bg-light rounded-4">
+                        <div class="emp-avatar bg-white text-danger border border-danger-subtle shadow-sm"
+                             style="width:70px; height:70px; font-size:24px;">
+                            @initials
+                        </div>
                         <div>
-                            <strong>@Model.Nombre</strong><br>
-                            <span class="text-muted">@Model.CC</span>
-                        </div>
-                        <div class="ms-auto text-end">
-                            <span class="badge bg-secondary">@Model.Cargo</span><br>
-                            <small class="text-muted">@Model.CiudadTrabajo</small>
+                            <h4 class="mb-1 fw-bold text-dark">@Model.NombreColaborador</h4>
+                            <div class="text-muted">
+                                <i class="bi bi-briefcase me-1"></i> @Model.Cargo
+                                <span class="mx-2">|</span>
+                                <i class="bi bi-building me-1"></i> @Model.Area
+                            </div>
                         </div>
                     </div>
-                </div>
 
-                <!-- Detalles completos en tarjetas (similar al Index) -->
-                <div class="row g-3">
-                    <!-- Identificación -->
-                    <div class="col-12">
-                        <div class="card border-0">
-                            <div class="card-header text-white fw-semibold" style="background:#343a40">
-                                🪪 Identificación
-                            </div>
-                            <div class="card-body bg-light">
-                                <div class="row row-cols-2 row-cols-md-4 g-2 small">
-                                    <div class="col">
-                                        <span class="text-muted">Cédula:</span><br>
-                                        <strong>@Model.CC</strong>
-                                    </div>
-                                    <div class="col">
-                                        <span class="text-muted">Expedida en:</span><br>
-                                        @Model.ExpediciónCiudad
-                                    </div>
-                                    <div class="col">
-                                        <span class="text-muted">Ciudad Trabajo:</span><br>
-                                        @Model.CiudadTrabajo
-                                    </div>
-                                    <div class="col">
-                                        <span class="text-muted">RH:</span><br>
-                                        @Model.Rh
-                                    </div>
+                    <div class="detail-section">
+                        <div class="detail-section-title">Información de Identificación</div>
+                        <div class="detail-grid">
+                            @field("Cédula de Ciudadanía", Model.CC.ToString())
+                            @field("Ciudad de Nacimiento", Model.CiudadNacimiento)
+                            @field("Ciudad de Trabajo", Model.CiudadTrabajo)
+                            @field("Género", Model.Genero)
+                        </div>
+                    </div>
+
+                    <div class="detail-section">
+                        <div class="detail-section-title text-primary">Detalles Contractuales</div>
+                        <div class="detail-grid">
+                            @field("Fecha de Ingreso", Model.FechaIngreso?.ToString("dd/MM/yyyy"))
+                            @field("Antigüedad a la fecha", antiguedadReal)
+                            @field("Tipo de Contrato", Model.TipoContrato)
+                            @field("Gerencia", Model.Gerencia)
+                            @field("Centro de Costos", Model.NombreCentroCostos)
+                            @field("Código CECO", Model.CodCeco?.ToString())
+                        </div>
+                    </div>
+
+                    <div class="row g-4">
+                        <div class="col-md-6">
+                            <div class="detail-section h-100 mb-0">
+                                <div class="detail-section-title text-success">Seguridad Social</div>
+                                <div class="bg-light p-3 rounded-3 border-start border-success border-4">
+                                    @field("EPS", Model.Eps)
+                                    @field("Fondo de Pensiones", Model.FondoPensiones)
+                                    @field("ARL", Model.Arl)
                                 </div>
                             </div>
                         </div>
-                    </div>
-
-                    <!-- Información Laboral -->
-                    <div class="col-12">
-                        <div class="card border-0">
-                            <div class="card-header text-white fw-semibold" style="background:#0d6efd">
-                                💼 Información Laboral
-                            </div>
-                            <div class="card-body" style="background:#eef3ff">
-                                <div class="row g-2 small">
-                                    <div class="col-md-6">
-                                        <span class="text-muted">Nombre:</span><br>
-                                        <strong>@Model.Nombre</strong>
-                                    </div>
-                                    <div class="col-md-6">
-                                        <span class="text-muted">Cargo:</span><br>
-                                        @Model.Cargo
-                                    </div>
-                                    <div class="col-md-6">
-                                        <span class="text-muted">Tipo Contrato:</span><br>
-                                        @Model.TipoContrato
-                                    </div>
-                                    <div class="col-md-6">
-                                        <span class="text-muted">Barrio:</span><br>
-                                        @Model.Barrio
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Contacto de Emergencia -->
-                    <div class="col-md-6">
-                        <div class="card border-0 h-100">
-                            <div class="card-header text-white fw-semibold" style="background:#198754">
-                                📞 Contacto de Emergencia
-                            </div>
-                            <div class="card-body" style="background:#edfaf3">
-                                <div class="small">
-                                    <div><span class="text-muted">Nombre:</span> @Model.ContactoEmergencia</div>
-                                    <div><span class="text-muted">Parentesco:</span> @Model.Parentesco</div>
-                                    <div><span class="text-muted">Celular:</span> @Model.CelularEmergencia</div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Seguridad Social -->
-                    <div class="col-md-6">
-                        <div class="card border-0 h-100">
-                            <div class="card-header text-white fw-semibold" style="background:#dc3545">
-                                🏥 Seguridad Social
-                            </div>
-                            <div class="card-body" style="background:#fff0f0">
-                                <div class="small">
-                                    <div><span class="text-muted">EPS:</span> @Model.Eps</div>
-                                    <div><span class="text-muted">Pensiones:</span> @Model.FondoPensiones</div>
-                                    <div><span class="text-muted">Cesantías:</span> @Model.FondoCesantias</div>
-                                    <div><span class="text-muted">Caja de Compensación:</span> @Model.CajaCompensación</div>
-                                    <div><span class="text-muted">ARL:</span> @Model.Arl</div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Datos Bancarios -->
-                    <div class="col-12">
-                        <div class="card border-0">
-                            <div class="card-header text-white fw-semibold" style="background:#6f42c1">
-                                🏦 Datos Bancarios
-                            </div>
-                            <div class="card-body" style="background:#f3eeff">
-                                <div class="row g-2 small">
-                                    <div class="col-md-4">
-                                        <span class="text-muted">Banco:</span><br>
-                                        @Model.Banco
-                                    </div>
-                                    <div class="col-md-4">
-                                        <span class="text-muted">Tipo Cuenta:</span><br>
-                                        @Model.Tpcuenta
-                                    </div>
-                                    <div class="col-md-4">
-                                        <span class="text-muted">Número Cuenta:</span><br>
-                                        @Model.NoCuenta
-                                    </div>
+                        <div class="col-md-6">
+                            <div class="detail-section h-100 mb-0">
+                                <div class="detail-section-title text-info">Contacto</div>
+                                <div class="bg-light p-3 rounded-3 border-start border-info border-4">
+                                    @field("Correo Personal", Model.CorreoPersonal)
+                                    @field("Teléfono / Celular", Model.Contacto)
+                                    @field("Dirección", Model.DireccionResidencia)
                                 </div>
                             </div>
                         </div>
                     </div>
                 </div>
-            </div>
 
-            <!-- Formulario de Confirmación -->
-            <div class="card-footer bg-light">
-                <form asp-action="Delete" method="post" class="mb-0">
-                    @Html.AntiForgeryToken()
-                    <input type="hidden" name="id" value="@Model.CC" />
+                <div class="card-footer bg-white p-4 border-top">
+                    <form asp-action="Delete" method="post">
+                        @Html.AntiForgeryToken()
+                        <input type="hidden" name="id" value="@Model.CC" />
 
-                    <div class="mb-3">
-                        <label class="form-label fw-bold text-danger">Motivo de retiro <span class="text-danger">*</span></label>
-                        <select name="motivoRetiro" class="form-select" required>
-                            <option value="">-- Seleccione el motivo --</option>
-                            <option value="Renuncia voluntaria">Renuncia voluntaria</option>
-                            <option value="Terminación de contrato">Terminación de contrato</option>
-                            <option value="Jubilación">Jubilación</option>
-                            <option value="Otro">Otro</option>
-                        </select>
-                    </div>
-
-                    <div class="d-flex gap-2 justify-content-end">
-                        <a asp-action="Index" class="btn btn-secondary">Cancelar</a>
-                        <button type="submit" class="btn btn-danger">
-                            <i class="bi bi-trash3"></i> Confirmar Retiro
-                        </button>
-                    </div>
-                </form>
+                        <div class="row align-items-end g-3 bg-danger-subtle p-4 rounded-4 border border-danger-subtle">
+                            <div class="col-md-8">
+                                <label class="form-label fw-bold text-danger">Motivo oficial del retiro</label>
+                                <select name="motivoRetiro" class="form-select form-select-lg border-danger shadow-sm" required>
+                                    <option value="">-- Seleccione una opción --</option>
+                                    <option value="Renuncia voluntaria">Renuncia voluntaria</option>
+                                    <option value="Terminación de contrato">Terminación de contrato</option>
+                                    <option value="Jubilación">Jubilación</option>
+                                    <option value="Despido con justa causa">Despido con justa causa</option>
+                                    <option value="Otro">Otro</option>
+                                </select>
+                            </div>
+                            <div class="col-md-4">
+                                <button type="submit" class="btn btn-danger btn-lg w-100 shadow-sm">
+                                    <i class="bi bi-person-x-fill me-2"></i>Finalizar Contrato
+                                </button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
             </div>
         </div>
     </div>
 </div>
+
+@functions {
+    IHtmlContent field(string label, string val)
+    {
+        if (string.IsNullOrEmpty(val)) return Html.Raw("");
+        return Html.Raw($@"
+            <div class='mb-3'>
+                <div class='detail-field-label fw-bold text-muted' style='font-size:0.75rem; text-transform:uppercase;'>{label}</div>
+                <div class='detail-field-val fw-medium' style='font-size:0.95rem; color:#222;'>{val}</div>
+            </div>");
+    }
+}
