@@ -7,50 +7,28 @@ namespace Farmacol.Models;
 public partial class Tbsolicitude
 {
     public int IdSolicitud { get; set; }
-
     public int CC { get; set; }
-
     public string? Nombre { get; set; }
-
     public string? Cargo { get; set; }
-
     public string TipoSolicitud { get; set; } = null!;
-
     public TimeSpan? HoraInicio { get; set; }
-
     public TimeSpan? HoraFin { get; set; }
-
     public decimal? TotalHoras { get; set; }
     public DateOnly? FechaInicio { get; set; }
-
     public DateOnly? FechaFin { get; set; }
-
     public string? JefeInmediato { get; set; }
-
     public string? CargoJinmediato { get; set; }
-
     public string? Motivo { get; set; }
-
     public DateOnly? FechaSolicitud { get; set; }
-
     public string? AprobJinmediato { get; set; }
-
     public string? AprobCh { get; set; }
-
     public string? Observaciones { get; set; }
-
     public string? Anexos { get; set; }
-
     public string? Estado { get; set; }
-
     public decimal? TotalDias { get; set; }
-
     public string? SubtipoPermiso { get; set; }
-
     public string? EtapaAprobacion { get; set; }
-
     public string? ObservacionJefe { get; set; }
-
     public string? ObservacionRRHH { get; set; }
     public string? Paso1Aprobador { get; set; }
     public string? Paso1Estado { get; set; }

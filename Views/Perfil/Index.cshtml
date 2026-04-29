@@ -1,94 +1,124 @@
-﻿@model Farmacol.Models.PerfilViewModel
+﻿@using Microsoft.AspNetCore.Html
+@model Farmacol.Models.PerfilViewModel
 @{
     ViewData["Title"] = "Mi Perfil";
+    
+    // Iniciales para el avatar en caso de que no haya foto
+    var initials = string.Join("", (Model.Personal.NombreColaborador ?? "?").Split(' ')
+                        .Take(2).Select(w => w.Length > 0 ? w[0].ToString() : ""));
 }
 
-<div class="row justify-content-center">
-    <div class="col-lg-8">
-        <div class="card shadow-sm">
-            <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
-                <h4 class="mb-0">👤 Mi Perfil</h4>
-                <a asp-action="Vacaciones" class="btn btn-light btn-sm">📅 Ver mis vacaciones completas</a>
-            </div>
-            <div class="card-body">
-
-                <!-- Foto de Perfil -->
-                <div class="text-center mb-4">
+<div class="container mt-4 mb-5">
+    <div class="row">
+        <div class="col-lg-4 mb-4">
+            <div class="card border-0 shadow-sm text-center p-4" style="border-radius: 20px;">
+                <div class="position-relative d-inline-block mx-auto mb-3">
                     @if (!string.IsNullOrEmpty(Model.FotoPerfil))
                     {
                         <img src="@Model.FotoPerfil" alt="Foto de perfil"
-                             class="rounded-circle border border-3 border-primary"
-                             style="width:180px;height:180px;object-fit:cover;" />
+                             class="rounded-circle border border-4 border-white shadow-sm"
+                             style="width:160px; height:160px; object-fit:cover;" />
                     }
                     else
                     {
-                        <div class="rounded-circle bg-light d-flex align-items-center justify-content-center mx-auto border border-3 border-primary"
-                             style="width:180px;height:180px;">
-                            <span class="display-1 text-muted">👤</span>
+                        <div class="rounded-circle bg-primary-subtle text-primary d-flex align-items-center justify-content-center border border-4 border-white shadow-sm mx-auto"
+                             style="width:160px; height:160px; font-size: 64px; font-weight: bold;">
+                            @initials
                         </div>
                     }
                 </div>
 
-                <!-- Subir Foto -->
+                <h4 class="fw-bold mb-1">@Model.Personal.NombreColaborador</h4>
+                <p class="text-muted mb-4">@Model.Personal.Cargo</p>
+
                 <form asp-action="SubirFoto" method="post" enctype="multipart/form-data" class="mb-4">
                     @Html.AntiForgeryToken()
-                    <div class="input-group">
-                        <input type="file" name="foto" class="form-control" accept="image/*" />
-                        <button type="submit" class="btn btn-primary">📸 Subir foto</button>
-                    </div>
-                    <small class="text-muted">JPG, PNG o GIF (máx. 5 MB)</small>
+                    <label class="btn btn-outline-primary btn-sm w-100 mb-2">
+                        <i class="bi bi-camera me-2"></i> Cambiar Foto
+                        <input type="file" name="foto" hidden accept="image/*" onchange="this.form.submit()" />
+                    </label>
+                    <div style="font-size: 10px;" class="text-muted text-uppercase">JPG o PNG (máx. 5 MB)</div>
                 </form>
 
-                <!-- Subir Firma -->
-                <div class="mt-4">
-                    <h5>Firma Corporativa</h5>
-                    @if (!string.IsNullOrEmpty(Model.Personal.FirmaPath))
-                    {
-                        <img src="@Model.Personal.FirmaPath" alt="Firma"
-                             class="img-fluid border p-2 mb-2" style="max-height: 140px;" />
-                    }
-                    else
-                    {
-                        <p class="text-muted">No has subido tu firma aún.</p>
-                    }
+                <hr class="my-4">
 
+                <div class="text-start">
+                    <h6 class="fw-bold mb-3"><i class="bi bi-pen me-2"></i>Firma Digital</h6>
+                    <div class="bg-light rounded-3 p-3 text-center mb-3 border border-dashed">
+                        @if (!string.IsNullOrEmpty(Model.Personal.FirmaPath))
+                        {
+                            <img src="@Model.Personal.FirmaPath" alt="Firma"
+                                 class="img-fluid" style="max-height: 80px;" />
+                        }
+                        else
+                        {
+                            <small class="text-muted d-block py-3">No has subido tu firma aún.</small>
+                        }
+                    </div>
+                    
                     <form asp-action="SubirFirma" method="post" enctype="multipart/form-data">
                         @Html.AntiForgeryToken()
-                        <div class="input-group">
+                        <div class="input-group input-group-sm">
                             <input type="file" name="firma" class="form-control" accept=".png,.jpg,.jpeg" />
-                            <button type="submit" class="btn btn-outline-primary">Subir Firma</button>
+                            <button type="submit" class="btn btn-secondary">Subir</button>
                         </div>
-                        <small class="text-muted">PNG o JPG (recomendado con fondo transparente)</small>
                     </form>
                 </div>
+            </div>
+        </div>
 
-                <hr>
-
-                <!-- Información del colaborador -->
-                <h5 class="text-primary">Información del colaborador</h5>
-                <div class="row g-3">
-                    <div class="col-md-6"><strong>Nombre:</strong> @Model.Personal.NombreColaborador</div>
-                    <div class="col-md-6"><strong>CC:</strong> @Model.Personal.CC</div>
-                    <div class="col-md-6"><strong>Cargo:</strong> @Model.Personal.Cargo</div>
-                    <div class="col-md-6"><strong>Área:</strong> @Model.Personal.Area</div>
-                    <div class="col-md-6"><strong>Fecha de ingreso:</strong> @Model.Personal.FechaIngreso?.ToString("dd/MM/yyyy")</div>
-                    <div class="col-md-6"><strong>Correo corporativo:</strong> @Model.Personal.CorreoCorporativo</div>
+        <div class="col-lg-8">
+            <div class="card border-0 shadow-sm mb-4" style="border-radius: 20px;">
+                <div class="card-body p-4">
+                    <div class="detail-section">
+                        <div class="detail-section-title text-primary">Información Laboral</div>
+                        <div class="detail-grid">
+                            @field("Identificación", Model.Personal.CC.ToString())
+                            @field("Área", Model.Personal.Area)
+                            @field("Correo Institucional", Model.Personal.CorreoCorporativo)
+                            @field("Fecha de Vinculación", Model.Personal.FechaIngreso?.ToString("dd MMM yyyy"))
+                        </div>
+                    </div>
                 </div>
+            </div>
 
-                <hr>
-
-                <!-- Vacaciones -->
-                <div class="card border-success mb-3">
-                    <div class="card-body text-center">
-                        <h5 class="text-success">📅 Días de vacaciones disponibles</h5>
-                        <div class="display-3 fw-bold text-success mb-2">@Model.Vacaciones.DiasDisponibles</div>
-                        <p class="text-muted">@Model.Vacaciones.Mensaje</p>
-                        <small>
-                            Acumulados: @Model.Vacaciones.DiasAcumulados |
-                            Disfrutados: @Model.Vacaciones.DiasDisfrutados
-                        </small>
-                        <div class="mt-3">
-                            <a asp-controller="Tbsolicitudes" asp-action="Create" class="btn btn-success">Solicitar vacaciones ahora</a>
+            <div class="card border-0 shadow-sm overflow-hidden" style="border-radius: 20px;">
+                <div class="bg-success p-3 text-white">
+                    <h5 class="mb-0"><i class="bi bi-calendar-check me-2"></i>Gestión de Vacaciones</h5>
+                </div>
+                <div class="card-body p-4">
+                    <div class="row align-items-center">
+                        <div class="col-md-5 text-center border-end">
+                            <div class="display-2 fw-bold text-success mb-0">@Model.Vacaciones.DiasDisponibles</div>
+                            <div class="text-uppercase fw-bold text-muted small">Días Disponibles</div>
+                        </div>
+                        <div class="col-md-7 ps-md-4">
+                            <div class="mb-3 mt-3 mt-md-0">
+                                <div class="d-flex justify-content-between mb-1">
+                                    <span class="text-muted small">Días Acumulados</span>
+                                    <span class="fw-bold small">@Model.Vacaciones.DiasAcumulados</span>
+                                </div>
+                                <div class="progress" style="height: 6px;">
+                                    <div class="progress-bar bg-success" style="width: 100%"></div>
+                                </div>
+                            </div>
+                            <div class="mb-4">
+                                <div class="d-flex justify-content-between mb-1">
+                                    <span class="text-muted small">Días Disfrutados</span>
+                                    <span class="fw-bold small text-danger">@Model.Vacaciones.DiasDisfrutados</span>
+                                </div>
+                                @{
+                                    var total = Model.Vacaciones.DiasAcumulados > 0 ? Model.Vacaciones.DiasAcumulados : 1;
+                                    var porc = (Model.Vacaciones.DiasDisfrutados * 100) / total;
+                                }
+                                <div class="progress" style="height: 6px;">
+                                    <div class="progress-bar bg-danger" style="width: @porc%"></div>
+                                </div>
+                            </div>
+                            <p class="small text-muted mb-4"><i class="bi bi-info-circle me-1"></i> @Model.Vacaciones.Mensaje</p>
+                            <a asp-controller="Tbsolicitudes" asp-action="Create" class="btn btn-success w-100 shadow-sm py-2">
+                                <i class="bi bi-send me-2"></i>Solicitar Vacaciones Ahora
+                            </a>
                         </div>
                     </div>
                 </div>
@@ -96,3 +126,14 @@
         </div>
     </div>
 </div>
+
+@functions {
+    IHtmlContent field(string label, string val)
+    {
+        return Html.Raw($@"
+            <div class='mb-3'>
+                <div class='detail-field-label fw-bold text-muted' style='font-size:0.7rem; text-transform:uppercase; letter-spacing:0.5px;'>{label}</div>
+                <div class='detail-field-val fw-medium' style='font-size:0.95rem; color:#333;'>{(string.IsNullOrEmpty(val) ? "No registrado" : val)}</div>
+            </div>");
+    }
+}

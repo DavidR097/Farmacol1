@@ -4,6 +4,7 @@ using Farmacol.Models;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace Farmacol.Migrations
 {
     [DbContext(typeof(Farmacol1Context))]
-    partial class Farmacol1ContextModelSnapshot : ModelSnapshot
+    [Migration("20260429105544_FixEquipos")]
+    partial class FixEquipos
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -529,12 +532,6 @@ namespace Farmacol.Migrations
                     b.Property<DateOnly?>("Fecha")
                         .HasColumnType("date");
 
-                    b.Property<DateTime?>("FechaAprobacionCH")
-                        .HasColumnType("datetime2");
-
-                    b.Property<DateTime?>("FechaAprobacionGerencia")
-                        .HasColumnType("datetime2");
-
                     b.Property<DateOnly?>("FechaRegistro")
                         .HasColumnType("date");
 
@@ -554,12 +551,6 @@ namespace Farmacol.Migrations
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("Solicitante")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("SolicitanteCorreo")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("SolicitanteUsuario")
                         .HasColumnType("nvarchar(max)");
 
                     b.HasKey("Id");

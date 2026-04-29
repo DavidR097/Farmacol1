@@ -1,0 +1,204 @@
+﻿@using Microsoft.AspNetCore.Html
+@model Farmacol.Models.TbSalidaEquipos
+
+@{
+    ViewData["Title"] = "Nueva Salida de Equipos";
+}
+
+<div class="container mt-4 mb-5">
+    <div class="row">
+        <div class="col-lg-10 mx-auto">
+            <div class="d-flex align-items-center justify-content-between mb-4">
+                <div>
+                    <h2 class="text-primary fw-bold mb-0">📦 Nueva Salida de Equipos</h2>
+                    <p class="text-muted">Registro y control de movimientos de activos corporativos.</p>
+                </div>
+                <a asp-action="Index" class="btn btn-outline-secondary btn-sm">
+                    <i class="bi bi-arrow-left"></i> Volver al listado
+                </a>
+            </div>
+
+            @* FIX: Mostrar errores de validación si existen *@
+            @if (TempData["ErrorValidacion"] != null)
+            {
+                <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                    <strong>⚠️ Error al guardar:</strong> @TempData["ErrorValidacion"]
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+            }
+
+            @if (TempData["Error"] != null)
+            {
+                <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                    @TempData["Error"]
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+            }
+
+            <div class="card border-0 shadow-sm" style="border-radius: 20px; overflow: hidden;">
+                <div class="card-body p-4 p-md-5">
+                    <form asp-action="Create" method="post">
+                        @Html.AntiForgeryToken()
+
+                        <div class="detail-section">
+                            <div class="detail-section-title text-primary">Información de Control</div>
+                            <div class="row g-3">
+                                <div class="col-md-4">
+                                    <label class="detail-field-label">ID Salida (Automático)</label>
+                                    <input type="text" class="form-control bg-light border-0 fw-bold" value="RS-XXXX" readonly />
+                                </div>
+                                <div class="col-md-4">
+                                    <label asp-for="FechaRegistro" class="detail-field-label">Fecha de Registro</label>
+                                    <input asp-for="FechaRegistro" class="form-control bg-light border-0" readonly />
+                                </div>
+                                <div class="col-md-4">
+                                    <label asp-for="Solicitante" class="detail-field-label">Solicitante</label>
+                                    <input asp-for="Solicitante" class="form-control bg-light border-0 fw-medium" readonly />
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="detail-section">
+                            <div class="detail-section-title text-success">Datos del Elemento</div>
+                            <div class="row g-3">
+                                <div class="col-md-6">
+                                    <label asp-for="Elemento" class="detail-field-label">Elemento / Equipo</label>
+                                    <input asp-for="Elemento" class="form-control" placeholder="Ej: Portátil HP" required />
+                                    <span asp-validation-for="Elemento" class="text-danger small"></span>
+                                </div>
+                                <div class="col-md-2">
+                                    <label asp-for="Cantidad" class="detail-field-label">Cantidad</label>
+                                    <input asp-for="Cantidad" class="form-control" type="number" value="1" min="1" />
+                                </div>
+                                <div class="col-md-4">
+                                    <label asp-for="CódigoSerie" class="detail-field-label">Código o Serie (Escriba o use NA)</label>
+                                    <input asp-for="CódigoSerie" class="form-control" placeholder="Escriba N/A si no aplica" />
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="detail-section">
+                            <div class="detail-section-title text-warning">Motivo</div>
+                            <div class="row g-3">
+                                <div class="col-md-6">
+                                    <label asp-for="MotivoSalida" class="detail-field-label">Motivo de Salida</label>
+
+                                    @*
+                                        FIX: El select tiene asp-for="MotivoSalida" y name="MotivoSalida".
+                                        Cuando se elige "Otro", el JS le quita el name al select y se lo da
+                                        al input de texto, así solo uno de los dos envía el valor al modelo.
+                                    *@
+                                    <select asp-for="MotivoSalida" class="form-select" id="selectMotivo" required>
+                                        <option value="">Seleccione...</option>
+                                        <option value="Actualización o Mejora de Hardware">Actualización o Mejora de Hardware</option>
+                                        <option value="Calibración">Calibración</option>
+                                        <option value="Desinstalación programada">Desinstalación Programada</option>
+                                        <option value="Evaluación o diagnóstico técnico">Evaluación o Diagnóstico Técnico</option>
+                                        <option value="Limpieza o desinfección especializada">Limpieza o Desinfección Especializada</option>
+                                        <option value="Mantenimiento correctivo">Mantenimiento Correctivo</option>
+                                        <option value="Mantenimiento preventivo">Mantenimiento Preventivo</option>
+                                        <option value="Material POP">Material POP</option>
+                                        <option value="Préstamo temporal a otra area">Préstamo Temporal a otra Area</option>
+                                        <option value="Pruebas de Calidad o Certificación">Pruebas de Calidad o Certificación</option>
+                                        <option value="Reemplazo por garantia">Reemplazo por Garantia</option>
+                                        <option value="Retiro por baja o desuso">Retiro por Baja o Desuso</option>
+                                        <option value="Revisión técnica externa">Revisión Técnica Externa</option>
+                                        <option value="Solicitud del area usuaria">Revisión del Area Usuaria</option>
+                                        <option value="Solicitud técnica proveedor">Soporte Técnico Proveedor</option>
+                                        <option value="Sustitución por nuevo equipo">Sustitución por Nuevo Equipo</option>
+                                        <option value="Trabajo en casa">Trabajo en Casa</option>
+                                        <option value="Validación o pruebas en sitio externo">Validación o Pruebas en Sitio Externo</option>
+                                        <option value="Otro">Otro (Especificar)</option>
+                                    </select>
+
+                                    @* FIX: Sin asp-for, sin name por defecto — el JS lo activa solo cuando se necesita *@
+                                    <input type="text"
+                                           id="otroMotivo"
+                                           class="form-control mt-2 d-none"
+                                           placeholder="¿Cuál es el otro motivo?" />
+
+                                    <span asp-validation-for="MotivoSalida" class="text-danger small"></span>
+                                </div>
+                                <div class="col-md-6">
+                                    <label asp-for="Destino" class="detail-field-label">Destino / Lugar de destino</label>
+                                    <input asp-for="Destino" class="form-control" placeholder="Ej: Bogotá/Medellín" />
+                                </div>
+                                <div class="col-md-6">
+                                    <label asp-for="FechaSalida" class="detail-field-label">Fecha Programada de Salida</label>
+                                    <input asp-for="FechaSalida" type="date" class="form-control" required />
+                                    <span asp-validation-for="FechaSalida" class="text-danger small"></span>
+                                </div>
+                                <div class="col-md-6">
+                                    <label asp-for="DebeRegresar" class="detail-field-label">¿Debe Regresar?</label>
+                                    <select asp-for="DebeRegresar" class="form-select" id="selectRegresa" required>
+                                        <option value="">Seleccione...</option>
+                                        <option value="Sí">Sí</option>
+                                        <option value="No">No / NA</option>
+                                    </select>
+                                    <div id="divFechaRegreso" class="mt-2 d-none">
+                                        <label class="detail-field-label text-primary">Fecha Estimada de Regreso</label>
+                                        <input asp-for="FechaRegreso" type="date" class="form-control border-primary" />
+                                    </div>
+                                </div>
+                                <div class="col-12">
+                                    <label asp-for="Observacion" class="detail-field-label">Observaciones Adicionales (Escriba o use NA)</label>
+                                    <textarea asp-for="Observacion" class="form-control" rows="2" placeholder="Observaciones o N/A"></textarea>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="mt-5 d-flex gap-3 justify-content-end">
+                            <a asp-action="Index" class="btn btn-light px-4 py-2 border">Cancelar</a>
+                            <button type="submit" class="btn btn-primary px-5 py-2 shadow-sm fw-bold">
+                                <i class="bi bi-save me-2"></i>Guardar Salida
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        // ── Mostrar / ocultar Fecha de Regreso ──────────────────────────────
+        document.getElementById('selectRegresa').addEventListener('change', function () {
+            const divFecha = document.getElementById('divFechaRegreso');
+            if (this.value === 'Sí') {
+                divFecha.classList.remove('d-none');
+            } else {
+                divFecha.classList.add('d-none');
+            }
+        });
+
+        // ── Lógica "Otro" motivo ────────────────────────────────────────────
+        // FIX: cuando el usuario elige "Otro":
+        //   1. Mostramos el input de texto
+        //   2. Le asignamos name="MotivoSalida" al input (para que se envíe al modelo)
+        //   3. Le quitamos el name al select (para que no pise el valor)
+        // Cuando elige cualquier otra opción se hace lo inverso.
+
+        const selectMotivo = document.getElementById('selectMotivo');
+        const otroInput    = document.getElementById('otroMotivo');
+
+        selectMotivo.addEventListener('change', function () {
+            if (this.value === 'Otro') {
+                // Activar input libre
+                otroInput.classList.remove('d-none');
+                otroInput.setAttribute('required', 'required');
+                otroInput.setAttribute('name', 'MotivoSalida');   // ← este enviará el valor
+                this.removeAttribute('name');                      // ← el select ya no envía nada
+                this.removeAttribute('required');
+            } else {
+                // Restaurar select normal
+                otroInput.classList.add('d-none');
+                otroInput.removeAttribute('required');
+                otroInput.removeAttribute('name');
+                otroInput.value = '';
+                this.setAttribute('name', 'MotivoSalida');         // ← el select vuelve a enviar
+                this.setAttribute('required', 'required');
+            }
+        });
+    </script>
+}

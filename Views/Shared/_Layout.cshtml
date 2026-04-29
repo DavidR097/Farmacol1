@@ -607,6 +607,8 @@
                             <span class="sb-icon">➕</span><span class="sb-text">Nueva</span>
                         </a>
                     }
+
+                    <!-- La creación de SalidaEquipos se moverá a la sección Equipos -->
                     <a class="sb-sub-item @(ctrl == "SolicitudRRHH" && action == "Create" ? "active" : "")"
                            asp-controller="SolicitudRRHH" asp-action="Create">
                         <span class="sb-icon">📄</span><span class="sb-text">Solicitud RRHH</span>
@@ -666,6 +668,33 @@
                            asp-controller="ExpedientesTI" asp-action="Index">
                         <span class="sb-icon">📁</span><span class="sb-text">Expedientes TI</span>
                     </a>
+                </div>
+            }
+
+            @* Nueva sección: Equipos (contiene creación y revisión de salidas) *@
+            @if (User.Identity?.IsAuthenticated == true)
+            {
+                <div class="sb-divider"></div>
+                <div class="sb-label">Equipos</div>
+                <div class="sb-item sb-toggle @(ctrl == "SalidaEquipos" ? "open" : "")" data-sub="sub-equipos">
+                    <span class="sb-icon">🔧</span>
+                    <span class="sb-text">Control Equipos <span class="sb-arrow">▶</span></span>
+                </div>
+                <div class="sb-sub @(ctrl == "SalidaEquipos" ? "open" : "")" id="sub-equipos">
+                    @* Create: disponible para usuarios autenticados *@
+                    <a class="sb-sub-item @(ctrl == "SalidaEquipos" && action == "Create" ? "active" : "")"
+                           asp-controller="SalidaEquipos" asp-action="Create">
+                        <span class="sb-icon">➕</span><span class="sb-text">Nueva salida</span>
+                    </a>
+
+                    @* Revisar: solo visible para Gerentes y RRHH/CH *@
+                    @if (User.IsInRole("Gerente") || User.IsInRole("Jefe") || User.IsInRole("RRHH") || User.IsInRole("Administrador") || User.IsInRole("Gerente Capital Humano"))
+                    {
+                        <a class="sb-sub-item @(ctrl == "SalidaEquipos" && action == "Index" ? "active" : "")"
+                               asp-controller="SalidaEquipos" asp-action="Index">
+                            <span class="sb-icon">📋</span><span class="sb-text">Revisar salidas</span>
+                        </a>
+                    }
                 </div>
             }
 
