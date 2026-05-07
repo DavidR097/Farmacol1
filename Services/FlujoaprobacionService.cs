@@ -30,14 +30,12 @@ public class FlujoAprobacionService
         string.Equals(area, "RRHH", StringComparison.OrdinalIgnoreCase);
 
     // ── DeterminarNivel ───────────────────────────────────────────────────
-    // ── DeterminarNivel ───────────────────────────────────────────────────
     public string DeterminarNivel(string? cargo)
     {
         if (string.IsNullOrWhiteSpace(cargo)) return "Usuario";
 
         var c = cargo.Trim();
 
-        // === NUEVOS NIVELES ESPECÍFICOS (más tolerantes) ===
         var cLower = c.ToLowerInvariant();
 
         if (cLower.Contains("técnico ti") || cLower.Contains("tecnico ti"))
@@ -47,7 +45,6 @@ public class FlujoAprobacionService
             cLower.Contains("asistente administrativo de recursos humanos"))
             return "Asistente Administrativo RRHH";
 
-        // === Mantener lógica existente ===
         if (string.Equals(c, CARGO_GERENTE_CH, StringComparison.OrdinalIgnoreCase))
             return "RRHH";
         if (string.Equals(c, CARGO_COORD_CH, StringComparison.OrdinalIgnoreCase))
@@ -67,9 +64,7 @@ public class FlujoAprobacionService
         return "Usuario";
     }
 
-    // ── Verificar aprobador disponible (con query a BD) ───────────────────
-
-    // Para cargos genéricos (Jefe X, Gerente X)
+    // ── Verificar aprobador disponible ───────────────────────────────────
     private async Task<bool> AprobadorDisponible(string cargo, string area)
     {
         var partes = cargo.Trim().Split(' ', 2);
@@ -86,9 +81,6 @@ public class FlujoAprobacionService
         return !await _delegacion.EstaInhabilitado(cargo, areaEsperada);
     }
 
-    // Para cargos exactos de Capital Humano
-    // CRÍTICO: usa .ToLower() == en lugar de string.Equals(..., OrdinalIgnoreCase)
-    // porque EF Core no puede traducir string.Equals con StringComparison a SQL
     private async Task<bool> AprobadorExactoDisponible(string cargoExacto)
     {
         var cargoLower = cargoExacto.ToLower();
@@ -99,7 +91,6 @@ public class FlujoAprobacionService
     }
 
     // ── ObtenerAprobadoresConFallback ─────────────────────────────────────
-    // ── ObtenerAprobadoresConFallback ─────────────────────────────────────
     public async Task<List<(string Cargo, string Area, bool EsFallback)>>
         ObtenerAprobadoresConFallback(Tbpersonal solicitante, string nivelSolicitante)
     {
@@ -107,16 +98,14 @@ public class FlujoAprobacionService
 
         switch (nivelSolicitante)
         {
-            // ── Técnico TI y Asistente Administrativo RRHH ─────────────────────
             case "Técnico TI":
             case "Asistente Administrativo RRHH":
                 {
                     pasos.Add(("Capital Humano", "Capital Humano", false));
-                    pasos.Add((CARGO_GERENTE_CH, "Capital Humano", false)); // Forzado siempre
+                    pasos.Add((CARGO_GERENTE_CH, "Capital Humano", false));
                     break;
                 }
 
-            // ── Asistente Capital Humano: Coordinador CH → Gerente CH ──────
             case "Asistente Capital Humano":
                 {
                     bool coordDisp = await AprobadorExactoDisponible(CARGO_COORD_CH);
@@ -131,7 +120,6 @@ public class FlujoAprobacionService
                     break;
                 }
 
-            // ── Coordinador Capital Humano: Asistente CH → Gerente CH ──────
             case "Coordinador Capital Humano":
                 {
                     bool asistDisp = await AprobadorExactoDisponible(CARGO_ASISTENTE_CH);
@@ -146,24 +134,20 @@ public class FlujoAprobacionService
                     break;
                 }
 
-            // ── Gerente Capital Humano (RRHH): solo Gerente General ────────
             case "RRHH":
                 pasos.Add(("Gerente General", "Gerencia General", false));
                 break;
 
-            // ── Gerente de área: Capital Humano → Gerente General ──────────
             case "Gerente":
                 pasos.Add(("Capital Humano", "Capital Humano", false));
                 pasos.Add(("Gerente General", "Gerencia General", false));
                 break;
 
-            // ── Gerente General: Capital Humano → Directivo ────────────────
             case "Gerente General":
                 pasos.Add(("Capital Humano", "Capital Humano", false));
                 pasos.Add(("Directivo", "Directivo", false));
                 break;
 
-            // ── Jefe: Capital Humano → Gerente del área ────────────────────
             case "Jefe":
                 {
                     pasos.Add(("Capital Humano", "Capital Humano", false));
@@ -176,7 +160,6 @@ public class FlujoAprobacionService
                     break;
                 }
 
-            // ── Coordinador/Asistente/Usuario de otras áreas ───────────────
             case "Coordinador":
             case "Asistente":
             case "Usuario":
@@ -198,7 +181,6 @@ public class FlujoAprobacionService
                 }
         }
 
-        // Eliminar duplicados consecutivos
         var resultado = new List<(string Cargo, string Area, bool EsFallback)>();
         foreach (var p in pasos)
             if (!resultado.Any() || resultado.Last().Cargo != p.Cargo)
@@ -207,10 +189,28 @@ public class FlujoAprobacionService
         return resultado;
     }
 
-    // ── InicializarFlujo ──────────────────────────────────────────────────
+    // ── InicializarFlujo (con parámetro esSST) ────────────────────────────
     public async Task<Tbsolicitude> InicializarFlujo(
-        Tbsolicitude solicitud, Tbpersonal solicitante)
+        Tbsolicitude solicitud, Tbpersonal solicitante, bool esSST = false)
     {
+        // ========== FLUJO ESPECIAL PARA SST ==========
+        if (esSST)
+        {
+            solicitud.NivelSolicitante = "SST";
+            solicitud.TotalPasos = 2;
+            solicitud.PasoActual = 1;
+            solicitud.Estado = "En proceso";
+            solicitud.Paso1Aprobador = "Capital Humano";
+            solicitud.Paso1Estado = "Pendiente";
+            solicitud.Paso2Aprobador = CARGO_GERENTE_CH;
+            solicitud.Paso2Estado = "Esperando";
+            solicitud.Paso3Aprobador = null;
+            solicitud.Paso3Estado = null;
+            solicitud.EtapaAprobacion = "Pendiente: Capital Humano";
+            return solicitud;
+        }
+
+        // ========== FLUJO NORMAL (por nivel detectado) ==========
         var nivel = DeterminarNivel(solicitante.Cargo ?? "");
         var pasos = await ObtenerAprobadoresConFallback(solicitante, nivel);
 
@@ -266,7 +266,6 @@ public class FlujoAprobacionService
                                : paso + 1 == 3 ? solicitud.Paso3Aprobador
                                : null;
 
-            // Verificar si el siguiente aprobador está inhabilitado en este momento
             if (siguienteCargo != null
                 && siguienteCargo != "Gerente General"
                 && siguienteCargo != "Capital Humano"
@@ -372,7 +371,7 @@ public class FlujoAprobacionService
 
         if (string.IsNullOrEmpty(cargo)) return false;
 
-        // Cargos exactos Capital Humano — comparación en memoria, seguro
+        // Cargos exactos Capital Humano
         if (string.Equals(cargo, CARGO_COORD_CH, StringComparison.OrdinalIgnoreCase))
             return string.Equals(cargoUsuario, CARGO_COORD_CH, StringComparison.OrdinalIgnoreCase);
 
@@ -397,8 +396,7 @@ public class FlujoAprobacionService
             return cargoUsuario.StartsWith("Directivo", StringComparison.OrdinalIgnoreCase);
 
         if (cargo == "Gerente General")
-            return string.Equals(cargoUsuario, "Gerente General",
-                                 StringComparison.OrdinalIgnoreCase);
+            return string.Equals(cargoUsuario, "Gerente General", StringComparison.OrdinalIgnoreCase);
 
         var partes = cargo.Trim().Split(' ', 2);
         var nivelEsperado = partes[0];
@@ -411,7 +409,6 @@ public class FlujoAprobacionService
     }
 
     // ── Helpers privados ──────────────────────────────────────────────────
-
     private async Task<string> ObtenerAreaSolicitante(Tbsolicitude solicitud)
     {
         var personal = await _context.Tbpersonals
@@ -427,7 +424,6 @@ public class FlujoAprobacionService
 
     private async Task<Tbpersonal?> BuscarPersonalPorCargo(string cargo, string area)
     {
-        // Cargos exactos de CH — usa .ToLower() == para compatibilidad con EF Core
         var cargoLower = cargo.ToLower();
         if (cargoLower == CARGO_ASISTENTE_CH.ToLower() ||
             cargoLower == CARGO_COORD_CH.ToLower() ||

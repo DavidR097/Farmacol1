@@ -1,0 +1,12 @@
+@{
+    ViewData["Title"] = "Error base de datos";
+}
+
+<div class="container mt-4">
+    <div class="alert alert-danger">
+        <h5>Error de acceso a datos</h5>
+        <p>@ViewBag.DbError</p>
+        <p>Verifica que la tabla <strong>TbSolicitudTerceros</strong> exista en la base de datos y que las migraciones estén aplicadas.</p>
+    </div>
+    <a asp-action="Index" class="btn btn-secondary">Volver</a>
+</div>

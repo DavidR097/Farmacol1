@@ -50,7 +50,7 @@ builder.Services.AddAuthorization(options =>
     options.AddPolicy("SolicitudesAccess", policy =>
         policy.RequireRole("Administrador", "RRHH", "Directivo",
                            "Gerente", "Jefe", "Coordinador", "Asistente", "Usuario",
-                           "Aprendiz", "Recepcionista", "TI"));
+                           "Aprendiz", "Recepcionista", "TI", "SST"));
 });
 
 builder.Services.ConfigureApplicationCookie(options =>
@@ -87,10 +87,14 @@ using (var scope = app.Services.CreateScope())
     // ── Crear roles ────────────────────────────────────────────────────
     string[] roles = {
         "Administrador", "Directivo", "Gerente", "RRHH", "Jefe",
-        "Coordinador", "Asistente", "Usuario", "TI", "Aprendiz", "Recepcionista"
+        "Coordinador", "Asistente", "Usuario", "TI", "Aprendiz", "Recepcionista", "Vigilancia"
     };
 
-    foreach (var rol in roles)
+    // Asegurar role SST esté seededeado
+    var rolesList = roles.ToList();
+    if (!rolesList.Contains("SST")) rolesList.Add("SST");
+
+    foreach (var rol in rolesList)
     {
         if (!await roleManager.RoleExistsAsync(rol))
             await roleManager.CreateAsync(new IdentityRole(rol));
@@ -106,6 +110,17 @@ using (var scope = app.Services.CreateScope())
         var result = await userManager.CreateAsync(user, adminPass);
         if (result.Succeeded)
             await userManager.AddToRoleAsync(user, "Administrador");
+    }
+
+    // Crear usuario vigilacia por defecto si no existe
+    var vigilanciaUser = "vigilancia";
+    var vigilanciaPass = "Vigilancia123!";
+    if (await userManager.FindByNameAsync(vigilanciaUser) == null)
+    {
+        var user = new IdentityUser { UserName = vigilanciaUser, Email = "vigilancia@farmacol.com" };
+        var result = await userManager.CreateAsync(user, vigilanciaPass);
+        if (result.Succeeded)
+            await userManager.AddToRoleAsync(user, "Vigilancia");
     }
 
     // Seed salas básicas si no existen

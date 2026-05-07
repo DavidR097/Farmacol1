@@ -1,0 +1,255 @@
+@model Farmacol.Models.TbSolicitudTerceros
+@{
+    ViewData["Title"] = "Revisar Solicitud de Terceros";
+}
+
+<style>
+    body { background-color: #f8f9fa; }
+    .review-card { background: white; border-radius: 16px; border: 1px solid #e9ecef; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05); }
+    .detail-section-title { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: .06em; color: #6c757d; border-bottom: 1px solid #f0f0f0; padding-bottom: 6px; margin-bottom: 18px; display: flex; align-items: center; }
+    .info-label { font-size: 11px; color: #9ca3af; margin-bottom: 2px; font-weight: 500; text-transform: uppercase; }
+    .info-value { font-size: 14px; color: #1f2937; font-weight: 500; margin-bottom: 15px; }
+    
+    /* Botones de decisión */
+    .btn-decision { border-radius: 8px; font-weight: 500; font-size: 14px; padding: 10px 20px; transition: all 0.2s; border: none; }
+    .btn-approve { background-color: #10b981; color: white; }
+    .btn-return { background-color: #f59e0b; color: white; }
+    .btn-reject { background-color: #ef4444; color: white; }
+
+    /* Estilos Documentos */
+    .doc-item { 
+        background: #fff; border: 1px solid #e2e8f0; border-radius: 10px; padding: 10px 15px; 
+        transition: all 0.2s; display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px;
+    }
+    .doc-item:hover { border-color: #3b82f6; background: #f0f7ff; }
+    .doc-info { display: flex; align-items: center; gap: 12px; }
+    .doc-icon { font-size: 1.5rem; color: #ef4444; }
+    .doc-name { font-size: 13px; font-weight: 600; color: #334155; }
+</style>
+
+<div class="container mt-4 mb-5" style="max-width: 1000px;">
+    <!-- Breadcrumb Estilizado -->
+    <nav aria-label="breadcrumb" class="mb-4">
+        <ol class="breadcrumb" style="font-size: 13px;">
+            <li class="breadcrumb-item"><a asp-action="Index" class="text-decoration-none text-muted">Solicitudes</a></li>
+            <li class="breadcrumb-item active text-dark fw-bold">Revisión de Seguridad SST</li>
+        </ol>
+    </nav>
+
+    <div class="review-card">
+        <div class="card-body p-4 p-md-5">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <div>
+                    <h2 class="fw-bold mb-1">Revisión de Ingreso</h2>
+                    <p class="text-muted small">Solicitud #@Model.Id — @Model.Empresa</p>
+                </div>
+                <span class="badge rounded-pill bg-light text-dark border px-3 py-2">
+                    <i class="bi bi-clock-history me-1"></i> @(Model.Estado ?? "Pendiente")
+                </span>
+            </div>
+
+            <div class="row">
+                <!-- Información Técnica -->
+                <div class="col-md-7 border-end pe-md-4">
+                    <div class="detail-section-title">Datos del Solicitante e Ingreso</div>
+                    <div class="row">
+                        <div class="col-6">
+                            <label class="info-label">Solicitado por</label>
+                            <p class="info-value">@Model.Solicitante</p>
+                        </div>
+                        <div class="col-6">
+                            <label class="info-label">Fecha de Ingreso</label>
+                            <p class="info-value">@(Model.FechaIngreso?.ToString("dd/MM/yyyy HH:mm") ?? "-")</p>
+                        </div>
+                        <div class="col-12">
+                            <label class="info-label">Motivo de Visita</label>
+                            <p class="info-value">@Model.MotivoVisita</p>
+                        </div>
+                    </div>
+
+                    <div class="detail-section-title mt-4">Personal Autorizado</div>
+                    <div class="bg-light rounded-3 p-3 mb-4">
+                        @if (!string.IsNullOrEmpty(Model.NombresTerceros)) {
+                            <ul class="list-unstyled mb-0">
+                                @foreach (var nombre in Model.NombresTerceros.Split(';')) {
+                                    <li class="small mb-1 text-secondary"><i class="bi bi-person-check me-2"></i>@nombre</li>
+                                }
+                            </ul>
+                        } else { <span class="text-muted small">Sin nombres registrados</span> }
+                    </div>
+
+                    <div class="detail-section-title">Equipamiento</div>
+                    <div class="row">
+                        <div class="col-6">
+                            <label class="info-label">Herramientas</label>
+                            <p class="small text-dark">@(Model.EquiposIngreso ?? "Ninguno")</p>
+                        </div>
+                        <div class="col-6">
+                            <label class="info-label">EPP Solicitado</label>
+                            <p class="small text-dark">@(Model.ElementoEPP ?? "Ninguno")</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Validación SST -->
+                <div class="col-md-5 ps-md-4">
+                    <div class="detail-section-title">Validación Documental</div>
+                    
+                    <div class="mb-4">
+                        <label class="info-label">¿Cuenta con Documentación?</label>
+                        <div class="fw-bold @(Model.DocumentacionSST == "Sí" ? "text-success" : "text-danger")">@Model.DocumentacionSST</div>
+                    </div>
+
+                    <div class="doc-preview-box mb-4">
+                        <label class="info-label d-block mb-2">Archivos Adjuntos</label>
+                        @if(!string.IsNullOrEmpty(Model.PlanillaDePago)) {
+                            <div class="d-grid gap-2">
+                                @if (!string.IsNullOrEmpty(Model.PlanillaDePago))
+                                    {
+                                        <dt>Planilla de Pago</dt>
+                                        <dd><a href="@Model.PlanillaDePago" target="_blank">Ver PDF</a></dd>
+                                    }
+                                    @if (!string.IsNullOrEmpty(Model.Identificacion))
+                                    {
+                                        <dt>Identificación Tercero</dt>
+                                        <dd><a href="@Model.Identificacion" target="_blank">Ver PDF</a></dd>
+                                    }
+                                    @if (!string.IsNullOrEmpty(Model.CursosEspeciales))
+                                    {
+                                        <dt>Cursos Especiales</dt>
+                                        <dd><a href="@Model.CursosEspeciales" target="_blank">Ver PDF</a></dd>
+                                    }
+                                }
+                            </div>
+                        } else {
+                            <p class="text-muted x-small mb-0 italic">No se adjuntaron documentos digitales.</p>
+                        }
+                    </div>
+
+                    <div class="alert alert-info border-0 py-2 px-3 small rounded-3">
+                        <i class="bi bi-info-circle me-2"></i> Revise que las fechas de vigencia de los aportes coincidan con la fecha de ingreso solicitada.
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Barra de Acciones Finales -->
+        <div class="card-footer bg-light p-4 border-0">
+            <div class="row align-items-center">
+                <div class="col-md-6">
+                    <a asp-action="Index" class="btn btn-link text-muted text-decoration-none small p-0">
+                        <i class="bi bi-arrow-left"></i> Volver sin cambios
+                    </a>
+                </div>
+                <div class="col-md-6 text-end">
+                    <div class="d-flex justify-content-end gap-2">
+                        <button class="btn btn-decision btn-return" data-bs-toggle="modal" data-bs-target="#modalDevolver">
+                             <i class="bi bi-reply me-1"></i> Devolver
+                        </button>
+                        <button class="btn btn-decision btn-reject" data-bs-toggle="modal" data-bs-target="#modalRechazar">
+                             <i class="bi bi-x-circle me-1"></i> Rechazar
+                        </button>
+                        <form asp-action="Aprobar" method="post" class="d-inline">
+                            @Html.AntiForgeryToken()
+                            <input type="hidden" name="id" value="@Model.Id" />
+                            <button type="submit" class="btn btn-decision btn-approve px-4 shadow-sm">
+                                <i class="bi bi-check-all me-1"></i> Aprobar Ingreso
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Devolver -->
+<div class="modal fade" id="modalDevolver" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content shadow-lg">
+            <form asp-action="Devolver" method="post">
+                @Html.AntiForgeryToken()
+                <div class="modal-header">
+                    <h5 class="fw-bold mb-0">Devolver para Corrección</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body p-4">
+                    <input type="hidden" name="id" value="@Model.Id" />
+                    <label class="form-label small text-muted">Explique qué información falta o requiere corrección:</label>
+                    <textarea name="observacion" class="form-control border-0 bg-light" rows="4" placeholder="Ej: El certificado ARL está vencido..." required></textarea>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-light px-4" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-return px-4">Enviar Observación</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Rechazar -->
+<div class="modal fade" id="modalRechazar" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content shadow-lg">
+            <form asp-action="Rechazar" method="post">
+                @Html.AntiForgeryToken()
+                <div class="modal-header bg-danger text-white rounded-top">
+                    <h5 class="fw-bold mb-0">Rechazar Solicitud</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body p-4">
+                    <input type="hidden" name="id" value="@Model.Id" />
+                    <label class="form-label small text-muted text-danger fw-bold">Atención: Esta acción no se puede deshacer.</label>
+                    <textarea name="observacion" class="form-control border-danger" rows="4" placeholder="Indique el motivo del rechazo definitivo..." required></textarea>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-light px-4" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-reject px-4">Confirmar Rechazo</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+<div class="modal fade" id="pdfModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-xl modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="pdfModalTitle">Documento</h5>
+                <div>
+                    <a id="btnExternal" href="#" target="_blank" class="btn btn-sm btn-outline-primary me-2"><i class="bi bi-box-arrow-up-right"></i> Pestaña nueva</a>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+            </div>
+            <div class="modal-body p-0">
+                <iframe id="pdfViewer" src="" style="width: 100%; height: 80vh;" frameborder="0"></iframe>
+            </div>
+        </div>
+    </div>
+</div>
+
+@functions {
+    public Microsoft.AspNetCore.Html.IHtmlContent RenderDocItem(string label, string path)
+    {
+        var url = Url.Content(path);
+        return new Microsoft.AspNetCore.Html.HtmlString($@"
+            <div class='doc-item shadow-sm'>
+                <div class='doc-info'>
+                    <i class='bi bi-file-earmark-pdf doc-icon'></i>
+                    <span class='doc-name'>{label}</span>
+                </div>
+                <button type='button' class='btn btn-sm btn-light border' 
+                        onclick=""previewPdf('{url}', '{label}')"">
+                    <i class='bi bi-eye'></i>
+                </button>
+            </div>");
+    }
+}
+
+<script>
+    function previewPdf(url, title) {
+        document.getElementById('pdfModalTitle').innerText = title;
+        document.getElementById('pdfViewer').src = url;
+        document.getElementById('btnExternal').href = url;
+        new bootstrap.Modal(document.getElementById('pdfModal')).show();
+    }
+</script>

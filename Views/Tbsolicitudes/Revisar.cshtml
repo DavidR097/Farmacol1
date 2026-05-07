@@ -28,7 +28,7 @@
             <h2 class="h3 mb-0">Solicitud <span class="text-primary">#@Model.IdSolicitud</span></h2>
         </div>
         <div class="border rounded px-3 py-2 fw-bold @bannerClass">
-            Estado: @Model.Estado.ToUpper()
+            Estado: @Model.Estado?.ToUpper()
         </div>
     </div>
 
@@ -79,13 +79,23 @@
                                 </tr>
                                 <tr>
                                     <td class="text-muted ps-4">Cálculo</td>
-                                    <td class="pe-4 text-primary fw-bold">@Model.TotalDias Días / @Model.TotalHoras Horas</td>
+                                    <td class="pe-4 text-primary fw-bold">
+                                        @if (Model.TotalDias.HasValue && Model.TotalDias > 0)
+                                        {
+                                            @Model.TotalDias.Value.ToString("0.##")<text> Días</text>
+                                        }
+                                        @if (Model.TotalHoras.HasValue && Model.TotalHoras > 0)
+                                        {
+                                            if (Model.TotalDias.HasValue && Model.TotalDias > 0) { <text> / </text> }
+                                            @Model.TotalHoras.Value.ToString("0.##")<text> Horas</text>
+                                        }
+                                    </td>
                                 </tr>
                                 <tr>
                                     <td class="text-muted ps-4">Motivo / Obs.</td>
                                     <td class="pe-4">
                                         <strong>@Model.Motivo</strong><br />
-                                        <small class="text-muted italic">@Model.Observaciones</small>
+                                        <small class="text-muted">@Model.Observaciones</small>
                                     </td>
                                 </tr>
                             </tbody>
@@ -122,10 +132,10 @@
                             var cargo = i == 1 ? Model.Paso1Aprobador : i == 2 ? Model.Paso2Aprobador : Model.Paso3Aprobador;
                             var estado = i == 1 ? Model.Paso1Estado : i == 2 ? Model.Paso2Estado : Model.Paso3Estado;
                             var obs = i == 1 ? Model.Paso1Obs : i == 2 ? Model.Paso2Obs : Model.Paso3Obs;
-                            
+
                             var isCurrent = i == Model.PasoActual && Model.Estado == "En proceso";
-                            var color = estado == "Aprobado" ? "success" : 
-                                        estado == "Rechazado" ? "danger" : 
+                            var color = estado == "Aprobado" ? "success" :
+                                        estado == "Rechazado" ? "danger" :
                                         estado == "Devuelta" || estado == "Pendiente" ? "warning" : "secondary";
 
                             <div class="d-flex mb-4 position-relative">

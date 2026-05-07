@@ -132,7 +132,7 @@
                     </div>
                 }
 
-                @if (User.IsInRole("RRHH") || User.IsInRole("Jefe") || User.IsInRole("Usuario") || User.IsInRole("TI") || User.IsInRole("Administrador") || User.IsInRole("Recepcionista") || User.IsInRole("Aprendiz") || User.IsInRole("Asistente") || User.IsInRole("Gerente") || User.IsInRole("Coordinador")) {
+                @if (User.IsInRole("RRHH") || User.IsInRole("Jefe") || User.IsInRole("Usuario") || User.IsInRole("TI") || User.IsInRole("Administrador") || User.IsInRole("Recepcionista") || User.IsInRole("Aprendiz") || User.IsInRole("Asistente") || User.IsInRole("Gerente") || User.IsInRole("Coordinador") || User.IsInRole("SST")){
                     <div class="col-md-4">
                         <a asp-controller="Tbsolicitudes" asp-action="Create" class="quick-access-item shadow-sm">
                             <div class="icon-shape bg-success text-white"><i class="bi bi-file-earmark-plus"></i></div>
@@ -145,6 +145,13 @@
                             <div><div class="fw-bold small">Salas</div><div class="text-muted small">Apartar sala</div></div>
                         </a>
                     </div>
+                    <div class="col-md-4">
+                        <a asp-controller="SalidaEquipos" asp-action="Create" class="quick-access-item shadow-sm">
+                            <div class="icon-shape bg-success text-white"><i class="bi bi-file-earmark-plus"></i></div>
+                            <div><div class="fw-bold small">Salida Equipos</div><div class="text-muted small">Registrar salida de equipos</div></div>
+                        </a>
+                    </div>
+
                 }
 
                 @if (User.IsInRole("RRHH")) {
@@ -185,6 +192,38 @@
                         <a asp-controller="Usuarios" asp-action="Bloqueados" class="quick-access-item shadow-sm">
                             <div class="icon-shape bg-info text-white"><i class="bi bi-unlock-fill"></i></div>
                             <div><div class="fw-bold small">Desbloqueo</div><div class="text-muted small">Usuarios Bloqueados</div></div>
+                        </a>
+                    </div>
+                }
+
+                @if (User.IsInRole("SST"))
+                {
+                    <div class="col-md-4">
+                        <a asp-controller="TbSolicitudTerceros" asp-action="Index" class="quick-access-item shadow-sm">
+                            <div class="icon-shape bg-info text-white"><i class="bi bi-pc-display"></i></div>
+                            <div><div class="fw-bold small">Ingreso Terceros</div><div class="text-muted small">Solicitudes</div></div>
+                        </a>
+                    </div>
+                    <div class="col-md-4">
+                        <a asp-controller="" asp-action="Bloqueados" class="quick-access-item shadow-sm">
+                            <div class="icon-shape bg-info text-white"><i class="bi bi-unlock-fill"></i></div>
+                            <div><div class="fw-bold small">Desbloqueo</div><div class="text-muted small">Usuarios Bloqueados</div></div>
+                        </a>
+                    </div>
+                }
+
+                @if (User.IsInRole("Vigilancia"))
+                {
+                    <div class="col-md-4">
+                        <a asp-controller="SalidaEquipos" asp-action="Vigilancia" class="quick-access-item shadow-sm">
+                            <div class="icon-shape bg-info text-white"><i class="bi bi-pc-display"></i></div>
+                            <div><div class="fw-bold small">Salida Equipos</div><div class="text-muted small">Control Equipos</div></div>
+                        </a>
+                    </div>
+                    <div class="col-md-4">
+                        <a asp-controller="TbSolicitudTerceros" asp-action="Index" class="quick-access-item shadow-sm">
+                            <div class="icon-shape bg-success text-white"><i class="bi bi-file-earmark-plus"></i></div>
+                            <div><div class="fw-bold small">Ingreso Terceros</div><div class="text-muted small">Control Ingreso Terceros</div></div>
                         </a>
                     </div>
                 }

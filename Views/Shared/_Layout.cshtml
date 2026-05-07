@@ -452,8 +452,10 @@
         bool esUsuario = User.IsInRole("Usuario");
         bool esAprendiz = User.IsInRole("Aprendiz");
         bool esRecepcionista = User.IsInRole("Recepcionista");
+        bool esSST = User.IsInRole("SST");
         bool esTI = User.IsInRole("TI");
         bool esDirectivo = User.IsInRole("Directivo");
+        bool esVigilancia = User.IsInRole("Vigilancia");
 
         bool esCapHumano = string.Equals(userArea, "Capital Humano", StringComparison.OrdinalIgnoreCase) ||
                            string.Equals(userArea, "RRHH", StringComparison.OrdinalIgnoreCase);
@@ -468,7 +470,7 @@
                               esAsistente || esCoord || esRecepcionista || esGerenteCH;
 
         bool crearSolicitud = esAdmin || esCoord || esUsuario || esGerente || esJefe ||
-                              esAsistente || esAprendiz || esRecepcionista || esRRHH || esTI;
+                              esAsistente || esAprendiz || esRecepcionista || esRRHH || esTI || esSST;
 
         bool verRechazadas = esAdmin || esRRHH || esGerenteCH;
 
@@ -479,7 +481,8 @@
         bool verAdmin = esAdmin;
         bool verUsuarios = esAdmin;
 
-        bool hayNotif = verSolicitudes || User.IsInRole("Usuario") || esRecepcionista;
+        // Mostrar la campana para todos los usuarios autenticados
+        bool hayNotif = User.Identity?.IsAuthenticated == true;
 
         var ctrl = ViewContext.RouteData.Values["controller"]?.ToString() ?? "";
         var action = ViewContext.RouteData.Values["action"]?.ToString() ?? "";
@@ -552,7 +555,7 @@
                 </a>
             }
 
-            @if (User.Identity?.IsAuthenticated == true)
+            @if (User.Identity?.IsAuthenticated == true && !esVigilancia)
             {
                 <a class="sb-item @(ctrl == "MiExpediente" ? "active" : "")"
                        asp-controller="MiExpediente" asp-action="Index">
@@ -561,6 +564,26 @@
             }
 
             <div class="sb-divider"></div>
+            <!-- GESTIÓN TERCEROS -->
+            <div class="sb-label">Gestión Terceros</div>
+            <div class="sb-item sb-toggle @(ctrl == "TbSolicitudTerceros" ? "open" : "")" data-sub="sub-terceros">
+                <span class="sb-icon">🧾</span>
+                <span class="sb-text">Terceros <span class="sb-arrow">▶</span></span>
+            </div>
+            <div class="sb-sub @(ctrl == "TbSolicitudTerceros" ? "open" : "")" id="sub-terceros">
+                <a class="sb-sub-item @(ctrl == "TbSolicitudTerceros" && action == "Index" ? "active" : "")"
+                       asp-controller="TbSolicitudTerceros" asp-action="Index">
+                    <span class="sb-icon">📄</span><span class="sb-text">Ver solicitudes</span>
+                </a>
+                @* Nueva solicitud: visible para todos los usuarios autenticados excepto Vigilancia *@
+                @if (User.Identity?.IsAuthenticated == true && !esVigilancia)
+                {
+                    <a class="sb-sub-item @(ctrl == "TbSolicitudTerceros" && action == "Create" ? "active" : "")"
+                           asp-controller="TbSolicitudTerceros" asp-action="Create">
+                        <span class="sb-icon">➕</span><span class="sb-text">Nueva solicitud</span>
+                    </a>
+                }
+            </div>
 
             @if (verPersonal)
             {
@@ -642,10 +665,13 @@
             }
 
             <div class="sb-divider"></div>
-            <a class="sb-item @(ctrl == "Salas" ? "active" : "")"
-                   asp-controller="Salas" asp-action="Index">
-                <span class="sb-icon">🏢</span><span class="sb-text">Salas</span>
-            </a>
+            @if (!esVigilancia)
+            {
+                <a class="sb-item @(ctrl == "Salas" ? "active" : "")"
+                       asp-controller="Salas" asp-action="Index">
+                    <span class="sb-icon">🏢</span><span class="sb-text">Salas</span>
+                </a>
+            }
 
             @if (verTI)
             {
@@ -671,7 +697,7 @@
                 </div>
             }
 
-            @* Nueva sección: Equipos (contiene creación y revisión de salidas) *@
+            <!-- SECCIÓN EQUIPOS -->
             @if (User.Identity?.IsAuthenticated == true)
             {
                 <div class="sb-divider"></div>
@@ -681,18 +707,42 @@
                     <span class="sb-text">Control Equipos <span class="sb-arrow">▶</span></span>
                 </div>
                 <div class="sb-sub @(ctrl == "SalidaEquipos" ? "open" : "")" id="sub-equipos">
-                    @* Create: disponible para usuarios autenticados *@
-                    <a class="sb-sub-item @(ctrl == "SalidaEquipos" && action == "Create" ? "active" : "")"
-                           asp-controller="SalidaEquipos" asp-action="Create">
-                        <span class="sb-icon">➕</span><span class="sb-text">Nueva salida</span>
-                    </a>
 
-                    @* Revisar: solo visible para Gerentes y RRHH/CH *@
-                    @if (User.IsInRole("Gerente") || User.IsInRole("Jefe") || User.IsInRole("RRHH") || User.IsInRole("Administrador") || User.IsInRole("Gerente Capital Humano"))
+                    <!-- MIS SALIDAS - Visible para todos EXCEPTO Vigilancia -->
+                    @if (!User.IsInRole("Vigilancia"))
+                    {
+                        <a class="sb-sub-item @(ctrl == "SalidaEquipos" && action == "MisSalidasEquipos" ? "active" : "")"
+                               asp-controller="SalidaEquipos" asp-action="MisSalidasEquipos">
+                            <span class="sb-icon">👤</span><span class="sb-text">Mis salidas</span>
+                        </a>
+                    }
+
+                    <!-- Nueva Salida - Visible para todos EXCEPTO Vigilancia -->
+                    @if (!User.IsInRole("Vigilancia"))
+                    {
+                        <a class="sb-sub-item @(ctrl == "SalidaEquipos" && action == "Create" ? "active" : "")"
+                               asp-controller="SalidaEquipos" asp-action="Create">
+                            <span class="sb-icon">➕</span><span class="sb-text">Nueva salida</span>
+                        </a>
+                    }
+
+                    <!-- Revisar Salidas - Gerentes, Jefes, RRHH, Admin, GerenteCH, Recepcionista -->
+                    @if (User.IsInRole("Gerente") || User.IsInRole("Jefe") ||
+                         User.IsInRole("RRHH") || User.IsInRole("Administrador") ||
+                         User.IsInRole("Gerente Capital Humano") || User.IsInRole("Recepcionista"))
                     {
                         <a class="sb-sub-item @(ctrl == "SalidaEquipos" && action == "Index" ? "active" : "")"
                                asp-controller="SalidaEquipos" asp-action="Index">
                             <span class="sb-icon">📋</span><span class="sb-text">Revisar salidas</span>
+                        </a>
+                    }
+
+                    <!-- Vigilancia - Solo visible para Vigilancia -->
+                    @if (User.IsInRole("Vigilancia"))
+                    {
+                        <a class="sb-sub-item @(ctrl == "SalidaEquipos" && action == "Vigilancia" ? "active" : "")"
+                               asp-controller="SalidaEquipos" asp-action="Vigilancia">
+                            <span class="sb-icon">🔒</span><span class="sb-text">Vigilancia de Salidas</span>
                         </a>
                     }
                 </div>
@@ -852,7 +902,18 @@
                             list.innerHTML = data.map(function(n) {
                                 var icono = iconoPor(n.mensaje);
                                 var nl = n.leida ? '' : ' no-leida';
-                                var href = n.idSolicitud ? '/Tbsolicitudes/Revisar/' + n.idSolicitud : '#';
+                                // Enrutado dinámico: si el mensaje hace referencia a terceros, llevar a Details de TbSolicitudTerceros
+                                var href = '#';
+                                try {
+                                    var msg = (n.mensaje || '').toLowerCase();
+                                    if (n.idSolicitud) {
+                                        if (msg.includes('tercer') || msg.includes('terceros')) {
+                                            href = '/TbSolicitudTerceros/Details/' + n.idSolicitud;
+                                        } else {
+                                            href = '/Tbsolicitudes/Revisar/' + n.idSolicitud;
+                                        }
+                                    }
+                                } catch (e) { href = '#'; }
                                 return '<a class="notif-item' + nl + '" href="' + href + '">' +
                                     '<span class="notif-icon">' + icono + '</span>' +
                                     '<div class="notif-body"><div class="notif-msg">' + n.mensaje + '</div>' +

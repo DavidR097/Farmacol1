@@ -1,0 +1,194 @@
+@model Farmacol.Models.TbSolicitudTerceros
+@{
+    ViewData["Title"] = "Detalle Solicitud de Terceros";
+}
+
+<style>
+    body { background-color: #f8f9fa; }
+    
+    .detail-card {
+        background: white;
+        border-radius: 16px;
+        border: 1px solid #e9ecef;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+        overflow: hidden;
+    }
+
+    .detail-header {
+        background: #ffffff;
+        padding: 2rem;
+        border-bottom: 1px solid #f1f5f9;
+    }
+
+    .status-badge {
+        padding: 6px 12px;
+        border-radius: 50px;
+        font-size: 11px;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.03em;
+    }
+
+    .status-pendiente { background-color: #fef3c7; color: #92400e; }
+    .status-aprobado { background-color: #d1fae5; color: #065f46; }
+    .status-rechazado { background-color: #fee2e2; color: #991b1b; }
+
+    .detail-section-title {
+        font-size: 11px;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: .06em;
+        color: #6c757d;
+        border-bottom: 1px solid #f0f0f0;
+        padding-bottom: 6px;
+        margin-bottom: 18px;
+        margin-top: 24px;
+        display: flex;
+        align-items: center;
+    }
+
+    .info-label {
+        font-size: 11px;
+        color: #9ca3af;
+        margin-bottom: 2px;
+        font-weight: 500;
+        text-transform: uppercase;
+    }
+
+    .info-value {
+        font-size: 14px;
+        color: #1f2937;
+        font-weight: 500;
+        margin-bottom: 15px;
+    }
+
+    .document-link {
+        display: flex;
+        align-items: center;
+        padding: 8px 12px;
+        background: #f8f9fa;
+        border-radius: 8px;
+        text-decoration: none;
+        color: #374151;
+        font-size: 13px;
+        margin-bottom: 8px;
+        transition: all 0.2s;
+    }
+
+    .document-link:hover { background: #f1f5f9; color: #111827; }
+
+    .list-item-custom {
+        padding: 4px 0;
+        font-size: 13px;
+        display: flex;
+        align-items: center;
+    }
+</style>
+
+<div class="container mt-4 mb-5" style="max-width: 900px;">
+    <div class="mb-3">
+        <a asp-action="Index" class="btn btn-link text-decoration-none text-muted p-0 small">
+            <i class="bi bi-arrow-left me-1"></i> Volver al listado
+        </a>
+    </div>
+
+    <div class="detail-card">
+        <div class="detail-header d-flex justify-content-between align-items-start">
+            <div>
+                <span class="x-small text-muted mb-1 d-block">SOLICITUD #@Model.Id</span>
+                <h2 class="fw-bold mb-1" style="color: #111;">@Model.Empresa</h2>
+                <p class="text-muted mb-0 small"><i class="bi bi-geo-alt me-1"></i> Destino: @(Model.AreaDirigida ?? "No especificado")</p>
+            </div>
+            <div class="text-end">
+                @{
+                    var statusClass = Model.Estado?.ToLower() switch {
+                        "aprobado" => "status-aprobado",
+                        "rechazado" => "status-rechazado",
+                        _ => "status-pendiente"
+                    };
+                }
+                <span class="status-badge @statusClass">@(Model.Estado ?? "Pendiente")</span>
+                <p class="small text-muted mt-2 mb-0">@(Model.FechaIngreso?.ToString("dd MMM yyyy, hh:mm tt") ?? "-")</p>
+            </div>
+        </div>
+
+        <div class="card-body p-4">
+            <div class="row">
+                <div class="col-md-7 border-end">
+                    <div class="detail-section-title"><i class="bi bi-person-workspace me-2"></i>Información General</div>
+                    <div class="row">
+                        <div class="col-6">
+                            <div class="info-label">Solicitante</div>
+                            <div class="info-value">@Model.Solicitante</div>
+                        </div>
+                        <div class="col-6">
+                            <div class="info-label">Motivo de Visita</div>
+                            <div class="info-value">@Model.MotivoVisita</div>
+                        </div>
+                    </div>
+
+                    <div class="detail-section-title"><i class="bi bi-people me-2"></i>Personal Autorizado</div>
+                    <div class="mb-4">
+                        @if (!string.IsNullOrEmpty(Model.NombresTerceros))
+                        {
+                            foreach (var nombre in Model.NombresTerceros.Split(';'))
+                            {
+                                <div class="list-item-custom">
+                                    <i class="bi bi-check-circle-fill text-success me-2" style="font-size: 14px;"></i> @nombre
+                                </div>
+                            }
+                        }
+                        else
+                        {
+                            <span class="text-muted italic">No se registraron nombres.</span>
+                        }
+                    </div>
+
+                    <div class="detail-section-title"><i class="bi bi-box-seam me-2"></i>Equipos y Herramientas</div>
+                    <div class="info-value">@(string.IsNullOrEmpty(Model.EquiposIngreso) ? "Ninguno registrado" : Model.EquiposIngreso)</div>
+                    
+                    @if(Model.IngresoVehiculo == "Sí") {
+                        <div class="info-label">Vehículo Autorizado</div>
+                        <div class="info-value"><span class="badge bg-dark">PLACA: @Model.PlacaVehiculo</span></div>
+                    }
+                </div>
+                
+                <div class="col-md-5">
+                    <div class="detail-section-title"><i class="bi bi-shield-check me-2"></i>Seguridad SST</div>
+                    
+                    <div class="info-label">Documentación</div>
+                    <div class="info-value">@Model.DocumentacionSST</div>
+
+                    @if(Model.DocumentacionSST == "Sí") {
+                        <div class="mt-2">
+                            @if(!string.IsNullOrEmpty(Model.PlanillaDePago)) {
+                                <a href="@Url.Content(Model.PlanillaDePago)" target="_blank" class="document-link">
+                                    <i class="bi bi-file-pdf text-danger me-2"></i> Planilla de Pago
+                                </a>
+                            }
+                        </div>
+                    }
+
+                    <div class="detail-section-title"><i class="bi bi-pci-card me-2"></i>EPP Requerido</div>
+                    <div class="row g-1">
+                        @if (!string.IsNullOrEmpty(Model.ElementoEPP))
+                        {
+                            foreach (var epp in Model.ElementoEPP.Split(';'))
+                            {
+                                <div class="col-6">
+                                    <div class="small bg-light p-2 rounded mb-1">
+                                        <i class="bi bi-shield-fill-check text-primary me-1"></i> @epp
+                                    </div>
+                                </div>
+                            }
+                        }
+                        else
+                        {
+                            <div class="col-12 text-muted small">No requiere préstamo de EPP</div>
+                        }
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

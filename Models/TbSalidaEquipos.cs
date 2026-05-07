@@ -5,9 +5,7 @@
         public string? Id { get; set; } 
         public DateOnly? FechaRegistro { get; set; }
         public string? Solicitante { get; set; }
-        // Usuario corporativo (nombre de usuario) del solicitante
         public string? SolicitanteUsuario { get; set; }
-        // Correo corporativo del solicitante
         public string? SolicitanteCorreo { get; set; }
         public string? Area { get; set; }
         public string? Elemento { get; set; }
@@ -27,7 +25,6 @@
         public string? EtapaAprobacion { get; set; }
         public string? AprobacionGerencia { get; set; }
         public string? AprobacionCH { get; set; }
-        // Timestamps for approvals
         public DateTime? FechaAprobacionGerencia { get; set; }
         public DateTime? FechaAprobacionCH { get; set; }
     }

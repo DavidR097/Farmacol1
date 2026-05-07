@@ -1,0 +1,267 @@
+@model Farmacol.Models.TbSolicitudTerceros
+
+@{
+    ViewData["Title"] = "Solicitud de Ingreso de Terceros";
+}
+
+<style>
+    body { background-color: #f8f9fa; }
+    .card { border-radius: 16px; border: 1px solid #e9ecef; box-shadow: 0 .125rem .25rem rgba(0,0,0,.05)!important; }
+    .detail-section-title {
+        font-size: 11px; font-weight: 600; text-transform: uppercase;
+        letter-spacing: .06em; color: #6c757d;
+        border-bottom: 1px solid #f0f0f0; padding-bottom: 6px; margin-bottom: 18px;
+        display: flex; align-items: center;
+    }
+    .form-label { font-size: 11px; color: #9ca3af; margin-bottom: 4px; font-weight: 500; text-transform: uppercase; }
+    .form-control, .form-select { font-size: 13px; border-radius: 8px; padding: 0.6rem 0.8rem; border: 1px solid #e2e8f0; }
+    .form-control[readonly] { background-color: #f8f9fa; color: #64748b; border-color: #f1f5f9; }
+    .tercero-item { border-radius: 8px; overflow: hidden; border: 1px solid #e2e8f0; margin-bottom: 8px !important; background: #fff; }
+    .tercero-item .input-group-text { background-color: #f8f9fa; border: none; }
+    .tercero-item input { border: none; }
+    .bg-light-custom { background: #f8f9fa; border-radius: 12px; padding: 15px; border: 1px solid #e9ecef; }
+    .btn-dark-custom { background-color: #111827; border-color: #111827; color: #fff; font-size: 13px; font-weight: 500; border-radius: 8px; }
+    .btn-dark-custom:hover { background-color: #1f2937; color: #fff; }
+    .btn-outline-secondary-custom { font-size: 13px; border-radius: 8px; color: #4b5563; }
+</style>
+
+<div class="container mt-4 mb-5" style="max-width: 900px;">
+    <div class="d-flex align-items-center justify-content-between mb-4">
+        <div>
+            <h2 class="fw-bold mb-0" style="color: #111;">Solicitud de Ingreso</h2>
+            <p class="text-muted small mb-0">Directorio de Terceros y Contratistas</p>
+        </div>
+        <a asp-action="Index" class="btn btn-outline-secondary btn-sm">
+            <i class="bi bi-arrow-left me-1"></i> Volver
+        </a>
+    </div>
+
+    <form asp-action="Create" method="post" enctype="multipart/form-data" id="formTerceros">
+        @Html.AntiForgeryToken()
+
+        <!-- SECCIÓN 1: SOLICITANTE -->
+        <div class="card border-0 mb-4">
+            <div class="card-body p-4">
+                <div class="detail-section-title"><i class="bi bi-person-badge me-2"></i>Información del Solicitante</div>
+                <div class="row g-3">
+                    <div class="col-md-4">
+                        <label class="form-label">Nombre del Solicitante</label>
+                        <input asp-for="Solicitante" class="form-control shadow-none" readonly />
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label">Cargo</label>
+                        <input asp-for="Cargo" class="form-control shadow-none" readonly />
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label">Área</label>
+                        <input asp-for="Area" class="form-control shadow-none" readonly />
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- SECCIÓN 2: DATOS DEL INGRESO -->
+        <div class="card border-0 mb-4">
+            <div class="card-body p-4">
+                <div class="detail-section-title"><i class="bi bi-calendar-check me-2"></i>Detalles del Acceso</div>
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <label class="form-label">Fecha y Hora de Ingreso *</label>
+                        <input type="datetime-local" asp-for="FechaIngreso" class="form-control" required />
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label">Empresa / Entidad Externa</label>
+                        <input asp-for="Empresa" class="form-control" placeholder="Nombre de la empresa" />
+                    </div>
+                    <div class="col-12">
+                        <label class="form-label">Motivo de la Visita *</label>
+                        <textarea asp-for="MotivoVisita" class="form-control" rows="2" placeholder="Describa el objetivo de la visita..." required></textarea>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label">Área Destino</label>
+                        <input asp-for="AreaDirigida" class="form-control" placeholder="Ej: Producción, Mantenimiento..." />
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label">Fecha de Registro</label>
+                        <input asp-for="FechaRegistro" class="form-control shadow-none" readonly />
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- SECCIÓN 3: PERSONAL EXTERNO (DINÁMICO) -->
+        <div class="card border-0 mb-4">
+            <div class="card-body p-4">
+                <div class="detail-section-title"><i class="bi bi-people me-2"></i>Personal a Ingresar</div>
+                <div id="tercerosContainer">
+                    <div class="input-group tercero-item shadow-sm mb-3">
+                        <span class="input-group-text"><i class="bi bi-person text-muted"></i></span>
+                        <input type="text" class="form-control" name="NombresTerceros[]" placeholder="Nombre completo del tercero" required>
+                        <button type="button" class="btn btn-danger px-3" onclick="eliminarTercero(this)" title="Eliminar este nombre">
+                            <i class="bi bi-trash"></i>
+                        </button>
+                    </div>
+                </div>
+                <button type="button" class="btn btn-link text-decoration-none small fw-bold p-0 mt-2" onclick="agregarTercero()">
+                    <i class="bi bi-plus-circle-fill me-1"></i> Añadir otro integrante
+                </button>
+            </div>
+        </div>
+
+        <!-- SECCIÓN 4: REQUISITOS DE SEGURIDAD (DOS COLUMNAS) -->
+        <div class="row g-4 mb-4">
+            <div class="col-md-6">
+                <div class="card h-100 border-0">
+                    <div class="card-body p-4">
+                        <div class="detail-section-title"><i class="bi bi-shield-lock me-2 text-primary"></i>Documentación SST</div>
+                        <select asp-for="DocumentacionSST" class="form-select mb-3" onchange="toggleSSTFields(this)">
+                            <option value="">¿Cuenta con documentos?</option>
+                            <option value="Sí">Sí</option>
+                            <option value="No">No</option>
+                        </select>
+                        <div id="sstFields" style="display: none;" class="bg-light-custom">
+                            <div class="mb-3">
+                                <label class="form-label">Planilla de Pago (Seguridad Social) (PDF)</label>
+                                <input type="file" name="archivoPlanilla" class="form-control" accept=".pdf" />
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Identificación del Tercero (PDF)</label>
+                                <input type="file" name="archivoCertificados" class="form-control" accept=".pdf" />
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="card h-100 border-0">
+                    <div class="card-body p-4">
+                        <div class="detail-section-title"><i class="bi bi-book me-2 text-primary"></i>Cursos Especiales</div>
+                        <select asp-for="RequiereCursosEspeciales" class="form-select mb-3" onchange="toggleCursosFields(this)">
+                            <option value="">¿Requiere cursos especiales (alturas, presión, etc.)?</option>
+                            <option value="Sí">Sí</option>
+                            <option value="No">No</option>
+                        </select>
+                        <div id="cursosFields" style="display: none;" class="bg-light-custom">
+                            <div class="mb-3">
+                                <label class="form-label">Certificado de Cursos (PDF)</label>
+                                <input type="file" name="archivoCursos" class="form-control" accept=".pdf" />
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- SECCIÓN 5: EPP -->
+        <div class="row g-4 mb-4">
+            <div class="col-md-6">
+                <div class="card h-100 border-0">
+                    <div class="card-body p-4">
+                        <div class="detail-section-title"><i class="bi bi-tools me-2 text-primary"></i>Suministro de EPP</div>
+                        <select asp-for="RequiereEPP" class="form-select mb-3 shadow-none" onchange="toggleEPPFields(this)">
+                            <option value="">¿Requiere elementos?</option>
+                            <option value="Sí">Sí</option>
+                            <option value="No">No</option>
+                        </select>
+                        <div id="eppFields" style="display: none;" class="bg-light-custom">
+                            <div class="row g-2">
+                                @foreach (var item in new[] { "Casco", "Botas", "Gafas", "Chaleco", "Tapaoídos", "Guantes" })
+                                {
+                                    <div class="col-6">
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" name="eppItems" value="@item" id="epp_@item">
+                                            <label class="form-check-label small" for="epp_@item">@item</label>
+                                        </div>
+                                    </div>
+                                }
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- SECCIÓN 6: VEHÍCULO Y EQUIPOS -->
+        <div class="card border-0 mb-4">
+            <div class="card-body p-4">
+                <div class="detail-section-title"><i class="bi bi-car-front me-2"></i>Logística Adicional</div>
+                <div class="row g-3">
+                    <div class="col-md-4">
+                        <label class="form-label">¿Ingresa Vehículo?</label>
+                        <select asp-for="IngresoVehiculo" class="form-select shadow-none" onchange="toggleVehiculoFields(this)">
+                            <option value="">Seleccione...</option>
+                            <option value="Sí">Sí</option>
+                            <option value="No">No</option>
+                        </select>
+                    </div>
+                    <div class="col-md-8" id="placaField" style="display: none;">
+                        <label class="form-label">Placa del Vehículo</label>
+                        <input asp-for="PlacaVehiculo" class="form-control text-uppercase fw-bold" placeholder="EJ: ABC-123" />
+                    </div>
+                    <div class="col-12">
+                        <label class="form-label">Herramientas y Equipos</label>
+                        <textarea asp-for="EquiposIngreso" class="form-control shadow-none" rows="2" placeholder="Relacione laptops, cajas de herramientas, etc."></textarea>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="d-flex gap-2 justify-content-end mt-5">
+            <a asp-action="Index" class="btn btn-outline-secondary-custom px-4">Cancelar</a>
+            <button type="submit" class="btn btn-dark-custom px-5">
+                <i class="bi bi-check2-circle me-1"></i> Guardar Solicitud
+            </button>
+        </div>
+    </form>
+</div>
+
+@section Scripts {
+    <script>
+        function agregarTercero() {
+            const container = document.getElementById('tercerosContainer');
+            const nuevo = document.createElement('div');
+            nuevo.className = 'input-group tercero-item shadow-sm mb-3';
+            nuevo.innerHTML = `
+                <span class="input-group-text"><i class="bi bi-person text-muted"></i></span>
+                <input type="text" class="form-control" name="NombresTerceros[]" placeholder="Nombre completo del tercero" required>
+                <button type="button" class="btn btn-danger px-3" onclick="eliminarTercero(this)">
+                    <i class="bi bi-trash"></i>
+                </button>
+            `;
+            container.appendChild(nuevo);
+        }
+
+        function eliminarTercero(btn) {
+            const items = document.querySelectorAll('.tercero-item');
+            if (items.length > 1) {
+                btn.closest('.tercero-item').remove();
+            } else {
+                alert("Debe haber al menos un nombre registrado.");
+            }
+        }
+
+        function toggleSSTFields(select) {
+            document.getElementById('sstFields').style.display = (select.value === "Sí") ? 'block' : 'none';
+        }
+
+        function toggleEPPFields(select) {
+            document.getElementById('eppFields').style.display = (select.value === "Sí") ? 'block' : 'none';
+        }
+
+        function toggleVehiculoFields(select) {
+            document.getElementById('placaField').style.display = (select.value === "Sí") ? 'block' : 'none';
+        }
+
+        function toggleCursosFields(select) {
+            document.getElementById('cursosFields').style.display = (select.value === "Sí") ? 'block' : 'none';
+        }
+
+        document.addEventListener('DOMContentLoaded', function () {
+            const fechaInput = document.querySelector('input[name="FechaRegistro"]');
+            if (fechaInput && !fechaInput.value) {
+                const hoy = new Date();
+                fechaInput.value = hoy.toISOString().split('T')[0];
+            }
+        });
+    </script>
+}

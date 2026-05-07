@@ -101,13 +101,13 @@ else
                                             <span> → @s.FechaFin.Value.ToString("dd/MM/yyyy")</span>
                                         }
                                     }
-                                    @if (s.TotalDias.HasValue && s.TotalDias > 0)
+                                    @if (s.TotalDias.HasValue && s.TotalDias.Value > 0)
                                     {
-                                        <span> · @s.TotalDias día(s)</span>
+                                        <span> · @s.TotalDias.Value.ToString("0.##") día(s)</span>
                                     }
-                                    @if (s.TotalHoras.HasValue && s.TotalHoras > 0)
+                                    @if (s.TotalHoras.HasValue && s.TotalHoras.Value > 0)
                                     {
-                                        <span> · @s.TotalHoras hora(s)</span>
+                                        <span> · @s.TotalHoras.Value.ToString("0.##") hora(s)</span>
                                     }
                                 </small>
                             </div>

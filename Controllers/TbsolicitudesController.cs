@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using System.Globalization;
 
 namespace Farmacol.Controllers
 {
@@ -68,7 +69,6 @@ namespace Farmacol.Controllers
             return PhysicalFile(fullPath, "application/pdf", Path.GetFileName(fullPath));
         }
 
-        // ── DESCARGAR DOCUMENTO GENERADO (DOCX) ───────────────────────────
         [HttpGet]
         [Route("Tbsolicitudes/DescargarDocumento/{id}")]
         public async Task<IActionResult> DescargarDocumento(int id)
@@ -82,7 +82,6 @@ namespace Farmacol.Controllers
             bool esSolicitante = personalUsuario != null && personalUsuario.CC == solicitud.CC;
             if (!esAdmin && !esRRHH && !esSolicitante) return Forbid();
 
-            // Buscar plantilla: preferir por tipo de solicitud, sino cualquier activa
             TbPlantilla? plantilla = null;
             try
             {
@@ -115,7 +114,6 @@ namespace Farmacol.Controllers
                 return StatusCode(500, "Error generando documento.");
             }
 
-            // intentar guardar copia en expediente
             try
             {
                 var carpeta = Path.Combine(_env.WebRootPath ?? "wwwroot", "expedientes", solicitante.CC.ToString());
@@ -157,11 +155,24 @@ namespace Farmacol.Controllers
         private async Task<(string userName, string email)> ObtenerIdentidad()
         {
             var userName = User.Identity?.Name ?? "";
-            var userObj = await _userManager.FindByNameAsync(userName);
-            return (userName, userObj?.Email ?? "");
+            if (string.IsNullOrEmpty(userName)) return ("", "");
+
+            // Buscar en Tbpersonals primero
+            var personal = await _context.Tbpersonals
+                .FirstOrDefaultAsync(p => p.UsuarioCorporativo == userName ||
+                                           p.CorreoCorporativo == userName);
+
+            if (personal != null)
+                return (personal.UsuarioCorporativo ?? userName,
+                        personal.CorreoCorporativo ?? "");
+
+            //Buscar usuarios seedeados
+            var identityUser = await _userManager.FindByNameAsync(userName);
+            var email = identityUser?.Email ?? "";
+
+            return (userName, email);
         }
 
-        // ── INDEX ─────────────────────────────────────────────────────────
         public async Task<IActionResult> Index(string? busqueda, string? cedula,
             string? nombre, string? tipoSolicitud, string? estado)
         {
@@ -195,7 +206,6 @@ namespace Farmacol.Controllers
 
             if (esAdmin || esRRHH || esDirectivo || esGerenteCapHumano || (esGerente && esGerGen))
             {
-                // Ven todas
             }
             else if (esCoordCapHumano || esAsistCapHumano || esGerente || esJefe || esCoord || esAsistente)
             {
@@ -247,7 +257,6 @@ namespace Farmacol.Controllers
                 .ToListAsync());
         }
 
-        // ── MIS SOLICITUDES ───────────────────────────────────────────────
         public async Task<IActionResult> MisSolicitudes()
         {
             var personal = await BuscarPersonalActual();
@@ -259,8 +268,6 @@ namespace Farmacol.Controllers
             return View(solicitudes);
         }
 
-        // ── CREATE GET ────────────────────────────────────────────────────
-        // ── CREATE GET ────────────────────────────────────────────────────
         [HttpGet]
         public async Task<IActionResult> Create(string? tipo = null)
         {
@@ -290,26 +297,22 @@ namespace Farmacol.Controllers
                 ViewBag.Vacaciones = null;
             }
 
-            // === Routing a la vista correcta ===
             if (tipo?.ToLower() == "vacaciones")
                 return View("CreateVacaciones");
 
             if (tipo?.ToLower() == "permiso")
                 return View("CreatePermiso");
 
-            // Por defecto: mostrar selector de tipo
-            return View();   // Create.cshtml
+            return View();
         }
-
 
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Create(
-    [Bind("CC,Nombre,Cargo,TipoSolicitud,SubtipoPermiso,HoraInicio,HoraFin,TotalHoras," +
+            [Bind("CC,Nombre,Cargo,TipoSolicitud,SubtipoPermiso,HoraInicio,HoraFin,TotalHoras," +
           "FechaInicio,FechaFin,TotalDias,Motivo,FechaSolicitud,Observaciones,DiasEnDinero")]
     Tbsolicitude tbsolicitude, IFormFile? archivoAnexo)
         {
-            // Helper para volver con error manteniendo la vista correcta
             async Task<IActionResult> VolverConError(string errorMsg = "")
             {
                 if (!string.IsNullOrEmpty(errorMsg))
@@ -335,23 +338,27 @@ namespace Farmacol.Controllers
                 return View(vista, tbsolicitude);
             }
 
-            // Conversión manual de campos (obligatorio porque el modelo usa TimeSpan y decimal)
             if (TimeSpan.TryParse(Request.Form["HoraInicio"], out TimeSpan hi))
                 tbsolicitude.HoraInicio = hi;
 
             if (TimeSpan.TryParse(Request.Form["HoraFin"], out TimeSpan hf))
                 tbsolicitude.HoraFin = hf;
 
-            if (decimal.TryParse(Request.Form["TotalHoras"], out decimal th))
-                tbsolicitude.TotalHoras = th;
+            if (decimal.TryParse(Request.Form["TotalHoras"].ToString().Replace(',', '.'),
+                NumberStyles.Any, CultureInfo.InvariantCulture, out decimal horas))
+            {
+                tbsolicitude.TotalHoras = horas;
+            }
 
-            if (decimal.TryParse(Request.Form["TotalDias"], out decimal td))
-                tbsolicitude.TotalDias = td;
+            if (decimal.TryParse(Request.Form["TotalDias"].ToString().Replace(',', '.'),
+                NumberStyles.Any, CultureInfo.InvariantCulture, out decimal dias))
+            {
+                tbsolicitude.TotalDias = dias;
+            }
 
             if (!ModelState.IsValid)
                 return await VolverConError("Por favor verifica los datos ingresados.");
 
-            // Validar archivo PDF
             if (archivoAnexo != null && archivoAnexo.Length > 0)
             {
                 if (Path.GetExtension(archivoAnexo.FileName).ToLower() != ".pdf")
@@ -370,7 +377,6 @@ namespace Farmacol.Controllers
             if (solicitante == null)
                 return await VolverConError("No se encontró el perfil del solicitante.");
 
-            // Validación específica para Vacaciones
             if (tbsolicitude.TipoSolicitud?.Equals("Vacaciones", StringComparison.OrdinalIgnoreCase) == true)
             {
                 var diasSolicitados = tbsolicitude.TotalDias ?? 0m;
@@ -390,8 +396,8 @@ namespace Farmacol.Controllers
                     return await VolverConError("Debes seleccionar un rango válido de fechas.");
             }
 
-            // Procesar y guardar
-            tbsolicitude = await _flujo.InicializarFlujo(tbsolicitude, solicitante);
+            bool esSST = User.IsInRole("SST");
+            tbsolicitude = await _flujo.InicializarFlujo(tbsolicitude, solicitante, esSST);
 
             _context.Add(tbsolicitude);
             await _context.SaveChangesAsync();
@@ -412,8 +418,6 @@ namespace Farmacol.Controllers
         }
 
 
-
-        // ── REVISAR ───────────────────────────────────────────────────────
         public async Task<IActionResult> Revisar(int id)
         {
             var solicitud = await _context.Tbsolicitudes.FindAsync(id);
@@ -432,7 +436,6 @@ namespace Farmacol.Controllers
             return View(solicitud);
         }
 
-        // ── APROBAR ───────────────────────────────────────────────────────
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Aprobar(int id, string? observacion)
@@ -465,10 +468,6 @@ namespace Farmacol.Controllers
                 return RedirectToAction(nameof(Index));
             }
 
-            // ===============================
-            // APROBACIÓN FINAL
-            // ===============================
-
             try { await _email.NotificarSolicitudAprobadaAsync(solicitud); } catch { }
 
             var personal = await _context.Tbpersonals.FirstOrDefaultAsync(p => p.CC == solicitud.CC);
@@ -488,7 +487,6 @@ namespace Farmacol.Controllers
 
             if (esVacaciones && solicitud.FechaInicio.HasValue && solicitud.FechaFin.HasValue)
             {
-                // 1️⃣ Crear delegación
                 await _delegacion.CrearDelegacion(
                     personal.CC,
                     personal.NombreColaborador ?? "",
@@ -500,7 +498,6 @@ namespace Farmacol.Controllers
                     User.Identity?.Name ?? ""
                 );
 
-                // 2️⃣ Buscar usuario Identity (ROBUSTO)
                 IdentityUser? identityUser = await _userManager.Users.FirstOrDefaultAsync(u =>
                     u.UserName == personal.UsuarioCorporativo ||
                     u.Email == personal.CorreoCorporativo ||
@@ -508,14 +505,13 @@ namespace Farmacol.Controllers
                     u.NormalizedEmail == (personal.CorreoCorporativo ?? "").ToUpper()
                 );
 
-                // 3️⃣ BLOQUEO REAL DE IDENTITY (ESTO FALTABA)
                 if (identityUser != null)
                 {
                     await _userManager.SetLockoutEnabledAsync(identityUser, true);
 
 
                     var lockoutEndUtc = solicitud.FechaFin.Value
-                        .ToDateTime(TimeOnly.MaxValue) // 23:59:59 LOCAL
+                        .ToDateTime(TimeOnly.MaxValue) 
                         .ToUniversalTime();
 
                     await _userManager.SetLockoutEnabledAsync(identityUser, true);
@@ -540,7 +536,6 @@ namespace Farmacol.Controllers
             return RedirectToAction(nameof(Index));
         }
 
-        // ── RECHAZAR ──────────────────────────────────────────────────────
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Rechazar(int id, string? observacion)
@@ -590,7 +585,6 @@ namespace Farmacol.Controllers
             return RedirectToAction(nameof(Index));
         }
 
-        // ── DEVOLVER ──────────────────────────────────────────────────────
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Devolver(int id, string observacion)
@@ -630,7 +624,6 @@ namespace Farmacol.Controllers
             return RedirectToAction(nameof(Index));
         }
 
-        // ── EDITAR GET ────────────────────────────────────────────────────
         [HttpGet]
         public async Task<IActionResult> Editar(int id)
         {
@@ -644,50 +637,39 @@ namespace Farmacol.Controllers
             return View(solicitud);
         }
 
-        // ── REENVIAR ──────────────────────────────────────────────────────
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Reenviar(int id, IFormFile? archivoAnexo,
-    string? observaciones, string? Motivo, string? SubtipoPermiso,
-    string? HoraInicio, string? HoraFin, string? TotalHoras,
-    string? FechaInicio, string? FechaFin, string? TotalDias)
+            string? observaciones, string? Motivo, string? SubtipoPermiso,
+            string? HoraInicio, string? HoraFin, string? TotalHoras,
+            string? FechaInicio, string? FechaFin, string? TotalDias)
         {
             var solicitud = await _context.Tbsolicitudes.FindAsync(id);
             if (solicitud == null) return NotFound();
             if (solicitud.Estado != "Devuelta") return RedirectToAction(nameof(Index));
 
-            // Actualizar campos simples
             if (!string.IsNullOrWhiteSpace(Motivo)) solicitud.Motivo = Motivo;
             if (!string.IsNullOrWhiteSpace(SubtipoPermiso)) solicitud.SubtipoPermiso = SubtipoPermiso;
             if (!string.IsNullOrWhiteSpace(observaciones)) solicitud.Observaciones = observaciones;
 
-            // ==================== CONVERSIÓN CORRECTA ====================
-            // HoraInicio y HoraFin: "HH:mm" → TimeSpan
             if (!string.IsNullOrWhiteSpace(HoraInicio) && TimeSpan.TryParse(HoraInicio, out TimeSpan tsInicio))
                 solicitud.HoraInicio = tsInicio;
 
             if (!string.IsNullOrWhiteSpace(HoraFin) && TimeSpan.TryParse(HoraFin, out TimeSpan tsFin))
                 solicitud.HoraFin = tsFin;
 
-            // TotalHoras y TotalDias: string decimal → decimal?
-            if (decimal.TryParse(TotalHoras, out decimal totalH))
+            if (decimal.TryParse(TotalHoras?.Replace(',', '.'), NumberStyles.Any, CultureInfo.InvariantCulture, out decimal totalH))
                 solicitud.TotalHoras = totalH;
 
-            if (decimal.TryParse(TotalDias, out decimal totalD))
+            if (decimal.TryParse(TotalDias?.Replace(',', '.'), NumberStyles.Any, CultureInfo.InvariantCulture, out decimal totalD))
                 solicitud.TotalDias = totalD;
 
-            // Fechas
-            if (DateOnly.TryParseExact(FechaInicio, "yyyy-MM-dd",
-                System.Globalization.CultureInfo.InvariantCulture,
-                System.Globalization.DateTimeStyles.None, out var fi))
+            if (DateOnly.TryParseExact(FechaInicio, "yyyy-MM-dd", CultureInfo.InvariantCulture, DateTimeStyles.None, out var fi))
                 solicitud.FechaInicio = fi;
 
-            if (DateOnly.TryParseExact(FechaFin, "yyyy-MM-dd",
-                System.Globalization.CultureInfo.InvariantCulture,
-                System.Globalization.DateTimeStyles.None, out var ff))
+            if (DateOnly.TryParseExact(FechaFin, "yyyy-MM-dd", CultureInfo.InvariantCulture, DateTimeStyles.None, out var ff))
                 solicitud.FechaFin = ff;
 
-            // Archivo Anexo
             if (archivoAnexo != null && archivoAnexo.Length > 0)
             {
                 if (Path.GetExtension(archivoAnexo.FileName).ToLower() != ".pdf")
@@ -712,8 +694,8 @@ namespace Farmacol.Controllers
                 return RedirectToAction(nameof(Editar), new { id });
             }
 
-            // Re-inicializar flujo y guardar
-            solicitud = await _flujo.InicializarFlujo(solicitud, personal);
+            bool esSST = User.IsInRole("SST");
+            solicitud = await _flujo.InicializarFlujo(solicitud, personal, esSST);
 
             _context.Update(solicitud);
             await _context.SaveChangesAsync();
@@ -733,7 +715,6 @@ namespace Farmacol.Controllers
             return RedirectToAction(nameof(Index));
         }
 
-        // ── FINALIZAR DEVUELTA ────────────────────────────────────────────
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> FinalizarDevuelta(int id)
@@ -748,7 +729,6 @@ namespace Farmacol.Controllers
             return RedirectToAction(nameof(Index));
         }
 
-        // ── DETAILS ───────────────────────────────────────────────────────
         public async Task<IActionResult> Details(int? id)
         {
             if (id == null) return NotFound();
@@ -775,7 +755,6 @@ namespace Farmacol.Controllers
             return View(solicitud);
         }
 
-        // ── EDIT (admin) ──────────────────────────────────────────────────
         public async Task<IActionResult> Edit(int? id)
         {
             if (id == null) return NotFound();
@@ -812,7 +791,6 @@ namespace Farmacol.Controllers
             return View(tbsolicitude);
         }
 
-        // ── DELETE ────────────────────────────────────────────────────────
         public async Task<IActionResult> Delete(int? id)
         {
             if (id == null) return NotFound();
@@ -831,28 +809,37 @@ namespace Farmacol.Controllers
             return RedirectToAction(nameof(Index));
         }
 
-        // ── NOTIFICACIONES ────────────────────────────────────────────────
         [HttpGet]
         public async Task<IActionResult> ContarNotificaciones()
         {
             var (userName, email) = await ObtenerIdentidad();
-            var count = await _context.Tbnotificaciones
-                .CountAsync(n => !n.Leida &&
-                                 (n.UsuarioDestino == userName || n.UsuarioDestino == email));
-            return Json(count);
+            var notifs = await _context.Tbnotificaciones
+                .Where(n => !n.Leida && (n.UsuarioDestino == userName || n.UsuarioDestino == email))
+                .ToListAsync();
+            var distinctCount = notifs
+                .GroupBy(n => new { n.Mensaje, n.IdSolicitud })
+                .Count();
+            return Json(distinctCount);
         }
 
         [HttpGet]
         public async Task<IActionResult> ObtenerNotificaciones()
         {
             var (userName, email) = await ObtenerIdentidad();
-            var notifs = await _context.Tbnotificaciones
+            var raw = await _context.Tbnotificaciones
                 .Where(n => n.UsuarioDestino == userName || n.UsuarioDestino == email)
                 .OrderByDescending(n => n.FechaCreacion)
+                .Take(40)
+                .ToListAsync();
+
+            var grouped = raw
+                .GroupBy(n => new { n.Mensaje, n.IdSolicitud })
+                .Select(g => g.OrderByDescending(x => x.FechaCreacion).First())
                 .Take(20)
                 .Select(n => new { n.IdNotificacion, n.Mensaje, n.Leida, n.IdSolicitud, n.FechaCreacion })
-                .ToListAsync();
-            return Json(notifs);
+                .ToList();
+
+            return Json(grouped);
         }
 
         [HttpPost]
@@ -868,7 +855,6 @@ namespace Farmacol.Controllers
             return Ok();
         }
 
-        // ── BUSCAR JEFE ───────────────────────────────────────────────────
         [HttpGet]
         public async Task<IActionResult> BuscarJefe(string q)
         {
@@ -880,7 +866,6 @@ namespace Farmacol.Controllers
             return Json(resultados);
         }
 
-        // ── NOTIFICAR APROBADOR ───────────────────────────────────────────
         private async Task NotificarAprobador(Tbsolicitude solicitud, int paso)
         {
             var cargo = paso == 1 ? solicitud.Paso1Aprobador

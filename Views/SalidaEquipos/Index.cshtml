@@ -1,49 +1,142 @@
 @model IEnumerable<Farmacol.Models.TbSalidaEquipos>
 @{
-    ViewData["Title"] = "Revisar salidas";
+    // Determinar el título basado en la acción actual
+    var esMisSalidas = ViewContext.RouteData.Values["action"]?.ToString() == "MisSalidasEquipos";
+    ViewData["Title"] = esMisSalidas ? "Mis Salidas de Equipos" : "Revisar Salidas";
 }
 
-<div class="container mt-4">
-    <div class="d-flex justify-content-between align-items-center mb-3">
-        <h2 class="mb-0">📋 Revisar Salidas de Equipos</h2>
-        <a asp-action="Create" asp-controller="SalidaEquipos" class="btn btn-sm btn-primary">➕ Nueva salida</a>
+<style>
+    .table-container { border-radius: 20px; overflow: hidden; background: white; }
+    .table thead th { 
+        background-color: #f8f9fa; 
+        border-bottom: 2px solid #edf2f7; 
+        color: #718096; 
+        font-size: 0.75rem; 
+        text-transform: uppercase; 
+        letter-spacing: 0.05em; 
+        padding: 1rem;
+    }
+    .table tbody td { padding: 1rem; border-bottom: 1px solid #edf2f7; vertical-align: middle; }
+    .tr-hover:hover { background-color: #f1f5f9 !important; cursor: pointer; }
+    .badge-status { font-size: 0.75rem; font-weight: 700; padding: 0.5em 1em; border-radius: 6px; border: 1px solid; }
+    .btn-action { border-radius: 8px; border: 1px solid #e2e8f0; background: white; transition: all 0.2s; }
+    .btn-action:hover { background: #edf2f7; transform: translateY(-1px); }
+</style>
+
+<div class="container mt-4 mb-5">
+    <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center mb-4 gap-3">
+        <div>
+            <h2 class="text-dark fw-bold mb-0">
+                @if (esMisSalidas)
+                {
+                    <i class="bi bi-person-badge me-2"></i>
+                    <span>Mis Salidas de Equipos</span>
+                }
+                else
+                {
+                    <i class="bi bi-clipboard-check me-2"></i>
+                    <span>Control de Salida de Equipos</span>
+                }
+            </h2>
+            <p class="text-muted mb-0">
+                @if (esMisSalidas)
+                {
+                    <span>📋 Solicitudes creadas por ti</span>
+                }
+                else
+                {
+                    <span>🔧 Gestión de activos corporativos</span>
+                }
+                <span class="badge bg-primary-subtle text-primary ms-2">@Model?.Count() registros</span>
+            </p>
+        </div>
+        
+        @if (!User.IsInRole("Vigilancia"))
+        {
+            <a asp-action="Create" asp-controller="SalidaEquipos" class="btn btn-primary shadow-sm px-4 fw-bold">
+                <i class="bi bi-plus-lg me-2"></i>Nueva Salida
+            </a>
+        }
     </div>
 
     @if (!Model?.Any() ?? true)
     {
-        <div class="alert alert-info">No hay salidas registradas.</div>
+        <div class="card border-0 shadow-sm p-5 text-center" style="border-radius: 20px;">
+            <i class="bi bi-archive display-1 text-muted opacity-25 mb-3"></i>
+            <h5 class="fw-bold">
+                @if (esMisSalidas)
+                {
+                    <span>No has creado ninguna salida</span>
+                }
+                else
+                {
+                    <span>Bandeja vacía</span>
+                }
+            </h5>
+            <p class="text-muted">
+                @if (esMisSalidas && !User.IsInRole("Vigilancia"))
+                {
+                    <span>Haz clic en "Nueva Salida" para registrar la salida de un equipo.</span>
+                }
+                else if (!esMisSalidas)
+                {
+                    <span>No se han encontrado solicitudes registradas actualmente.</span>
+                }
+                else
+                {
+                    <span>No hay registros disponibles.</span>
+                }
+            </p>
+        </div>
     }
     else
     {
-        <div class="card border-0 shadow-sm">
+        <div class="table-container shadow-sm">
             <div class="table-responsive">
-                <table class="table table-hover align-middle mb-0 small">
-                    <thead class="table-dark">
+                <table class="table table-hover mb-0">
+                    <thead>
                         <tr>
-                            <th>ID</th>
+                            <th class="ps-4">ID</th>
                             <th>Solicitante</th>
-                            <th>Área</th>
-                            <th>Fecha registro</th>
-                            <th>Estado</th>
-                            <th class="text-end">Acciones</th>
+                            <th>Área / Departamento</th>
+                            <th>Fecha Registro</th>
+                            <th class="text-center">Estado</th>
+                            <th class="text-end pe-4">Acciones</th>
                         </tr>
                     </thead>
                     <tbody>
                         @foreach (var item in Model)
                         {
-                            <tr>
-                                <td>@item.Id</td>
-                                <td>@item.Solicitante</td>
-                                <td>@item.Area</td>
-                                <td>@(item.FechaRegistro.HasValue ? item.FechaRegistro.Value.ToString("dd MMM, yyyy") : "-")</td>
-                                <td>@(item.Estado ?? "-")</td>
-                                <td class="text-end">
-                                    @* Only show Revisar link to roles that can access it *@
-                                    @if (User.IsInRole("Gerente") || User.IsInRole("Jefe") || User.IsInRole("RRHH") || User.IsInRole("Administrador") || User.IsInRole("Gerente Capital Humano"))
-                                    {
-                                        <a asp-action="Revisar" asp-route-id="@item.Id" class="btn btn-sm btn-outline-primary">Revisar</a>
-                                    }
-                                    <a asp-action="Create" asp-controller="SalidaEquipos" class="btn btn-sm btn-outline-secondary ms-2">Duplicar</a>
+                            string badgeStyle = item.Estado switch
+                            {
+                                "Aprobado" => "bg-success-subtle text-success border-success-subtle",
+                                "Aprobada" => "bg-success-subtle text-success border-success-subtle",
+                                "Rechazado" => "bg-danger-subtle text-danger border-danger-subtle",
+                                "Rechazada" => "bg-danger-subtle text-danger border-danger-subtle",
+                                _ => "bg-warning-subtle text-warning-emphasis border-warning-subtle"
+                            };
+
+                            <tr class="tr-hover">
+                                <td class="ps-4 fw-bold text-primary">#@item.Id</td>
+                                <td class="fw-bold text-dark">@item.Solicitante</td>
+                                <td><span class="text-muted">@item.Area</span></td>
+                                <td>
+                                    <div class="small text-dark">
+                                        <i class="bi bi-calendar-event me-1 text-muted"></i>
+                                        @(item.FechaRegistro?.ToString("dd MMM, yyyy") ?? "-")
+                                    </div>
+                                </td>
+                                <td class="text-center">
+                                    <span class="badge-status @badgeStyle">
+                                        @item.Estado?.ToUpper()
+                                    </span>
+                                </td>
+                                <td class="pe-4 text-end">
+                                    <div class="btn-group gap-2">
+                                        <a href="/SalidaEquipos/Revisar?id=@item.Id" class="btn btn-action btn-sm px-3 text-primary fw-bold" title="Ver">
+                                            <i class="bi bi-eye me-1"></i> Ver
+                                        </a>
+                                    </div>
                                 </td>
                             </tr>
                         }

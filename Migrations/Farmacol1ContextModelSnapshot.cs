@@ -567,6 +567,140 @@ namespace Farmacol.Migrations
                     b.ToTable("TbSalidaEquipos");
                 });
 
+            modelBuilder.Entity("Farmacol.Models.TbSalidaEquiposHistorico", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Accion")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime>("Fecha")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("Observacion")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("SalidaId")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Usuario")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("TbSalidaEquiposHistoricos");
+                });
+
+            modelBuilder.Entity("Farmacol.Models.TbSolicitudTerceros", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("AprobadoPor")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Area")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("AreaDirigida")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Cargo")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("ContactoEmpresa")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("CursosEspeciales")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("DevueltoPor")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("DocumentacionSST")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("DocumentoTerceros")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("ElementoEPP")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Empresa")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("EquiposIngreso")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Estado")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime?>("FechaAprobacionSST")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime?>("FechaDevolucion")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime?>("FechaIngreso")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime?>("FechaRechazo")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateOnly?>("FechaRegistro")
+                        .HasColumnType("date");
+
+                    b.Property<string>("Identificacion")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("IngresoVehiculo")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("MotivoVisita")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("NombresTerceros")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("ObservacionEstado")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("PlacaVehiculo")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("PlanillaDePago")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("RechazadoPor")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("RequiereCursosEspeciales")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("RequiereEPP")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Solicitante")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("TipoDocumento")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("TbSolicitudTerceros");
+                });
+
             modelBuilder.Entity("Farmacol.Models.Tbarea", b =>
                 {
                     b.Property<int>("IdArea")

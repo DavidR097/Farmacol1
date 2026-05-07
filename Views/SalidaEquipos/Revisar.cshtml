@@ -4,177 +4,214 @@
 @{
     ViewData["Title"] = "Revisión de Salida";
     
-    // Lógica para determinar el color del estado actual
+    // 1. Definición de variables de estado
     string badgeClass = Model.Estado switch
     {
-        "Aprobado" => "bg-success",
-        "Rechazado" => "bg-danger",
+        "Aprobada" or "Aprobado" => "bg-success",
+        "Rechazada" or "Rechazado" => "bg-danger",
         _ => "bg-warning text-dark"
     };
+
+    // 2. Lógica para determinar el flujo (Normal vs Corto)
+    // Se extrae una sola vez para evitar el error CS0128
+    string etapaTexto = Model.EtapaAprobacion ?? "";
+    string estadoActual = Model.Estado ?? "";
+    
+    // Es flujo corto si no requiere firma de Gerente de Área
+    bool esFlujoCorto = string.IsNullOrEmpty(Model.AprobacionGerencia) && 
+                       (etapaTexto.Contains("Capital Humano") || estadoActual == "Aprobada" || estadoActual == "Finalizada");
 }
 
+<style>
+    .detail-section { margin-bottom: 2rem; }
+    .detail-section-title { 
+        font-weight: 700; 
+        font-size: 0.9rem; 
+        text-transform: uppercase; 
+        letter-spacing: 1px; 
+        margin-bottom: 1.25rem; 
+        border-bottom: 2px solid currentColor; 
+        display: inline-block; 
+        padding-bottom: 3px;
+    }
+    .detail-grid { 
+        display: grid; 
+        grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); 
+        gap: 1.5rem; 
+    }
+    .stepper-icon {
+        width: 45px;
+        height: 45px;
+        font-weight: bold;
+        transition: all 0.3s ease;
+        z-index: 2;
+    }
+    .card { transition: transform 0.2s ease; border-radius: 15px; }
+    .x-small { font-size: 0.7rem; }
+</style>
+
 <div class="container mt-4 mb-5">
-    <div class="row">
-        <div class="col-lg-10 mx-auto">
-            
-            <!-- Encabezado Principal -->
-            <div class="d-flex align-items-center justify-content-between mb-4">
-                <div>
-                    <h2 class="fw-bold mb-0">Revisión de Solicitud <span class="text-primary">@Model.Id</span></h2>
-                    <p class="text-muted">Gestión de activos y salidas de seguridad</p>
-                </div>
-                <span class="badge @badgeClass fs-6 px-3 py-2 shadow-sm">@Model.Estado</span>
+    <div class="col-lg-10 mx-auto">
+        
+        <!-- Botón Volver -->
+        <div class="mb-3">
+            <a asp-action="Index" class="btn btn-outline-secondary btn-sm shadow-sm">
+                <i class="bi bi-arrow-left"></i> Volver al listado
+            </a>
+        </div>
+
+        <!-- Encabezado Principal -->
+        <div class="d-flex align-items-center justify-content-between mb-4">
+            <div>
+                <h2 class="fw-bold mb-0">Revisión de Solicitud <span class="text-primary">#@Model.Id</span></h2>
+                <p class="text-muted">Gestión de activos y salidas de seguridad</p>
             </div>
+            <span class="badge @badgeClass fs-6 px-4 py-2 rounded-pill shadow-sm">@Model.Estado</span>
+        </div>
 
-            <!-- STEPPER: Flujo de Aprobación Visual -->
-            <div class="card border-0 shadow-sm mb-4" style="border-radius: 15px;">
-                <div class="card-body p-4">
-                    <div class="d-flex justify-content-between position-relative">
-                        <!-- Línea de fondo del stepper -->
-                        <div class="position-absolute top-50 start-0 end-0 border-top" style="z-index: 0; transform: translateY(-50%);"></div>
-                        
-                        <div class="text-center position-relative bg-white px-2" style="z-index: 1;">
-                            <div class="rounded-circle @(Model.Estado != "Pendiente" || Model.EtapaAprobacion.Contains("Gerente de Área") ? "bg-primary text-white" : "bg-light") d-flex align-items-center justify-content-center mx-auto mb-2 shadow-sm" style="width:40px; height:40px;">1</div>
-                            <small class="fw-bold d-block">Gerente de Área</small>
-                            <small class="text-muted">@(Model.AprobacionGerencia ?? "Pendiente")</small>
+        <!-- STEPPER CORREGIDO -->
+        <div class="card border-0 shadow-sm mb-4">
+            <div class="card-body p-4">
+                <div class="d-flex justify-content-between position-relative">
+                    <!-- Línea de fondo del stepper -->
+                    <div class="position-absolute top-50 start-0 end-0 border-top" style="z-index: 0; transform: translateY(-100%); opacity: 0.5;"></div>
+                    
+                    @if (!esFlujoCorto)
+                    {
+                        <!-- Paso 1: Gerente de Área -->
+                        <div class="text-center" style="flex: 1; z-index: 1;">
+                            <div class="stepper-icon mx-auto rounded-circle d-flex align-items-center justify-content-center 
+                                 @(Model.FechaAprobacionGerencia != null ? "bg-primary text-white" : "bg-light text-muted border")">
+                                @if (Model.FechaAprobacionGerencia != null) { <i class="bi bi-check-lg"></i> } else { <span>1</span> }
+                            </div>
+                            <div class="mt-2 small fw-bold">Gerente de Área</div>
+                            <div class="text-muted x-small">
+                                @(Model.AprobacionGerencia ?? "Pendiente")
+                            </div>
                         </div>
+                    }
 
-                        <div class="text-center position-relative bg-white px-2" style="z-index: 1;">
-                            <div class="rounded-circle @(Model.EtapaAprobacion.Contains("CH") || Model.Estado == "Aprobado" ? "bg-primary text-white" : "bg-light") d-flex align-items-center justify-content-center mx-auto mb-2 shadow-sm" style="width:40px; height:40px;">2</div>
-                            <small class="fw-bold d-block">Capital Humano</small>
-                            <small class="text-muted">@(Model.AprobacionCH ?? "Pendiente")</small>
+                    <!-- Paso 2: Capital Humano (O paso 1 en flujo corto) -->
+                    <div class="text-center" style="flex: 1; z-index: 1;">
+                        <div class="stepper-icon mx-auto rounded-circle d-flex align-items-center justify-content-center 
+                             @(Model.FechaAprobacionCH != null ? "bg-primary text-white" : (etapaTexto.Contains("Capital Humano") ? "bg-warning text-white" : "bg-light text-muted border"))">
+                            @if (Model.FechaAprobacionCH != null) { <i class="bi bi-check-lg"></i> } else { <span>@(esFlujoCorto ? "1" : "2")</span> }
                         </div>
+                        <div class="mt-2 small fw-bold">Capital Humano</div>
+                        <div class="text-muted x-small">
+                            @(Model.AprobacionCH ?? (etapaTexto.Contains("Capital Humano") ? "En revisión" : "Pendiente"))
+                        </div>
+                    </div>
 
-                        <div class="text-center position-relative bg-white px-2" style="z-index: 1;">
-                            <div class="rounded-circle @(Model.Estado == "Aprobado" ? "bg-success text-white" : "bg-light") d-flex align-items-center justify-content-center mx-auto mb-2 shadow-sm" style="width:40px; height:40px;">3</div>
-                            <small class="fw-bold d-block">Finalizado</small>
-                            <small class="text-muted">Salida Autorizada</small>
+                    <!-- Paso Final -->
+                    <div class="text-center" style="flex: 1; z-index: 1;">
+                        <div class="stepper-icon mx-auto rounded-circle d-flex align-items-center justify-content-center 
+                             @(estadoActual == "Aprobada" || estadoActual == "Finalizada" ? "bg-success text-white" : "bg-light text-muted border")">
+                            <i class="bi bi-flag-fill"></i>
+                        </div>
+                        <div class="mt-2 small fw-bold">Finalizado</div>
+                        <div class="text-muted x-small">
+                            @(estadoActual == "Aprobada" ? "Autorizado" : "En proceso")
                         </div>
                     </div>
                 </div>
             </div>
+        </div>
 
-            <div class="card border-0 shadow-sm overflow-hidden" style="border-radius: 20px;">
-                <!-- Información del Solicitante -->
-                <div class="card-header bg-white border-bottom p-4">
-                    <div class="row align-items-center">
-                        <div class="col-auto">
-                            <div class="bg-primary-subtle text-primary rounded-circle d-flex align-items-center justify-content-center" style="width:55px; height:55px;">
-                                <i class="bi bi-person-badge fs-3"></i>
-                            </div>
+        <!-- Contenido de la Solicitud -->
+        <div class="card border-0 shadow-sm overflow-hidden">
+            <div class="card-header bg-white border-bottom p-4">
+                <div class="row align-items-center">
+                    <div class="col-auto">
+                        <div class="bg-primary-subtle text-primary rounded-circle d-flex align-items-center justify-content-center" style="width:60px; height:60px;">
+                            <i class="bi bi-person-vcard fs-3"></i>
                         </div>
-                        <div class="col">
-                            <h5 class="mb-0 fw-bold">@Model.Solicitante</h5>
-                            <span class="text-muted small text-uppercase">@Model.Area</span>
-                        </div>
-                        <div class="col-md-3 text-md-end mt-3 mt-md-0">
+                    </div>
+                    <div class="col">
+                        <h5 class="mb-0 fw-bold text-dark">@Model.Solicitante</h5>
+                        <span class="badge bg-light text-primary border border-primary-subtle">@Model.Area</span>
+                    </div>
+                    <div class="col-md-3 text-md-end mt-3 mt-md-0">
                         <div class="text-muted small">Fecha Registro</div>
-                            <div class="fw-bold">@(Model.FechaRegistro.HasValue ? Model.FechaRegistro.Value.ToString("dd MMM, yyyy") : "")</div>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="card-body p-4 p-md-5">
-                    <!-- DETALLES DEL EQUIPO -->
-                    <div class="detail-section">
-                        <div class="detail-section-title text-primary">Especificaciones Técnicas</div>
-                        <div class="detail-grid">
-                            @field("Elemento", Model.Elemento)
-                            @field("Serie / Código", Model.CódigoSerie)
-                            @field("Cantidad", Model.Cantidad)
-                            @field("Descripción", Model.Descripcion)
-                        </div>
-                    </div>
-
-                    <!-- LOGÍSTICA -->
-                    <div class="detail-section">
-                        <div class="detail-section-title text-success">Plan de Salida y Retorno</div>
-                        <div class="detail-grid">
-                            @field("Motivo", Model.MotivoSalida)
-                            @field("Destino", Model.Destino)
-                            @field("Fecha de Salida", Model.FechaSalida)
-                            @field("Retorno Obligatorio", Model.DebeRegresar)
-                            @if (Model.DebeRegresar == "Sí")
-                            {
-                                @field("Fecha de Regreso", Model.FechaRegreso)
-                            }
-                        </div>
-                    </div>
-
-                    <!-- OBSERVACIONES -->
-                    <div class="detail-section mb-5">
-                        <div class="detail-section-title text-secondary">Notas del Solicitante</div>
-                        <div class="p-3 bg-light rounded-3 border-start border-4 border-secondary">
-                            <p class="mb-0 italic text-dark">@(string.IsNullOrEmpty(Model.Observacion) ? "No se registraron observaciones adicionales." : Model.Observacion)</p>
-                        </div>
-                    </div>
-
-                    <!-- SECCIÓN DE ACCIONES (SOLO SI ESTÁ PENDIENTE) -->
-                    @if (Model.Estado == "Pendiente")
-                    {
-                        <div class="card border-primary shadow-sm mt-4" style="border-radius: 15px; background-color: #f8f9ff;">
-                            <div class="card-body p-4">
-                                <h5 class="fw-bold text-primary mb-3"><i class="bi bi-shield-check me-2"></i>Módulo de Aprobación</h5>
-                                <p class="small text-muted">Como responsable de la etapa <strong>@Model.EtapaAprobacion</strong>, su decisión quedará registrada en el historial de la solicitud.</p>
-                                
-                                <form asp-action="ProcesarAprobacion" method="post">
-                                    @Html.AntiForgeryToken()
-                                    <input type="hidden" name="id" value="@Model.Id" />
-                                    
-                                    <div class="mb-3">
-                                        <label class="form-label fw-bold">Observaciones de la Revisión</label>
-                                        <textarea name="observacionesEstado" class="form-control"></textarea>
-                                    </div>
-
-                                    <div class="d-flex flex-wrap gap-2 justify-content-end">
-                                        <button type="submit" name="decision" value="Rechazar" class="btn btn-outline-danger px-4 py-2 fw-bold">
-                                            <i class="bi bi-x-lg me-2"></i>Rechazar
-                                        </button>
-                                        <button type="submit" name="decision" value="Aprobar" class="btn btn-primary px-5 py-2 fw-bold shadow-sm">
-                                            <i class="bi bi-check-lg me-2"></i>Aprobar Solicitud
-                                        </button>
-                                    </div>
-                                </form>
-                            </div>
-                        </div>
-                    }
-                    else
-                    {
-                        <!-- FOOTER DE ESTADO FINALIZADO -->
-                        <div class="alert alert-secondary border-0 rounded-4 p-4 mt-4">
-                            <div class="d-flex align-items-center gap-3">
-                                <i class="bi bi-info-square-fill fs-3"></i>
-                                <div>
-                                    <h6 class="fw-bold mb-1">Comentarios de Revisión Final</h6>
-                                    <p class="mb-0 small">@Model.ObservacionEstado</p>
-                                </div>
-                            </div>
-                        </div>
-                    }
-
-                    <!-- Historial de aprobaciones -->
-                    <div class="detail-section mt-4">
-                        <div class="detail-section-title text-muted">Historial de Aprobaciones</div>
-                        <div class="detail-grid">
-                            <div>
-                                <div class="detail-field-label small text-muted">Aprobación Gerente de Área</div>
-                                <div class="detail-field-val">@(!string.IsNullOrEmpty(Model.AprobacionGerencia) ? Model.AprobacionGerencia : "—")</div>
-                                <div class="text-muted small">@((Model.FechaAprobacionGerencia.HasValue) ? Model.FechaAprobacionGerencia.Value.ToString("dd/MM/yyyy HH:mm") : "")</div>
-                            </div>
-                            <div>
-                                <div class="detail-field-label small text-muted">Aprobación Gerente CH</div>
-                                <div class="detail-field-val">@(!string.IsNullOrEmpty(Model.AprobacionCH) ? Model.AprobacionCH : "—")</div>
-                                <div class="text-muted small">@((Model.FechaAprobacionCH.HasValue) ? Model.FechaAprobacionCH.Value.ToString("dd/MM/yyyy HH:mm") : "")</div>
-                            </div>
-                        </div>
+                        <div class="fw-bold text-dark">@(Model.FechaRegistro?.ToString("dd MMM, yyyy") ?? "—")</div>
                     </div>
                 </div>
             </div>
-            
-            <div class="text-center mt-4">
-                <a asp-action="Index" class="btn btn-link text-decoration-none text-muted">
-                    <i class="bi bi-arrow-left me-1"></i> Regresar al listado de solicitudes
-                </a>
+
+            <div class="card-body p-4 p-md-5">
+                <div class="detail-section">
+                    <div class="detail-section-title text-primary">Especificaciones Técnicas</div>
+                    <div class="detail-grid">
+                        @field("Elemento", Model.Elemento)
+                        @field("Serie / Código", Model.CódigoSerie)
+                        @field("Cantidad", Model.Cantidad)
+                        @field("Descripción", Model.Descripcion)
+                    </div>
+                </div>
+
+                <div class="detail-section">
+                    <div class="detail-section-title text-success">Plan de Salida y Retorno</div>
+                    <div class="detail-grid">
+                        @field("Motivo", Model.MotivoSalida)
+                        @field("Destino", Model.Destino)
+                        @field("Fecha de Salida", Model.FechaSalida)
+                        @field("Retorno Obligatorio", Model.DebeRegresar)
+                        @if (Model.DebeRegresar == "Sí") { @field("Fecha de Regreso", Model.FechaRegreso) }
+                    </div>
+                </div>
+
+                <div class="detail-section mb-5">
+                    <div class="detail-section-title text-secondary">Notas del Solicitante</div>
+                    <div class="p-3 bg-light rounded-3 border-start border-4 border-secondary shadow-sm">
+                        <p class="mb-0 fst-italic text-dark">@(string.IsNullOrEmpty(Model.Observacion) ? "Sin observaciones." : Model.Observacion)</p>
+                    </div>
+                </div>
+
+                <!-- Módulo de Aprobación -->
+                @if ((Model.Estado == "Pendiente" || Model.Estado == "En proceso") && (ViewBag.CanProcess ?? false))
+                {
+                    <div class="card border-0 shadow-sm mt-4" style="background-color: #f0f4ff;">
+                        <div class="card-body p-4">
+                            <h5 class="fw-bold text-primary mb-3"><i class="bi bi-shield-lock me-2"></i>Módulo de Aprobación</h5>
+                            <form asp-action="ProcesarAprobacion" method="post">
+                                @Html.AntiForgeryToken()
+                                <input type="hidden" name="id" value="@Model.Id" />
+                                <div class="mb-3">
+                                    <label class="form-label fw-bold small text-uppercase">Comentarios de Revisión</label>
+                                    <textarea name="observacionesEstado" class="form-control border-0 shadow-sm" rows="3" placeholder="Opcional..."></textarea>
+                                </div>
+                                <div class="d-flex flex-wrap gap-2 justify-content-end">
+                                    <button type="submit" name="decision" value="Rechazar" class="btn btn-outline-danger px-4 fw-bold">Rechazar</button>
+                                    <button type="submit" name="decision" value="Aprobar" class="btn btn-primary px-5 fw-bold shadow">Aprobar Solicitud</button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                }
+                else if (Model.Estado != "Pendiente" && Model.Estado != "En proceso")
+                {
+                    <div class="alert alert-light border shadow-sm rounded-4 p-4 mt-4">
+                        <h6 class="fw-bold mb-1"><i class="bi bi-chat-left-dots me-2 text-primary"></i>Comentarios de Revisión Final</h6>
+                        <p class="mb-0 text-dark">@(Model.ObservacionEstado ?? "Sin comentarios adicionales.")</p>
+                    </div>
+                }
+
+                <!-- Trazabilidad -->
+                <div class="detail-section mt-5 pt-4 border-top">
+                    <div class="detail-section-title text-muted">Trazabilidad de Firmas</div>
+                    <div class="detail-grid">
+                        <div>
+                            <div class="small text-muted fw-bold text-uppercase">G. Área</div>
+                            <div class="fw-medium">@(Model.AprobacionGerencia ?? "N/A")</div>
+                            <div class="text-muted x-small">@Model.FechaAprobacionGerencia?.ToString("g")</div>
+                        </div>
+                        <div>
+                            <div class="small text-muted fw-bold text-uppercase">G. Capital Humano</div>
+                            <div class="fw-medium">@(Model.AprobacionCH ?? "Pendiente")</div>
+                            <div class="text-muted x-small">@Model.FechaAprobacionCH?.ToString("g")</div>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
@@ -183,16 +220,17 @@
 @functions {
     IHtmlContent field(string label, object? val)
     {
-        string text = "";
-        if (val == null) text = "N/A";
-        else if (val is DateOnly d) text = d.ToString("dd MMM, yyyy");
-        else if (val is DateTime dt) text = dt.ToString("dd MMM, yyyy");
-        else text = val.ToString() ?? "";
+        string text = val switch {
+            null => "N/A",
+            DateOnly d => d.ToString("dd MMM, yyyy"),
+            DateTime dt => dt.ToString("dd MMM, yyyy"),
+            _ => val.ToString() ?? ""
+        };
 
         return Html.Raw($@"
-            <div class='mb-3'>
-                <div class='detail-field-label fw-bold text-muted small text-uppercase' style='letter-spacing: 0.5px;'>{label}</div>
-                <div class='detail-field-val fw-medium' style='color:#333; font-size: 1.05rem;'>{text}</div>
+            <div class='mb-2'>
+                <div class='text-muted small fw-bold text-uppercase' style='font-size: 0.7rem;'>{label}</div>
+                <div class='fw-semibold text-dark' style='font-size: 1rem;'>{text}</div>
             </div>");
     }
 }
