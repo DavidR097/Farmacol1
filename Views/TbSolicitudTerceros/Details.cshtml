@@ -96,99 +96,217 @@
         <div class="detail-header d-flex justify-content-between align-items-start">
             <div>
                 <span class="x-small text-muted mb-1 d-block">SOLICITUD #@Model.Id</span>
-                <h2 class="fw-bold mb-1" style="color: #111;">@Model.Empresa</h2>
-                <p class="text-muted mb-0 small"><i class="bi bi-geo-alt me-1"></i> Destino: @(Model.AreaDirigida ?? "No especificado")</p>
+                <h2 class="fw-bold mb-1" style="color: #111;">
+                    @(Model.TipoSolicitud == "Servicio Transporte" ? "Solicitud de Servicio de Transporte" : "Solicitud de Ingreso de Terceros")
+                </h2>
+                <p class="text-muted mb-0 small">
+                    <i class="bi bi-building me-1"></i> @(Model.Empresa ?? "Empresa no especificada")
+                </p>
             </div>
             <div class="text-end">
                 @{
                     var statusClass = Model.Estado?.ToLower() switch {
-                        "aprobado" => "status-aprobado",
-                        "rechazado" => "status-rechazado",
+                        "aprobada" => "status-aprobado",
+                        "rechazada" => "status-rechazado",
                         _ => "status-pendiente"
                     };
                 }
                 <span class="status-badge @statusClass">@(Model.Estado ?? "Pendiente")</span>
-                <p class="small text-muted mt-2 mb-0">@(Model.FechaIngreso?.ToString("dd MMM yyyy, hh:mm tt") ?? "-")</p>
+                <p class="small text-muted mt-2 mb-0">
+                    @(Model.FechaIngreso?.ToString("dd MMM yyyy, hh:mm tt") ?? Model.FechaRegistro?.ToString("dd MMM yyyy") ?? "-")
+                </p>
             </div>
         </div>
 
         <div class="card-body p-4">
-            <div class="row">
-                <div class="col-md-7 border-end">
-                    <div class="detail-section-title"><i class="bi bi-person-workspace me-2"></i>Información General</div>
-                    <div class="row">
-                        <div class="col-6">
-                            <div class="info-label">Solicitante</div>
-                            <div class="info-value">@Model.Solicitante</div>
+            @if (Model.TipoSolicitud == "Ingreso Terceros")
+            {
+                <!-- ========== INGRESO DE TERCEROS ========== -->
+                <div class="row">
+                    <div class="col-md-7 border-end">
+                        <div class="detail-section-title"><i class="bi bi-person-workspace me-2"></i>Información General</div>
+                        <div class="row">
+                            <div class="col-6">
+                                <div class="info-label">Solicitante</div>
+                                <div class="info-value">@Model.Solicitante</div>
+                            </div>
+                            <div class="col-6">
+                                <div class="info-label">Motivo de Visita</div>
+                                <div class="info-value">@Model.MotivoVisita</div>
+                            </div>
                         </div>
-                        <div class="col-6">
-                            <div class="info-label">Motivo de Visita</div>
-                            <div class="info-value">@Model.MotivoVisita</div>
-                        </div>
-                    </div>
 
-                    <div class="detail-section-title"><i class="bi bi-people me-2"></i>Personal Autorizado</div>
-                    <div class="mb-4">
-                        @if (!string.IsNullOrEmpty(Model.NombresTerceros))
-                        {
-                            foreach (var nombre in Model.NombresTerceros.Split(';'))
+                        <div class="detail-section-title"><i class="bi bi-people me-2"></i>Personal Autorizado</div>
+                        <div class="mb-4">
+                            @if (!string.IsNullOrEmpty(Model.NombresTerceros))
                             {
-                                <div class="list-item-custom">
-                                    <i class="bi bi-check-circle-fill text-success me-2" style="font-size: 14px;"></i> @nombre
-                                </div>
-                            }
-                        }
-                        else
-                        {
-                            <span class="text-muted italic">No se registraron nombres.</span>
-                        }
-                    </div>
-
-                    <div class="detail-section-title"><i class="bi bi-box-seam me-2"></i>Equipos y Herramientas</div>
-                    <div class="info-value">@(string.IsNullOrEmpty(Model.EquiposIngreso) ? "Ninguno registrado" : Model.EquiposIngreso)</div>
-                    
-                    @if(Model.IngresoVehiculo == "Sí") {
-                        <div class="info-label">Vehículo Autorizado</div>
-                        <div class="info-value"><span class="badge bg-dark">PLACA: @Model.PlacaVehiculo</span></div>
-                    }
-                </div>
-                
-                <div class="col-md-5">
-                    <div class="detail-section-title"><i class="bi bi-shield-check me-2"></i>Seguridad SST</div>
-                    
-                    <div class="info-label">Documentación</div>
-                    <div class="info-value">@Model.DocumentacionSST</div>
-
-                    @if(Model.DocumentacionSST == "Sí") {
-                        <div class="mt-2">
-                            @if(!string.IsNullOrEmpty(Model.PlanillaDePago)) {
-                                <a href="@Url.Content(Model.PlanillaDePago)" target="_blank" class="document-link">
-                                    <i class="bi bi-file-pdf text-danger me-2"></i> Planilla de Pago
-                                </a>
-                            }
-                        </div>
-                    }
-
-                    <div class="detail-section-title"><i class="bi bi-pci-card me-2"></i>EPP Requerido</div>
-                    <div class="row g-1">
-                        @if (!string.IsNullOrEmpty(Model.ElementoEPP))
-                        {
-                            foreach (var epp in Model.ElementoEPP.Split(';'))
-                            {
-                                <div class="col-6">
-                                    <div class="small bg-light p-2 rounded mb-1">
-                                        <i class="bi bi-shield-fill-check text-primary me-1"></i> @epp
+                                foreach (var nombre in Model.NombresTerceros.Split(';', StringSplitOptions.RemoveEmptyEntries))
+                                {
+                                    <div class="list-item-custom">
+                                        <i class="bi bi-check-circle-fill text-success me-2" style="font-size: 14px;"></i> @nombre.Trim()
                                     </div>
-                                </div>
+                                }
                             }
-                        }
-                        else
-                        {
-                            <div class="col-12 text-muted small">No requiere préstamo de EPP</div>
+                            else
+                            {
+                                <span class="text-muted italic">No se registraron nombres.</span>
+                            }
+                        </div>
+
+                        <div class="detail-section-title"><i class="bi bi-box-seam me-2"></i>Equipos y Herramientas</div>
+                        <div class="info-value">@(string.IsNullOrEmpty(Model.EquiposIngreso) ? "Ninguno registrado" : Model.EquiposIngreso)</div>
+                        
+                        @if(Model.IngresoVehiculo == "Sí") {
+                            <div class="info-label">Vehículo Autorizado</div>
+                            <div class="info-value"><span class="badge bg-dark">PLACA: @Model.PlacaVehiculo</span></div>
                         }
                     </div>
+                    
+                    <div class="col-md-5">
+                        <div class="detail-section-title"><i class="bi bi-shield-check me-2"></i>Seguridad SST</div>
+                        
+                        <div class="info-label">Documentación</div>
+                        <div class="info-value">@Model.DocumentacionSST</div>
+
+                        @if(Model.DocumentacionSST == "Sí") {
+                            <div class="mt-2">
+                                @if(!string.IsNullOrEmpty(Model.PlanillaDePago)) {
+                                    <a href="@Url.Content(Model.PlanillaDePago)" target="_blank" class="document-link">
+                                        <i class="bi bi-file-pdf text-danger me-2"></i> Planilla de Pago
+                                    </a>
+                                }
+                                @if(!string.IsNullOrEmpty(Model.Identificacion)) {
+                                    <a href="@Url.Content(Model.Identificacion)" target="_blank" class="document-link">
+                                        <i class="bi bi-file-pdf text-danger me-2"></i> Identificación del Tercero
+                                    </a>
+                                }
+                                @if(!string.IsNullOrEmpty(Model.CursosEspeciales)) {
+                                    <a href="@Url.Content(Model.CursosEspeciales)" target="_blank" class="document-link">
+                                        <i class="bi bi-file-pdf text-danger me-2"></i> Certificado de Cursos Especiales
+                                    </a>
+                                }
+                            </div>
+                        }
+
+                        <div class="detail-section-title"><i class="bi bi-pci-card me-2"></i>EPP Requerido</div>
+                        <div class="row g-1">
+                            @if (!string.IsNullOrEmpty(Model.ElementoEPP))
+                            {
+                                foreach (var epp in Model.ElementoEPP.Split(';', StringSplitOptions.RemoveEmptyEntries))
+                                {
+                                    <div class="col-6">
+                                        <div class="small bg-light p-2 rounded mb-1">
+                                            <i class="bi bi-shield-fill-check text-primary me-1"></i> @epp.Trim()
+                                        </div>
+                                    </div>
+                                }
+                            }
+                            else
+                            {
+                                <div class="col-12 text-muted small">No requiere préstamo de EPP</div>
+                            }
+                        </div>
+                    </div>
                 </div>
-            </div>
+            }
+            else if (Model.TipoSolicitud == "Servicio Transporte")
+            {
+                <div class="row">
+                    <div class="col-12">
+                        <div class="detail-section-title"><i class="bi bi-person-vcard me-2"></i>Documentación del Conductor</div>
+                        <div class="row mb-4">
+                            <div class="col-md-6">
+                                <div class="info-label">Nombre completo</div>
+                                <div class="info-value">@(Model.ConductorNombre ?? "No especificado")</div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="info-label">Licencia de conducción</div>
+                                @if(!string.IsNullOrEmpty(Model.ConductorLicenciaUrl)) {
+                                    <a href="@Url.Content(Model.ConductorLicenciaUrl)" target="_blank" class="document-link"><i class="bi bi-file-pdf text-danger me-2"></i> Ver PDF</a>
+                                } else { <span class="text-muted">No adjunto</span> }
+                            </div>
+                            <div class="col-md-6">
+                                <div class="info-label">Cédula de ciudadanía</div>
+                                @if(!string.IsNullOrEmpty(Model.ConductorCedulaUrl)) {
+                                    <a href="@Url.Content(Model.ConductorCedulaUrl)" target="_blank" class="document-link"><i class="bi bi-file-pdf text-danger me-2"></i> Ver PDF</a>
+                                } else { <span class="text-muted">No adjunto</span> }
+                            </div>
+                            <div class="col-md-6">
+                                <div class="info-label">Planilla aportes Seguridad Social</div>
+                                @if(!string.IsNullOrEmpty(Model.ConductorPlanillaSeguridadSocialUrl)) {
+                                    <a href="@Url.Content(Model.ConductorPlanillaSeguridadSocialUrl)" target="_blank" class="document-link"><i class="bi bi-file-pdf text-danger me-2"></i> Ver PDF</a>
+                                } else { <span class="text-muted">No adjunto</span> }
+                            </div>
+                            <div class="col-12">
+                                <div class="info-label">Formación en seguridad vial (último año)</div>
+                                @if(!string.IsNullOrEmpty(Model.ConductorFormacionVialUrl)) {
+                                    <a href="@Url.Content(Model.ConductorFormacionVialUrl)" target="_blank" class="document-link"><i class="bi bi-file-pdf text-danger me-2"></i> Ver PDF</a>
+                                } else { <span class="text-muted">No adjunto</span> }
+                            </div>
+                        </div>
+
+                        <div class="detail-section-title"><i class="bi bi-truck me-2"></i>Documentación del Vehículo</div>
+                        <div class="row mb-4">
+                            <div class="col-md-6">
+                                <div class="info-label">Licencia de tránsito (Tarjeta propiedad)</div>
+                                @if(!string.IsNullOrEmpty(Model.VehiculoLicenciaTransitoUrl)) {
+                                    <a href="@Url.Content(Model.VehiculoLicenciaTransitoUrl)" target="_blank" class="document-link"><i class="bi bi-file-pdf text-danger me-2"></i> Ver PDF</a>
+                                } else { <span class="text-muted">No adjunto</span> }
+                            </div>
+                            <div class="col-md-6">
+                                <div class="info-label">SOAT vigente</div>
+                                @if(!string.IsNullOrEmpty(Model.VehiculoSOATUrl)) {
+                                    <a href="@Url.Content(Model.VehiculoSOATUrl)" target="_blank" class="document-link"><i class="bi bi-file-pdf text-danger me-2"></i> Ver PDF</a>
+                                } else { <span class="text-muted">No adjunto</span> }
+                            </div>
+                            <div class="col-md-6">
+                                <div class="info-label">RTM y gases vigente</div>
+                                @if(!string.IsNullOrEmpty(Model.VehiculoRTMUrl)) {
+                                    <a href="@Url.Content(Model.VehiculoRTMUrl)" target="_blank" class="document-link"><i class="bi bi-file-pdf text-danger me-2"></i> Ver PDF</a>
+                                } else { <span class="text-muted">No adjunto</span> }
+                            </div>
+                            <div class="col-md-6">
+                                <div class="info-label">Pólizas RC Contractual y Extracontractual</div>
+                                @if(!string.IsNullOrEmpty(Model.VehiculoPolizasUrl)) {
+                                    <a href="@Url.Content(Model.VehiculoPolizasUrl)" target="_blank" class="document-link"><i class="bi bi-file-pdf text-danger me-2"></i> Ver PDF</a>
+                                } else { <span class="text-muted">No adjunto</span> }
+                            </div>
+                            <div class="col-md-6">
+                                <div class="info-label">Plan de mantenimiento</div>
+                                @if(!string.IsNullOrEmpty(Model.VehiculoPlanMantenimientoUrl)) {
+                                    <a href="@Url.Content(Model.VehiculoPlanMantenimientoUrl)" target="_blank" class="document-link"><i class="bi bi-file-pdf text-danger me-2"></i> Ver PDF</a>
+                                } else { <span class="text-muted">No adjunto</span> }
+                            </div>
+                            <div class="col-md-6">
+                                <div class="info-label">Inspecciones preoperacionales</div>
+                                @if(!string.IsNullOrEmpty(Model.VehiculoInspeccionesUrl)) {
+                                    <a href="@Url.Content(Model.VehiculoInspeccionesUrl)" target="_blank" class="document-link"><i class="bi bi-file-pdf text-danger me-2"></i> Ver PDF</a>
+                                } else { <span class="text-muted">No adjunto</span> }
+                            </div>
+                        </div>
+
+                        <div class="detail-section-title"><i class="bi bi-building me-2"></i>Documentación de la Empresa Transportadora</div>
+                        <div class="row mb-4">
+                            <div class="col-md-6">
+                                <div class="info-label">Habilitación Ministerio de Transporte</div>
+                                @if(!string.IsNullOrEmpty(Model.EmpresaHabilitacionMTUrl)) {
+                                    <a href="@Url.Content(Model.EmpresaHabilitacionMTUrl)" target="_blank" class="document-link"><i class="bi bi-file-pdf text-danger me-2"></i> Ver PDF</a>
+                                } else { <span class="text-muted">No adjunto</span> }
+                            </div>
+                            <div class="col-md-6">
+                                <div class="info-label">Reporte autogestión PESV</div>
+                                @if(!string.IsNullOrEmpty(Model.EmpresaReportePESVUrl)) {
+                                    <a href="@Url.Content(Model.EmpresaReportePESVUrl)" target="_blank" class="document-link"><i class="bi bi-file-pdf text-danger me-2"></i> Ver PDF</a>
+                                } else { <span class="text-muted">No adjunto</span> }
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            }
+            else
+            {
+                <div class="alert alert-warning">Tipo de solicitud no reconocido.</div>
+            }
         </div>
     </div>
 </div>

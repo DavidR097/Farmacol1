@@ -51,7 +51,19 @@ public async Task<IActionResult> Create(
     TbSolicitudTerceros model,
     IFormFile? archivoPlanilla,
     IFormFile? archivoIdentificacion,
-    IFormFile? archivoCursos)
+    IFormFile? archivoCursos,
+    IFormFile? archivoLicencia,
+    IFormFile? archivoCedulaConductor,
+    IFormFile? archivoPlanillaSeguridadSocialConductor,
+    IFormFile? archivoFormacionVial,
+    IFormFile? archivoLicenciaTransito,
+    IFormFile? archivoSOAT,
+    IFormFile? archivoRTM,
+    IFormFile? archivoPolizas,
+    IFormFile? archivoPlanMantenimiento,
+    IFormFile? archivoInspecciones,
+    IFormFile? archivoHabilitacionMT,
+    IFormFile? archivoReportePESV)
 {
     if (User.IsInRole("Vigilancia")) return Forbid();
 
@@ -62,41 +74,77 @@ public async Task<IActionResult> Create(
         return View(model);
     }
 
-    // Asignar datos del solicitante
-    model.Solicitante = personal.NombreColaborador;
-    model.Cargo = personal.Cargo;
-    model.Area = personal.Area;
+    // Datos base
+    model.Solicitante   = personal.NombreColaborador;
+    model.Cargo         = personal.Cargo;
+    model.Area          = personal.Area;
     model.FechaRegistro = DateOnly.FromDateTime(DateTime.Now);
 
-    // Capturar nombres de terceros
-    var nombresForm = Request.Form["NombresTerceros[]"].ToArray();
-    if (nombresForm.Any())
-        model.NombresTerceros = string.Join(";", nombresForm.Where(x => !string.IsNullOrWhiteSpace(x)));
+    // ✅ Leer TipoSolicitud explícitamente
+    model.TipoSolicitud = Request.Form["TipoSolicitud"].ToString();
 
-    // Capturar toggles
-    model.DocumentacionSST = Request.Form["DocumentacionSST"].ToString();
-    model.RequiereCursosEspeciales = Request.Form["RequiereCursosEspeciales"].ToString();
-    model.RequiereEPP = Request.Form["RequiereEPP"].ToString();
-
-    // Elementos EPP
-    var eppSeleccionados = Request.Form["eppItems"].ToList();
-    if (eppSeleccionados.Any())
-        model.ElementoEPP = string.Join(";", eppSeleccionados);
-
-    // Vehículo
-    model.IngresoVehiculo = Request.Form["IngresoVehiculo"].ToString();
-    model.PlacaVehiculo = Request.Form["PlacaVehiculo"].ToString();
-
-    // Subir archivos (solo si el toggle correspondiente es "Sí")
-    if (model.DocumentacionSST == "Sí")
+    if (model.TipoSolicitud == "Ingreso Terceros")
     {
-        model.PlanillaDePago = await GuardarArchivo(archivoPlanilla, "planilla");
-        model.Identificacion = await GuardarArchivo(archivoIdentificacion, "identificacion");
+        var nombresForm = Request.Form["NombresTerceros[]"].ToArray();
+        if (nombresForm.Any())
+            model.NombresTerceros = string.Join(";", nombresForm.Where(x => !string.IsNullOrWhiteSpace(x)));
+
+        model.DocumentacionSST        = Request.Form["DocumentacionSST"].ToString();
+        model.RequiereCursosEspeciales = Request.Form["RequiereCursosEspeciales"].ToString();
+        model.RequiereEPP             = Request.Form["RequiereEPP"].ToString();
+
+        var eppSeleccionados = Request.Form["eppItems"].ToList();
+        if (eppSeleccionados.Any())
+            model.ElementoEPP = string.Join(";", eppSeleccionados);
+
+        model.IngresoVehiculo = Request.Form["IngresoVehiculo"].ToString();
+        model.PlacaVehiculo   = Request.Form["PlacaVehiculo"].ToString();
+
+        if (model.DocumentacionSST == "Sí")
+        {
+            model.PlanillaDePago = await GuardarArchivo(archivoPlanilla, "planilla");
+            model.Identificacion = await GuardarArchivo(archivoIdentificacion, "identificacion");
+        }
+        if (model.RequiereCursosEspeciales == "Sí")
+            model.CursosEspeciales = await GuardarArchivo(archivoCursos, "cursos");
+    }
+    else if (model.TipoSolicitud == "Servicio Transporte")
+    {
+        model.ConductorNombre                       = Request.Form["ConductorNombre"].ToString();
+        model.ConductorLicenciaUrl                  = await GuardarArchivo(archivoLicencia, "licencia_conductor");
+        model.ConductorCedulaUrl                    = await GuardarArchivo(archivoCedulaConductor, "cedula_conductor");
+        model.ConductorPlanillaSeguridadSocialUrl   = await GuardarArchivo(archivoPlanillaSeguridadSocialConductor, "planilla_ss");
+        model.ConductorFormacionVialUrl             = await GuardarArchivo(archivoFormacionVial, "formacion_vial");
+        model.VehiculoLicenciaTransitoUrl           = await GuardarArchivo(archivoLicenciaTransito, "licencia_transito");
+        model.VehiculoSOATUrl                       = await GuardarArchivo(archivoSOAT, "soat");
+        model.VehiculoRTMUrl                        = await GuardarArchivo(archivoRTM, "rtm");
+        model.VehiculoPolizasUrl                    = await GuardarArchivo(archivoPolizas, "polizas");
+        model.VehiculoPlanMantenimientoUrl          = await GuardarArchivo(archivoPlanMantenimiento, "plan_mant");
+        model.VehiculoInspeccionesUrl               = await GuardarArchivo(archivoInspecciones, "inspecciones");
+        model.EmpresaHabilitacionMTUrl              = await GuardarArchivo(archivoHabilitacionMT, "habilitacion_mt");
+        model.EmpresaReportePESVUrl                 = await GuardarArchivo(archivoReportePESV, "pesv");
     }
 
-    if (model.RequiereCursosEspeciales == "Sí")
+    // ✅ Limpiar ModelState y revalidar solo lo que aplica
+    ModelState.Clear();
+
+    if (string.IsNullOrEmpty(model.TipoSolicitud))
     {
-        model.CursosEspeciales = await GuardarArchivo(archivoCursos, "cursos");
+        ModelState.AddModelError("TipoSolicitud", "Debe seleccionar un tipo de solicitud.");
+    }
+    else if (model.TipoSolicitud == "Ingreso Terceros")
+    {
+        if (model.FechaIngreso == null)
+            ModelState.AddModelError("FechaIngreso", "La fecha de ingreso es requerida.");
+        if (string.IsNullOrEmpty(model.MotivoVisita))
+            ModelState.AddModelError("MotivoVisita", "El motivo de visita es requerido.");
+        if (string.IsNullOrEmpty(model.NombresTerceros))
+            ModelState.AddModelError("NombresTerceros", "Debe registrar al menos un nombre.");
+    }
+    else if (model.TipoSolicitud == "Servicio Transporte")
+    {
+        if (string.IsNullOrEmpty(model.ConductorNombre))
+            ModelState.AddModelError("ConductorNombre", "El nombre del conductor es requerido.");
     }
 
     if (!ModelState.IsValid)
@@ -107,15 +155,12 @@ public async Task<IActionResult> Create(
         _context.TbSolicitudTerceros.Add(model);
         await _context.SaveChangesAsync();
 
-        // Notificar a SST
         var usuariosSST = await _userManager.GetUsersInRoleAsync("SST");
         foreach (var u in usuariosSST)
-        {
             await _notif.CrearNotificacion(u.UserName ?? "",
                 $"Nueva solicitud de terceros #{model.Id} requiere revisión.", model.Id);
-        }
 
-        TempData["Exito"] = "Solicitud de ingreso de terceros registrada correctamente.";
+        TempData["Exito"] = "Solicitud registrada correctamente.";
         return RedirectToAction(nameof(Index));
     }
     catch (Exception ex)
@@ -176,44 +221,38 @@ public async Task<IActionResult> Create(
 
         [Authorize(Roles = "SST,Administrador,RRHH,Gerente Capital Humano,Gerente General,Recepcionista")]
         public async Task<IActionResult> Revisar(int? id)
-        {
-            if (id == null)
-            {
-                return NotFound();
-            }
+{
+    if (id == null) return NotFound();
 
-            var solicitud = await _context.TbSolicitudTerceros.FindAsync(id);
-            if (solicitud == null)
-            {
-                return NotFound();
-            }
+    var solicitud = await _context.TbSolicitudTerceros.FindAsync(id);
+    if (solicitud == null) return NotFound();
 
-            var personal = await BuscarPersonalActual();
+    bool esSST          = User.IsInRole("SST");
+    bool esRecepcionista= User.IsInRole("Recepcionista");
+    bool esGerenteCH    = User.IsInRole("Gerente Capital Humano");
+    bool esGerenteGeneral = User.IsInRole("Gerente General");
+    bool esAdmin        = User.IsInRole("Administrador");
+    bool esRRHH         = User.IsInRole("RRHH");
 
-            bool esSST = User.IsInRole("SST");
-            bool esRecepcionista = User.IsInRole("Recepcionista");
-            bool esGerenteCH = User.IsInRole("Gerente Capital Humano");
-            bool esGerenteGeneral = User.IsInRole("Gerente General");
-            bool esAdmin = User.IsInRole("Administrador");
-            bool esRRHH = User.IsInRole("RRHH");
-            
-            bool puedeRevisar = esSST || esRecepcionista || esGerenteCH || esGerenteGeneral || esAdmin || esRRHH;
+    bool puedeRevisar = esSST || esRecepcionista || esGerenteCH || esGerenteGeneral || esAdmin || esRRHH;
 
-            if (!puedeRevisar)
-            {
-                return Forbid();
-            }
-            
-            bool estaPendiente = string.IsNullOrEmpty(solicitud.Estado) || solicitud.Estado == "Pendiente" || solicitud.Estado == "En proceso";
+    if (!puedeRevisar) return Forbid();
 
-            if (!estaPendiente)
-            {
-                TempData["Error"] = "Esta solicitud ya ha sido procesada.";
-                return RedirectToAction(nameof(Index));
-            }
+    bool estaPendiente = string.IsNullOrEmpty(solicitud.Estado)
+                      || solicitud.Estado == "Pendiente"
+                      || solicitud.Estado == "En proceso";
 
-            return View("Revisar", solicitud); 
-        }
+    if (!estaPendiente)
+    {
+        TempData["Error"] = "Esta solicitud ya ha sido procesada.";
+        return RedirectToAction(nameof(Index));
+    }
+
+    // ✅ LÍNEA QUE FALTABA
+    ViewBag.PuedeActuar = puedeRevisar;
+
+    return View("Revisar", solicitud);
+}
         public async Task<IActionResult> Details(int? id)
         {
             if (id == null) return BadRequest();

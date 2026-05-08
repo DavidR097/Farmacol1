@@ -1,6 +1,8 @@
 @model Farmacol.Models.TbSolicitudTerceros
 @{
     ViewData["Title"] = "Revisar Solicitud de Terceros";
+    bool puedeActuar = (bool)(ViewBag.PuedeActuar ?? false);
+    bool estaPendiente = Model.Estado == null || Model.Estado == "Pendiente" || Model.Estado == "En proceso";
 }
 
 <style>
@@ -9,26 +11,27 @@
     .detail-section-title { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: .06em; color: #6c757d; border-bottom: 1px solid #f0f0f0; padding-bottom: 6px; margin-bottom: 18px; display: flex; align-items: center; }
     .info-label { font-size: 11px; color: #9ca3af; margin-bottom: 2px; font-weight: 500; text-transform: uppercase; }
     .info-value { font-size: 14px; color: #1f2937; font-weight: 500; margin-bottom: 15px; }
-    
-    /* Botones de decisión */
     .btn-decision { border-radius: 8px; font-weight: 500; font-size: 14px; padding: 10px 20px; transition: all 0.2s; border: none; }
     .btn-approve { background-color: #10b981; color: white; }
     .btn-return { background-color: #f59e0b; color: white; }
     .btn-reject { background-color: #ef4444; color: white; }
-
-    /* Estilos Documentos */
-    .doc-item { 
-        background: #fff; border: 1px solid #e2e8f0; border-radius: 10px; padding: 10px 15px; 
+    .doc-item {
+        background: #fff; border: 1px solid #e2e8f0; border-radius: 10px; padding: 10px 15px;
         transition: all 0.2s; display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px;
     }
     .doc-item:hover { border-color: #3b82f6; background: #f0f7ff; }
     .doc-info { display: flex; align-items: center; gap: 12px; }
     .doc-icon { font-size: 1.5rem; color: #ef4444; }
     .doc-name { font-size: 13px; font-weight: 600; color: #334155; }
+    .document-link {
+        display: flex; align-items: center; padding: 8px 12px; background: #f8f9fa;
+        border-radius: 8px; text-decoration: none; color: #374151; font-size: 13px;
+        margin-bottom: 8px; transition: all 0.2s;
+    }
+    .document-link:hover { background: #f1f5f9; color: #111827; }
 </style>
 
 <div class="container mt-4 mb-5" style="max-width: 1000px;">
-    <!-- Breadcrumb Estilizado -->
     <nav aria-label="breadcrumb" class="mb-4">
         <ol class="breadcrumb" style="font-size: 13px;">
             <li class="breadcrumb-item"><a asp-action="Index" class="text-decoration-none text-muted">Solicitudes</a></li>
@@ -40,126 +43,272 @@
         <div class="card-body p-4 p-md-5">
             <div class="d-flex justify-content-between align-items-center mb-4">
                 <div>
-                    <h2 class="fw-bold mb-1">Revisión de Ingreso</h2>
-                    <p class="text-muted small">Solicitud #@Model.Id — @Model.Empresa</p>
+                    <h2 class="fw-bold mb-1">
+                        @(Model.TipoSolicitud == "Servicio Transporte"
+                            ? "Revisión de Servicio de Transporte"
+                            : "Revisión de Ingreso de Terceros")
+                    </h2>
+                    <p class="text-muted small">Solicitud #@Model.Id — @(Model.Empresa ?? "Sin empresa")</p>
                 </div>
                 <span class="badge rounded-pill bg-light text-dark border px-3 py-2">
                     <i class="bi bi-clock-history me-1"></i> @(Model.Estado ?? "Pendiente")
                 </span>
             </div>
 
-            <div class="row">
-                <!-- Información Técnica -->
-                <div class="col-md-7 border-end pe-md-4">
-                    <div class="detail-section-title">Datos del Solicitante e Ingreso</div>
-                    <div class="row">
-                        <div class="col-6">
-                            <label class="info-label">Solicitado por</label>
-                            <p class="info-value">@Model.Solicitante</p>
+            @if (Model.TipoSolicitud == "Servicio Transporte")
+            {
+                <!-- ========== SERVICIO DE TRANSPORTE ========== -->
+                <div class="row">
+                    <div class="col-12">
+                        <div class="detail-section-title"><i class="bi bi-person-vcard me-2"></i>Documentación del Conductor</div>
+                        <div class="row mb-4">
+                            <div class="col-md-6">
+                                <div class="info-label">Nombre completo</div>
+                                <div class="info-value">@(Model.ConductorNombre ?? "No especificado")</div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="info-label">Licencia de conducción</div>
+                                @if (!string.IsNullOrEmpty(Model.ConductorLicenciaUrl)) {
+                                    <button type="button" class="document-link border-0 w-100" onclick="previewPdf('@Url.Content(Model.ConductorLicenciaUrl)', 'Licencia de conducción')">
+                                        <i class="bi bi-file-pdf text-danger me-2"></i> Ver PDF
+                                    </button>
+                                } else { <span class="text-muted small">No adjunto</span> }
+                            </div>
+                            <div class="col-md-6">
+                                <div class="info-label">Cédula de ciudadanía</div>
+                                @if (!string.IsNullOrEmpty(Model.ConductorCedulaUrl)) {
+                                    <button type="button" class="document-link border-0 w-100" onclick="previewPdf('@Url.Content(Model.ConductorCedulaUrl)', 'Cédula de ciudadanía')">
+                                        <i class="bi bi-file-pdf text-danger me-2"></i> Ver PDF
+                                    </button>
+                                } else { <span class="text-muted small">No adjunto</span> }
+                            </div>
+                            <div class="col-md-6">
+                                <div class="info-label">Planilla Seguridad Social</div>
+                                @if (!string.IsNullOrEmpty(Model.ConductorPlanillaSeguridadSocialUrl)) {
+                                    <button type="button" class="document-link border-0 w-100" onclick="previewPdf('@Url.Content(Model.ConductorPlanillaSeguridadSocialUrl)', 'Planilla Seguridad Social')">
+                                        <i class="bi bi-file-pdf text-danger me-2"></i> Ver PDF
+                                    </button>
+                                } else { <span class="text-muted small">No adjunto</span> }
+                            </div>
+                            <div class="col-12">
+                                <div class="info-label">Formación en seguridad vial</div>
+                                @if (!string.IsNullOrEmpty(Model.ConductorFormacionVialUrl)) {
+                                    <button type="button" class="document-link border-0 w-100" onclick="previewPdf('@Url.Content(Model.ConductorFormacionVialUrl)', 'Formación seguridad vial')">
+                                        <i class="bi bi-file-pdf text-danger me-2"></i> Ver PDF
+                                    </button>
+                                } else { <span class="text-muted small">No adjunto</span> }
+                            </div>
                         </div>
-                        <div class="col-6">
-                            <label class="info-label">Fecha de Ingreso</label>
-                            <p class="info-value">@(Model.FechaIngreso?.ToString("dd/MM/yyyy HH:mm") ?? "-")</p>
-                        </div>
-                        <div class="col-12">
-                            <label class="info-label">Motivo de Visita</label>
-                            <p class="info-value">@Model.MotivoVisita</p>
-                        </div>
-                    </div>
 
-                    <div class="detail-section-title mt-4">Personal Autorizado</div>
-                    <div class="bg-light rounded-3 p-3 mb-4">
-                        @if (!string.IsNullOrEmpty(Model.NombresTerceros)) {
-                            <ul class="list-unstyled mb-0">
-                                @foreach (var nombre in Model.NombresTerceros.Split(';')) {
-                                    <li class="small mb-1 text-secondary"><i class="bi bi-person-check me-2"></i>@nombre</li>
-                                }
-                            </ul>
-                        } else { <span class="text-muted small">Sin nombres registrados</span> }
-                    </div>
-
-                    <div class="detail-section-title">Equipamiento</div>
-                    <div class="row">
-                        <div class="col-6">
-                            <label class="info-label">Herramientas</label>
-                            <p class="small text-dark">@(Model.EquiposIngreso ?? "Ninguno")</p>
+                        <div class="detail-section-title"><i class="bi bi-truck me-2"></i>Documentación del Vehículo</div>
+                        <div class="row mb-4">
+                            <div class="col-md-6">
+                                <div class="info-label">Licencia de tránsito</div>
+                                @if (!string.IsNullOrEmpty(Model.VehiculoLicenciaTransitoUrl)) {
+                                    <button type="button" class="document-link border-0 w-100" onclick="previewPdf('@Url.Content(Model.VehiculoLicenciaTransitoUrl)', 'Licencia de tránsito')">
+                                        <i class="bi bi-file-pdf text-danger me-2"></i> Ver PDF
+                                    </button>
+                                } else { <span class="text-muted small">No adjunto</span> }
+                            </div>
+                            <div class="col-md-6">
+                                <div class="info-label">SOAT vigente</div>
+                                @if (!string.IsNullOrEmpty(Model.VehiculoSOATUrl)) {
+                                    <button type="button" class="document-link border-0 w-100" onclick="previewPdf('@Url.Content(Model.VehiculoSOATUrl)', 'SOAT')">
+                                        <i class="bi bi-file-pdf text-danger me-2"></i> Ver PDF
+                                    </button>
+                                } else { <span class="text-muted small">No adjunto</span> }
+                            </div>
+                            <div class="col-md-6">
+                                <div class="info-label">RTM y gases</div>
+                                @if (!string.IsNullOrEmpty(Model.VehiculoRTMUrl)) {
+                                    <button type="button" class="document-link border-0 w-100" onclick="previewPdf('@Url.Content(Model.VehiculoRTMUrl)', 'RTM y gases')">
+                                        <i class="bi bi-file-pdf text-danger me-2"></i> Ver PDF
+                                    </button>
+                                } else { <span class="text-muted small">No adjunto</span> }
+                            </div>
+                            <div class="col-md-6">
+                                <div class="info-label">Pólizas RC</div>
+                                @if (!string.IsNullOrEmpty(Model.VehiculoPolizasUrl)) {
+                                    <button type="button" class="document-link border-0 w-100" onclick="previewPdf('@Url.Content(Model.VehiculoPolizasUrl)', 'Pólizas RC')">
+                                        <i class="bi bi-file-pdf text-danger me-2"></i> Ver PDF
+                                    </button>
+                                } else { <span class="text-muted small">No adjunto</span> }
+                            </div>
+                            <div class="col-md-6">
+                                <div class="info-label">Plan de mantenimiento</div>
+                                @if (!string.IsNullOrEmpty(Model.VehiculoPlanMantenimientoUrl)) {
+                                    <button type="button" class="document-link border-0 w-100" onclick="previewPdf('@Url.Content(Model.VehiculoPlanMantenimientoUrl)', 'Plan de mantenimiento')">
+                                        <i class="bi bi-file-pdf text-danger me-2"></i> Ver PDF
+                                    </button>
+                                } else { <span class="text-muted small">No adjunto</span> }
+                            </div>
+                            <div class="col-md-6">
+                                <div class="info-label">Inspecciones preoperacionales</div>
+                                @if (!string.IsNullOrEmpty(Model.VehiculoInspeccionesUrl)) {
+                                    <button type="button" class="document-link border-0 w-100" onclick="previewPdf('@Url.Content(Model.VehiculoInspeccionesUrl)', 'Inspecciones preoperacionales')">
+                                        <i class="bi bi-file-pdf text-danger me-2"></i> Ver PDF
+                                    </button>
+                                } else { <span class="text-muted small">No adjunto</span> }
+                            </div>
                         </div>
-                        <div class="col-6">
-                            <label class="info-label">EPP Solicitado</label>
-                            <p class="small text-dark">@(Model.ElementoEPP ?? "Ninguno")</p>
+
+                        <div class="detail-section-title"><i class="bi bi-building me-2"></i>Empresa Transportadora</div>
+                        <div class="row mb-4">
+                            <div class="col-md-6">
+                                <div class="info-label">Habilitación Ministerio de Transporte</div>
+                                @if (!string.IsNullOrEmpty(Model.EmpresaHabilitacionMTUrl)) {
+                                    <button type="button" class="document-link border-0 w-100" onclick="previewPdf('@Url.Content(Model.EmpresaHabilitacionMTUrl)', 'Habilitación Ministerio de Transporte')">
+                                        <i class="bi bi-file-pdf text-danger me-2"></i> Ver PDF
+                                    </button>
+                                } else { <span class="text-muted small">No adjunto</span> }
+                            </div>
+                            <div class="col-md-6">
+                                <div class="info-label">Reporte autogestión PESV</div>
+                                @if (!string.IsNullOrEmpty(Model.EmpresaReportePESVUrl)) {
+                                    <button type="button" class="document-link border-0 w-100" onclick="previewPdf('@Url.Content(Model.EmpresaReportePESVUrl)', 'Reporte PESV')">
+                                        <i class="bi bi-file-pdf text-danger me-2"></i> Ver PDF
+                                    </button>
+                                } else { <span class="text-muted small">No adjunto</span> }
+                            </div>
                         </div>
                     </div>
                 </div>
-
-                <!-- Validación SST -->
-                <div class="col-md-5 ps-md-4">
-                    <div class="detail-section-title">Validación Documental</div>
-                    
-                    <div class="mb-4">
-                        <label class="info-label">¿Cuenta con Documentación?</label>
-                        <div class="fw-bold @(Model.DocumentacionSST == "Sí" ? "text-success" : "text-danger")">@Model.DocumentacionSST</div>
-                    </div>
-
-                    <div class="doc-preview-box mb-4">
-                        <label class="info-label d-block mb-2">Archivos Adjuntos</label>
-                        @if(!string.IsNullOrEmpty(Model.PlanillaDePago)) {
-                            <div class="d-grid gap-2">
-                                @if (!string.IsNullOrEmpty(Model.PlanillaDePago))
-                                    {
-                                        <dt>Planilla de Pago</dt>
-                                        <dd><a href="@Model.PlanillaDePago" target="_blank">Ver PDF</a></dd>
-                                    }
-                                    @if (!string.IsNullOrEmpty(Model.Identificacion))
-                                    {
-                                        <dt>Identificación Tercero</dt>
-                                        <dd><a href="@Model.Identificacion" target="_blank">Ver PDF</a></dd>
-                                    }
-                                    @if (!string.IsNullOrEmpty(Model.CursosEspeciales))
-                                    {
-                                        <dt>Cursos Especiales</dt>
-                                        <dd><a href="@Model.CursosEspeciales" target="_blank">Ver PDF</a></dd>
-                                    }
-                                }
+            }
+            else
+            {
+                <!-- ========== INGRESO DE TERCEROS (default) ========== -->
+                <div class="row">
+                    <div class="col-md-7 border-end pe-md-4">
+                        <div class="detail-section-title">Datos del Solicitante e Ingreso</div>
+                        <div class="row">
+                            <div class="col-6">
+                                <label class="info-label">Solicitado por</label>
+                                <p class="info-value">@Model.Solicitante</p>
                             </div>
-                        } else {
-                            <p class="text-muted x-small mb-0 italic">No se adjuntaron documentos digitales.</p>
+                            <div class="col-6">
+                                <label class="info-label">Fecha de Ingreso</label>
+                                <p class="info-value">@(Model.FechaIngreso?.ToString("dd/MM/yyyy HH:mm") ?? "-")</p>
+                            </div>
+                            <div class="col-12">
+                                <label class="info-label">Motivo de Visita</label>
+                                <p class="info-value">@Model.MotivoVisita</p>
+                            </div>
+                        </div>
+
+                        <div class="detail-section-title mt-4">Personal Autorizado</div>
+                        <div class="bg-light rounded-3 p-3 mb-4">
+                            @if (!string.IsNullOrEmpty(Model.NombresTerceros)) {
+                                <ul class="list-unstyled mb-0">
+                                    @foreach (var nombre in Model.NombresTerceros.Split(';', StringSplitOptions.RemoveEmptyEntries)) {
+                                        <li class="small mb-1 text-secondary"><i class="bi bi-person-check me-2"></i>@nombre.Trim()</li>
+                                    }
+                                </ul>
+                            } else { <span class="text-muted small">Sin nombres registrados</span> }
+                        </div>
+
+                        <div class="detail-section-title">Equipamiento</div>
+                        <div class="row">
+                            <div class="col-6">
+                                <label class="info-label">Herramientas</label>
+                                <p class="small text-dark">@(Model.EquiposIngreso ?? "Ninguno")</p>
+                            </div>
+                            <div class="col-6">
+                                <label class="info-label">EPP Solicitado</label>
+                                <p class="small text-dark">@(Model.ElementoEPP ?? "Ninguno")</p>
+                            </div>
+                        </div>
+                        @if (Model.IngresoVehiculo == "Sí") {
+                            <div class="mt-2">
+                                <label class="info-label">Vehículo</label>
+                                <p class="small text-dark">Placa: @Model.PlacaVehiculo</p>
+                            </div>
                         }
                     </div>
 
-                    <div class="alert alert-info border-0 py-2 px-3 small rounded-3">
-                        <i class="bi bi-info-circle me-2"></i> Revise que las fechas de vigencia de los aportes coincidan con la fecha de ingreso solicitada.
+                    <div class="col-md-5 ps-md-4">
+                        <div class="detail-section-title">Validación Documental</div>
+                        <div class="mb-4">
+                            <label class="info-label">¿Cuenta con Documentación?</label>
+                            <div class="fw-bold @(Model.DocumentacionSST == "Sí" ? "text-success" : "text-danger")">
+                                @(Model.DocumentacionSST ?? "No especificado")
+                            </div>
+                        </div>
+
+                        <div class="mb-4">
+                            <label class="info-label d-block mb-2">Archivos Adjuntos</label>
+                            @if (Model.DocumentacionSST == "Sí") {
+                                @if (!string.IsNullOrEmpty(Model.PlanillaDePago)) {
+                                    <button type="button" class="document-link border-0 w-100" onclick="previewPdf('@Url.Content(Model.PlanillaDePago)', 'Planilla de Pago')">
+                                        <i class="bi bi-file-pdf text-danger me-2"></i> Planilla de Pago
+                                    </button>
+                                }
+                                @if (!string.IsNullOrEmpty(Model.Identificacion)) {
+                                    <button type="button" class="document-link border-0 w-100" onclick="previewPdf('@Url.Content(Model.Identificacion)', 'Identificación del Tercero')">
+                                        <i class="bi bi-file-pdf text-danger me-2"></i> Identificación del Tercero
+                                    </button>
+                                }
+                                @if (!string.IsNullOrEmpty(Model.CursosEspeciales)) {
+                                    <button type="button" class="document-link border-0 w-100" onclick="previewPdf('@Url.Content(Model.CursosEspeciales)', 'Cursos Especiales')">
+                                        <i class="bi bi-file-pdf text-danger me-2"></i> Certificado de Cursos Especiales
+                                    </button>
+                                }
+                                @if (string.IsNullOrEmpty(Model.PlanillaDePago) && string.IsNullOrEmpty(Model.Identificacion) && string.IsNullOrEmpty(Model.CursosEspeciales)) {
+                                    <p class="text-muted small mb-0">No se adjuntaron documentos digitales.</p>
+                                }
+                            } else {
+                                <p class="text-muted small mb-0">No se adjuntaron documentos digitales.</p>
+                            }
+                        </div>
+
+                        <div class="alert alert-info border-0 py-2 px-3 small rounded-3">
+                            <i class="bi bi-info-circle me-2"></i> Revise que las fechas de vigencia de los aportes coincidan con la fecha de ingreso solicitada.
+                        </div>
                     </div>
                 </div>
-            </div>
+            }
         </div>
 
-        <!-- Barra de Acciones Finales -->
-        <div class="card-footer bg-light p-4 border-0">
-            <div class="row align-items-center">
-                <div class="col-md-6">
-                    <a asp-action="Index" class="btn btn-link text-muted text-decoration-none small p-0">
-                        <i class="bi bi-arrow-left"></i> Volver sin cambios
-                    </a>
-                </div>
-                <div class="col-md-6 text-end">
-                    <div class="d-flex justify-content-end gap-2">
-                        <button class="btn btn-decision btn-return" data-bs-toggle="modal" data-bs-target="#modalDevolver">
-                             <i class="bi bi-reply me-1"></i> Devolver
-                        </button>
-                        <button class="btn btn-decision btn-reject" data-bs-toggle="modal" data-bs-target="#modalRechazar">
-                             <i class="bi bi-x-circle me-1"></i> Rechazar
-                        </button>
-                        <form asp-action="Aprobar" method="post" class="d-inline">
-                            @Html.AntiForgeryToken()
-                            <input type="hidden" name="id" value="@Model.Id" />
-                            <button type="submit" class="btn btn-decision btn-approve px-4 shadow-sm">
-                                <i class="bi bi-check-all me-1"></i> Aprobar Ingreso
+        <!-- ✅ Barra de acciones: solo visible si puedeActuar Y solicitud está pendiente -->
+        @if (puedeActuar && estaPendiente)
+        {
+            <div class="card-footer bg-light p-4 border-0">
+                <div class="row align-items-center">
+                    <div class="col-md-6">
+                        <a asp-action="Index" class="btn btn-link text-muted text-decoration-none small p-0">
+                            <i class="bi bi-arrow-left"></i> Volver sin cambios
+                        </a>
+                    </div>
+                    <div class="col-md-6 text-end">
+                        <div class="d-flex justify-content-end gap-2">
+                            <button class="btn btn-decision btn-return" data-bs-toggle="modal" data-bs-target="#modalDevolver">
+                                <i class="bi bi-reply me-1"></i> Devolver
                             </button>
-                        </form>
+                            <button class="btn btn-decision btn-reject" data-bs-toggle="modal" data-bs-target="#modalRechazar">
+                                <i class="bi bi-x-circle me-1"></i> Rechazar
+                            </button>
+                            <form asp-action="Aprobar" method="post" class="d-inline">
+                                @Html.AntiForgeryToken()
+                                <input type="hidden" name="id" value="@Model.Id" />
+                                <button type="submit" class="btn btn-decision btn-approve px-4 shadow-sm">
+                                    <i class="bi bi-check-all me-1"></i> Aprobar
+                                </button>
+                            </form>
+                        </div>
                     </div>
                 </div>
             </div>
-        </div>
+        }
+        else if (!estaPendiente)
+        {
+            <!-- Mensaje informativo si ya fue procesada -->
+            <div class="card-footer bg-light p-4 border-0">
+                <div class="alert alert-secondary mb-0 small">
+                    <i class="bi bi-info-circle me-2"></i>
+                    Esta solicitud ya fue procesada con estado: <strong>@Model.Estado</strong>.
+                    No se pueden realizar más acciones.
+                </div>
+            </div>
+        }
     </div>
 </div>
 
@@ -176,7 +325,8 @@
                 <div class="modal-body p-4">
                     <input type="hidden" name="id" value="@Model.Id" />
                     <label class="form-label small text-muted">Explique qué información falta o requiere corrección:</label>
-                    <textarea name="observacion" class="form-control border-0 bg-light" rows="4" placeholder="Ej: El certificado ARL está vencido..." required></textarea>
+                    <textarea name="observacion" class="form-control border-0 bg-light" rows="4"
+                              placeholder="Ej: El certificado ARL está vencido..." required></textarea>
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-light px-4" data-bs-dismiss="modal">Cancelar</button>
@@ -199,8 +349,11 @@
                 </div>
                 <div class="modal-body p-4">
                     <input type="hidden" name="id" value="@Model.Id" />
-                    <label class="form-label small text-muted text-danger fw-bold">Atención: Esta acción no se puede deshacer.</label>
-                    <textarea name="observacion" class="form-control border-danger" rows="4" placeholder="Indique el motivo del rechazo definitivo..." required></textarea>
+                    <label class="form-label small text-muted text-danger fw-bold">
+                        Atención: Esta acción no se puede deshacer.
+                    </label>
+                    <textarea name="observacion" class="form-control border-danger" rows="4"
+                              placeholder="Indique el motivo del rechazo definitivo..." required></textarea>
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-light px-4" data-bs-dismiss="modal">Cancelar</button>
@@ -210,13 +363,17 @@
         </div>
     </div>
 </div>
+
+<!-- Modal visor PDF -->
 <div class="modal fade" id="pdfModal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-xl modal-dialog-centered">
         <div class="modal-content">
             <div class="modal-header">
                 <h5 class="modal-title" id="pdfModalTitle">Documento</h5>
                 <div>
-                    <a id="btnExternal" href="#" target="_blank" class="btn btn-sm btn-outline-primary me-2"><i class="bi bi-box-arrow-up-right"></i> Pestaña nueva</a>
+                    <a id="btnExternal" href="#" target="_blank" class="btn btn-sm btn-outline-primary me-2">
+                        <i class="bi bi-box-arrow-up-right"></i> Pestaña nueva
+                    </a>
                     <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                 </div>
             </div>
@@ -227,29 +384,13 @@
     </div>
 </div>
 
-@functions {
-    public Microsoft.AspNetCore.Html.IHtmlContent RenderDocItem(string label, string path)
-    {
-        var url = Url.Content(path);
-        return new Microsoft.AspNetCore.Html.HtmlString($@"
-            <div class='doc-item shadow-sm'>
-                <div class='doc-info'>
-                    <i class='bi bi-file-earmark-pdf doc-icon'></i>
-                    <span class='doc-name'>{label}</span>
-                </div>
-                <button type='button' class='btn btn-sm btn-light border' 
-                        onclick=""previewPdf('{url}', '{label}')"">
-                    <i class='bi bi-eye'></i>
-                </button>
-            </div>");
-    }
+@section Scripts {
+    <script>
+        function previewPdf(url, title) {
+            document.getElementById('pdfModalTitle').innerText = title;
+            document.getElementById('pdfViewer').src = url;
+            document.getElementById('btnExternal').href = url;
+            new bootstrap.Modal(document.getElementById('pdfModal')).show();
+        }
+    </script>
 }
-
-<script>
-    function previewPdf(url, title) {
-        document.getElementById('pdfModalTitle').innerText = title;
-        document.getElementById('pdfViewer').src = url;
-        document.getElementById('btnExternal').href = url;
-        new bootstrap.Modal(document.getElementById('pdfModal')).show();
-    }
-</script>

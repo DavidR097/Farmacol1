@@ -84,7 +84,7 @@
                                  @(Model.FechaAprobacionGerencia != null ? "bg-primary text-white" : "bg-light text-muted border")">
                                 @if (Model.FechaAprobacionGerencia != null) { <i class="bi bi-check-lg"></i> } else { <span>1</span> }
                             </div>
-                            <div class="mt-2 small fw-bold">Gerente de Área</div>
+                            <div class="mt-2 small fw-bold">Aprobador de Área</div>
                             <div class="text-muted x-small">
                                 @(Model.AprobacionGerencia ?? "Pendiente")
                             </div>
@@ -201,7 +201,7 @@
                     <div class="detail-section-title text-muted">Trazabilidad de Firmas</div>
                     <div class="detail-grid">
                         <div>
-                            <div class="small text-muted fw-bold text-uppercase">G. Área</div>
+                            <div class="small text-muted fw-bold text-uppercase">Aprobador Área</div>
                             <div class="fw-medium">@(Model.AprobacionGerencia ?? "N/A")</div>
                             <div class="text-muted x-small">@Model.FechaAprobacionGerencia?.ToString("g")</div>
                         </div>

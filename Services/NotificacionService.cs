@@ -20,7 +20,6 @@ namespace Farmacol.Services
         {
             try
             {
-                // Crear la notificación para el destino proporcionado
                 _context.Tbnotificaciones.Add(new Tbnotificacione
                 {
                     UsuarioDestino = usuarioDestino,
@@ -98,7 +97,6 @@ namespace Farmacol.Services
             }
             catch
             {
-                // Si falla el email, la notificación interna igual se crea
             }
         }
 
