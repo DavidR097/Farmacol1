@@ -1,3 +1,4 @@
+using Farmacol.BackgroundServices;
 using Farmacol.Models;
 using Farmacol.Services;
 using Microsoft.AspNetCore.Authorization;
@@ -15,17 +16,20 @@ namespace Farmacol.Controllers
         private readonly UserManager<IdentityUser> _userManager;
         private readonly AnuncioService _anuncioService;
         private readonly IWebHostEnvironment _env;
+        private readonly NotificacionVacacionesService _notificacionVacacionesService;
 
         public HomeController(
             Farmacol1Context context,
             UserManager<IdentityUser> userManager,
             AnuncioService anuncioService,
-            IWebHostEnvironment env)
+            IWebHostEnvironment env,
+            NotificacionVacacionesService notificacionVacacionesService)
         {
             _context = context;
             _userManager = userManager;
             _anuncioService = anuncioService;
             _env = env;
+            _notificacionVacacionesService = notificacionVacacionesService;
         }
 
         public async Task<IActionResult> Index()
@@ -162,5 +166,19 @@ namespace Farmacol.Controllers
 
         [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
         public IActionResult Error() => View(new ErrorViewModel { RequestId = Activity.Current?.Id ?? HttpContext.TraceIdentifier });
+
+        [HttpGet]
+        public async Task<IActionResult> ForzarNotificacionVacaciones()
+        {
+            try
+            {
+                await _notificacionVacacionesService.EjecutarCorteManualAsync();
+                return Content("Notificaciones de vacaciones enviadas correctamente. Revisa los logs.");
+            }
+            catch (Exception ex)
+            {
+                return Content($"Error: {ex.Message}");
+            }
+        }
     }
 }

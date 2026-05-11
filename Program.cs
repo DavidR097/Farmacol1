@@ -1,3 +1,4 @@
+using Farmacol.BackgroundServices;
 using Farmacol.Filters;
 using Farmacol.Middleware;
 using Farmacol.Models;
@@ -28,6 +29,7 @@ builder.Services.AddScoped<AuditService>();
 builder.Services.AddScoped<ExcelService>();
 builder.Services.AddScoped<VacacionesService>();
 builder.Services.AddScoped<AnuncioService>();
+builder.Services.AddScoped<NotificacionVacacionesService>();
 
 builder.Services.AddIdentity<IdentityUser, IdentityRole>(options =>
 {
