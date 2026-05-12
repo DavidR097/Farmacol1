@@ -8,7 +8,7 @@ public partial class Tbsolicitude
 {
     public int IdSolicitud { get; set; }
     public int CC { get; set; }
-    public string? Nombre { get; set; }
+    public string Nombre { get; set; } = string.Empty;
     public string? Cargo { get; set; }
     public string TipoSolicitud { get; set; } = null!;
     public TimeSpan? HoraInicio { get; set; }
@@ -46,7 +46,12 @@ public partial class Tbsolicitude
     public string? TipoFlujo { get; set; }
     public string? DocumentoSolicitado { get; set; }
     public int? DiasEnDinero { get; set; }
-    public DateOnly? FechaReposición { get; set; }
-    //public int? DiasDisponibles { get; set; }
+    public DateOnly? FechaReposición { get; set; }   
+    public bool? IncluirSueldo { get; set; }
+    public bool? IncluirFunciones { get; set; }
+    public string? DirigidoA { get; set; }             
+    public string? MotivoCesantias { get; set; }        
+    public decimal? MontoCesantias { get; set; }        
+    public DateOnly? FechaRetiro { get; set; } 
 
 }

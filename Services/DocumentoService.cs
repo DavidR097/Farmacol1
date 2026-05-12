@@ -131,6 +131,45 @@ public class DocumentoService
             cargoJI = gch?.Cargo ?? "";
         }
 
+        // Dentro de GenerarDocxAsync, después de cargar la plantilla con DocX
+        if (solicitud != null)
+        {
+            // -- Certificado Laboral -------------------------------------------------
+            Reemplazar(doc, "{{DIRIGIDO_A}}", solicitud.DirigidoA ?? "");
+
+            if (solicitud.IncluirSueldo == true && personal.SalarioFeb2026.HasValue)
+            {
+                string textoSalario = $"\n\nSalario mensual: ${personal.SalarioFeb2026.Value:N0} COP";
+                // Inserta o reemplaza un marcador especial
+                Reemplazar(doc, "{{INCLUIR_SUELDO}}", textoSalario);
+            }
+            else
+            {
+                Reemplazar(doc, "{{INCLUIR_SUELDO}}", "");
+            }
+
+            //if (solicitud.IncluirFunciones == true && !string.IsNullOrEmpty(personal.Funciones))
+            //{
+            //    string textoFunciones = $"\n\nFunciones del cargo:\n{personal.Funciones}";
+            //    Reemplazar(doc, "{{INCLUIR_FUNCIONES}}", textoFunciones);
+            //}
+            //else
+            //{
+            //    Reemplazar(doc, "{{INCLUIR_FUNCIONES}}", "");
+            //}
+
+            // -- Cesantías -----------------------------------------------------------
+            Reemplazar(doc, "{{MOTIVO_CESANTIAS}}", solicitud.MotivoCesantias ?? "");
+            if (solicitud.MontoCesantias.HasValue)
+                Reemplazar(doc, "{{MONTO_CESANTIAS}}", solicitud.MontoCesantias.Value.ToString("N0"));
+            else
+                Reemplazar(doc, "{{MONTO_CESANTIAS}}", "");
+
+            // -- Paz y salvo ---------------------------------------------------------
+            Reemplazar(doc, "{{FECHA_RETIRO}}", solicitud.FechaRetiro?.ToString("dd/MM/yyyy") ?? "");
+        }
+
+
         // ── Reemplazos de texto ─────────────────────────────────
         Reemplazar(doc, "{{FECHA_SOLICITUD}}", solicitud?.FechaSolicitud?.ToString("dd/MM/yyyy") ?? "");
         Reemplazar(doc, "{{FECHA_INICIO}}", solicitud?.FechaInicio?.ToString("dd/MM/yyyy") ?? "");

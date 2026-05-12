@@ -48,7 +48,7 @@ public partial class Tbpersonal
     public string? Genero { get; set; }
     public string? CiudadNacimiento { get; set; }
     public string? EstadoCivil { get; set; }
-    public string? CorreoPersonal { get; set; }
+    public string? CorreoPersonal { get; set; } = null!;
     public string? Contacto { get; set; }
     public string? DireccionResidencia { get; set; }
     public string? Barrio { get; set; }
@@ -69,7 +69,7 @@ public partial class Tbpersonal
     public string? Grupo { get; set; }
     public string? Concepto { get; set; }
     public string? CorreoCorporativo { get; set; }
-    public string? UsuarioCorporativo { get; set; }
+    public string UsuarioCorporativo { get; set; } = string.Empty;
     public string? FotoPerfil { get; set; }
     public string? FirmaPath { get; set; }           
     public string? JefeInmediato { get; set; }      

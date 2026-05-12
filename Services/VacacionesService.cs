@@ -30,14 +30,12 @@ namespace Farmacol.Services
             var fechaIngreso = personal.FechaIngreso.Value;
             var hoy = DateOnly.FromDateTime(DateTime.Now);
 
-            // Cálculo de meses trabajados
             int mesesTrabajados = ((hoy.Year - fechaIngreso.Year) * 12) + (hoy.Month - fechaIngreso.Month);
             if (hoy.Day < fechaIngreso.Day)
                 mesesTrabajados--;
 
             decimal diasAcumulados = mesesTrabajados * 1.25m;
-
-            // Días ya disfrutados - CORREGIDO (decimal)
+            
             decimal diasDisfrutados = await _context.Tbsolicitudes
                 .Where(s => s.CC == cc
                          && s.TipoSolicitud == "Vacaciones"

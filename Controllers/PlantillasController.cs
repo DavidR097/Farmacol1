@@ -14,16 +14,14 @@ public class PlantillasController : Controller
     private readonly AuditService _audit;
 
     private static readonly string[] TiposRRHH = {
-        "Constancia laboral",
+        "Certificado laboral",
         "Paz y salvo",
-        "Carta de retiro",
-        "Certificado de ingresos",
+        "Retiro de Cesantias",
         "Vacaciones",          
         "Permisos",            
-        "Vacaciones/Permisos"  
     };
     private static readonly string[] TiposTI = {
-        "Responsiva TI", "Devolución de equipo"
+        "Responsiva TI"
     };
 
     public PlantillasController(Farmacol1Context context,

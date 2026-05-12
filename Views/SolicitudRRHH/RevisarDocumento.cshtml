@@ -1,0 +1,169 @@
+﻿@model Farmacol.Models.Tbsolicitude
+
+@{
+    ViewData["Title"] = "Revisar solicitud documental";
+    var personal = ViewBag.Personal as Farmacol.Models.Tbpersonal;
+    var plantillas = ViewBag.Plantillas as List<Farmacol.Models.TbPlantilla> ?? new();
+    bool hayPlantillas = plantillas.Any();
+}
+
+<div class="container py-3">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h2>📄 Solicitud de documento</h2>
+        <a asp-action="Gestion" class="btn btn-outline-secondary">← Volver a la lista</a>
+    </div>
+
+    <div class="row g-4">
+        <!-- Columna izquierda: detalles de la solicitud -->
+        <div class="col-lg-7">
+            <div class="card shadow-sm mb-4">
+                <div class="card-header bg-white">
+                    <h5 class="mb-0">Datos del solicitante</h5>
+                </div>
+                <div class="card-body">
+                    <table class="table table-borderless">
+                        <tr><th style="width:180px">Nombre</th><td>@Model.Nombre</td></tr>
+                        <tr><th>CC</th><td>@Model.CC</td></tr>
+                        <tr><th>Cargo</th><td>@Model.Cargo</td></tr>
+                        <tr><th>Área</th><td>@personal?.Area</td></tr>
+                        <tr><th>Fecha de solicitud</th><td>@Model.FechaSolicitud?.ToString("dd/MM/yyyy")</td></tr>
+                    </table>
+                </div>
+            </div>
+
+            <div class="card shadow-sm mb-4">
+                <div class="card-header bg-white">
+                    <h5 class="mb-0">Detalle del documento solicitado</h5>
+                </div>
+                <div class="card-body">
+                    <table class="table table-borderless">
+                        <tr><th style="width:180px">Documento</th><td><strong>@Model.DocumentoSolicitado</strong></td></tr>
+                        @if (!string.IsNullOrEmpty(Model.DirigidoA))
+                        {
+                            <tr><th>Dirigido a</th><td>@Model.DirigidoA</td></tr>
+                        }
+                        @if (Model.IncluirSueldo == true)
+                        {
+                            <tr><th>Incluir sueldo</th><td>✅ Sí</td></tr>
+                        }
+                        @if (Model.IncluirFunciones == true)
+                        {
+                            <tr><th>Incluir funciones</th><td>✅ Sí</td></tr>
+                        }
+                        @if (!string.IsNullOrEmpty(Model.MotivoCesantias))
+                        {
+                            <tr><th>Motivo cesantías</th><td>@Model.MotivoCesantias</td></tr>
+                        }
+                        @if (Model.MontoCesantias.HasValue)
+                        {
+                            <tr><th>Monto aproximado</th><td>$@Model.MontoCesantias.Value.ToString("N0")</td></tr>
+                        }
+                        @if (Model.FechaRetiro.HasValue)
+                        {
+                            <tr><th>Fecha de retiro</th><td>@Model.FechaRetiro.Value.ToString("dd/MM/yyyy")</td></tr>
+                        }
+                        <tr><th>Motivo / Observaciones</th><td>@Model.Motivo</td></tr>
+                    </table>
+                </div>
+            </div>
+
+            @if (!string.IsNullOrEmpty(Model.Anexos))
+            {
+                <div class="card shadow-sm">
+                    <div class="card-header bg-white">
+                        <h5 class="mb-0">📎 Anexo</h5>
+                    </div>
+                    <div class="card-body">
+                        <a href="@Model.Anexos" target="_blank" class="btn btn-sm btn-outline-primary">Ver archivo adjunto</a>
+                    </div>
+                </div>
+            }
+        </div>
+
+        <!-- Columna derecha: acciones -->
+        <div class="col-lg-5">
+            <div class="card shadow-sm sticky-top" style="top: 20px;">
+                <div class="card-header bg-success text-white">
+                    <h5 class="mb-0">Acciones</h5>
+                </div>
+                <div class="card-body">
+                    @if (Model.Estado == "Pendiente")
+                    {
+                        if (hayPlantillas)
+                        {
+                            <form asp-action="GenerarDocumento" method="post" id="formGenerar">
+                                @Html.AntiForgeryToken()
+                                <input type="hidden" name="idSolicitud" value="@Model.IdSolicitud" />
+                                
+                                <div class="mb-3">
+                                    <label class="form-label">Seleccionar plantilla</label>
+                                    <select name="tipoDocumento" class="form-select" required>
+                                        @foreach (var p in plantillas)
+                                        {
+                                            <option value="@p.TipoDocumento">@p.Nombre</option>
+                                        }
+                                    </select>
+                                    @if (plantillas.Count == 1)
+                                    {
+                                        <small class="text-muted">Solo hay una plantilla disponible.</small>
+                                    }
+                                </div>
+                                
+                                <button type="submit" class="btn btn-success w-100 mb-3">
+                                    📄 Generar documento
+                                </button>
+                            </form>
+                        }
+                        else
+                        {
+                            <div class="alert alert-warning">
+                                No hay plantilla activa para este tipo de documento.
+                            </div>
+                        }
+
+                        <button type="button" class="btn btn-danger w-100" data-bs-toggle="modal" data-bs-target="#modalRechazar">
+                            ❌ Rechazar solicitud
+                        </button>
+                    }
+                    else if (Model.Estado == "Aprobada")
+                    {
+                        <div class="alert alert-success">
+                            ✅ Documento generado el @Model.EtapaAprobacion
+                        </div>
+                    }
+                    else if (Model.Estado == "Rechazada")
+                    {
+                        <div class="alert alert-danger">
+                            ❌ Rechazada: @Model.EtapaAprobacion
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Rechazar -->
+<div class="modal fade" id="modalRechazar" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form asp-action="Rechazar" method="post">
+                @Html.AntiForgeryToken()
+                <input type="hidden" name="id" value="@Model.IdSolicitud" />
+                <div class="modal-header bg-danger text-white">
+                    <h5 class="modal-title">Rechazar solicitud</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <p>¿Está seguro de rechazar la solicitud de <strong>@Model.Nombre</strong>?</p>
+                    <label class="form-label">Motivo del rechazo</label>
+                    <textarea name="observacion" class="form-control" rows="3" required></textarea>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-danger">Confirmar rechazo</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>

@@ -11,7 +11,7 @@ public partial class TbsoliRechazadum
     public int CC { get; set; }
 
     public string TipoSolicitud { get; set; } = null!;
-    public string Motivo { get; set; } = null!;
+    public string? Motivo { get; set; } = null!;
     public string? Observaciones { get; set; }
     public string? Anexos { get; set; }
     public DateOnly FechaSolicitud { get; set; }

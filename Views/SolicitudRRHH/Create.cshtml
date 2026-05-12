@@ -1,7 +1,7 @@
 ﻿@{
     ViewData["Title"] = "Solicitar documento RRHH";
-    var personal       = ViewBag.Personal       as Farmacol.Models.Tbpersonal;
-    var tiposDocumento = ViewBag.TiposDocumento  as string[] ?? Array.Empty<string>();
+    var personal = ViewBag.Personal as Farmacol.Models.Tbpersonal;
+    var tiposDocumento = ViewBag.TiposDocumento as string[] ?? Array.Empty<string>();
 }
 
 <div class="mb-3">
@@ -13,9 +13,11 @@
 <hr />
 
 @if (TempData["Error"] != null)
-{<div class="alert alert-danger">@TempData["Error"]</div>}
+{
+    <div class="alert alert-danger">@TempData["Error"]</div>
+}
 
-<form asp-action="Create" method="post" style="max-width:560px">
+<form asp-action="Create" method="post" style="max-width:650px" id="formSolicitud">
     @Html.AntiForgeryToken()
     <div class="card border-0 shadow-sm">
         <div class="card-header fw-semibold text-white" style="background:#198754">
@@ -24,7 +26,6 @@
         <div class="card-body">
             <div class="row g-3">
 
-                <!-- Solicitante (solo lectura) -->
                 <div class="col-12">
                     <div class="alert alert-light border small py-2 mb-0">
                         <strong>Solicitante:</strong> @personal?.NombreColaborador
@@ -33,29 +34,20 @@
                     </div>
                 </div>
 
-                <!-- Tipo de documento -->
                 <div class="col-12">
-                    <label class="form-label fw-bold">
-                        Documento solicitado <span class="text-danger">*</span>
-                    </label>
+                    <label class="form-label fw-bold">Documento solicitado <span class="text-danger">*</span></label>
                     <div class="row g-2 mt-1">
                         @foreach (var tipo in tiposDocumento)
                         {
                             <div class="col-md-6">
-                                <label class="d-flex align-items-center gap-2 p-3 border rounded cursor-pointer"
-                                       style="cursor:pointer;transition:background .15s"
-                                       onmouseover="this.style.background='#f0fdf4'"
-                                       onmouseout="this.style.background=''"
-                                       onclick="this.querySelector('input').click()">
-                                    <input type="radio" name="documentoSolicitado"
-                                           value="@tipo" required class="form-check-input mt-0" />
-                                    <span>
+                                <label class="d-flex align-items-center gap-2 p-3 border rounded option-card" style="cursor:pointer; transition: all .2s ease;">
+                                    <input type="radio" name="documentoSolicitado" value="@tipo" required class="form-check-input mt-0" onclick="mostrarCampos(this.value)" />
+                                    <span class="small fw-medium">
                                         @(tipo switch {
-                                            "Constancia laboral"      => "📋 Constancia laboral",
-                                            "Paz y salvo"             => "✅ Paz y salvo",
-                                            "Certificado de ingresos" => "💰 Certificado de ingresos",
-                                            "Carta de retiro"         => "📤 Carta de retiro",
-                                            _                         => tipo
+                                            "Certificado Laboral" => "📋 Certificado laboral",
+                                            "Paz y salvo" => "✅ Paz y salvo",
+                                            "Retiro de Cesantias" => "💲 Retiro de Cesantías",
+                                            _ => tipo
                                         })
                                     </span>
                                 </label>
@@ -64,25 +56,99 @@
                     </div>
                 </div>
 
-                <!-- Motivo (opcional) -->
+                <div id="seccionDinamica" class="col-12 d-none">
+                    <div class="p-3 border rounded bg-light">
+                        
+                        <!-- Campos para Certificado Laboral -->
+                        <div id="campos-Certificado" class="extra-fields d-none">
+                            <h6 class="fw-bold mb-2 small text-success">Opciones de Certificado</h6>                        
+                            <div class="form-check form-switch small">
+                                <input class="form-check-input" type="checkbox" name="IncluirSueldo" id="swSueldo" value="true" />
+                                <input type="hidden" name="IncluirSueldo" value="false" />
+                                <label class="form-check-label" for="swSueldo">Incluir salario mensual</label>
+                            </div>
+                            <div class="form-check form-switch small">
+                                <input class="form-check-input" type="checkbox" name="IncluirFunciones" id="swFunciones" value="true" />
+                                <input type="hidden" name="IncluirFunciones" value="false" />
+                                <label class="form-check-label" for="swFunciones">Incluir funciones detalladas</label>
+                            </div>
+                            <input type="text" name="DirigidoA" class="form-control form-control-sm mt-2" placeholder="¿A quién se dirige el documento? (Ej: Banco X, Embajada...)" />
+                        </div>
+
+                        <!-- Campos para Retiro de Cesantías -->
+                        <div id="campos-Cesantias" class="extra-fields d-none">
+                            <h6 class="fw-bold mb-2 small text-success">Detalles de Cesantías</h6>
+                            <select name="MotivoCesantias" class="form-select form-select-sm mb-2">
+                                <option value="">Seleccione el motivo del retiro...</option>
+                                <option value="Vivienda">Compra / Mejora de Vivienda</option>
+                                <option value="Educación">Educación Superior / Diplomados</option>
+                                <option value="Otros">Otros motivos legales</option>
+                            </select>
+                            <input type="number" name="MontoCesantias" class="form-control form-control-sm mb-2" placeholder="Monto aproximado a solicitar" step="0.01" />
+                            <small class="text-muted" style="font-size:11px">Monto sugerido (opcional).</small>
+                        </div>
+
+                        <!-- Campos para Paz y Salvo (nuevo bloque) -->
+                        <div id="campos-PazSalvo" class="extra-fields d-none">
+                            <h6 class="fw-bold mb-2 small text-success">Información de Retiro</h6>
+                            <input type="date" name="FechaRetiro" class="form-control form-control-sm" title="Fecha de último día laborado" />
+                            <small class="text-muted" style="font-size:11px">Indique su último día laborado para la liquidación.</small>
+                        </div>
+
+                    </div>
+                </div>
+
                 <div class="col-12">
-                    <label class="form-label fw-bold">
-                        Motivo / Destino <small class="text-muted fw-normal">(opcional)</small>
-                    </label>
+                    <label class="form-label fw-bold">Observaciones adicionales</label>
                     <textarea name="motivo" class="form-control" rows="2"
-                              placeholder="Ej: Para trámite bancario, proceso de visa, etc."
+                              placeholder="Escribe aquí cualquier detalle adicional que debamos saber..."
                               maxlength="500"></textarea>
                 </div>
 
             </div>
         </div>
-        <div class="card-footer d-flex gap-2">
-            <button type="submit" class="btn btn-success fw-bold">
+        <div class="card-footer d-flex gap-2 bg-white border-top-0 pb-3">
+            <button type="submit" class="btn btn-success fw-bold px-4">
                 📤 Enviar solicitud
             </button>
-            <a asp-action="MisSolicitudes" class="btn btn-outline-secondary">
+            <a asp-controller="Tbsolicitudes" asp-action="MisSolicitudes" class="btn btn-outline-secondary">
                 Ver mis solicitudes
             </a>
         </div>
     </div>
 </form>
+
+<style>
+    .option-card:hover {
+        background-color: #f0fdf4;
+        border-color: #198754 !important;
+    }
+    .option-card:has(input:checked) {
+        background-color: #e8f5e9;
+        border-color: #198754 !important;
+        box-shadow: 0 0 0 1px #198754;
+    }
+    input[type="radio"]:checked {
+        background-color: #198754;
+        border-color: #198754;
+    }
+</style>
+
+<script>
+    function mostrarCampos(tipo) {
+        const seccionDinamica = document.getElementById('seccionDinamica');
+        seccionDinamica.classList.remove('d-none');
+
+        document.querySelectorAll('.extra-fields').forEach(el => el.classList.add('d-none'));
+
+        if (tipo === "Certificado Laboral") {
+            document.getElementById('campos-Certificado').classList.remove('d-none');
+        } 
+        else if (tipo === "Retiro de Cesantias") {
+            document.getElementById('campos-Cesantias').classList.remove('d-none');
+        }
+        else if (tipo === "Paz y salvo") {
+            document.getElementById('campos-PazSalvo').classList.remove('d-none');
+        }
+    }
+</script>

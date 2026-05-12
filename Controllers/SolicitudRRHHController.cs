@@ -19,8 +19,8 @@ public class SolicitudRRHHController : Controller
     private readonly AuditService _audit;
 
     private static readonly string[] TiposDocumento = {
-        "Constancia laboral", "Paz y salvo",
-        "Certificado de ingresos", "Carta de retiro"
+        "Certificado Laboral", "Paz y salvo",
+        "Retiro de Cesantias"
     };
 
     public SolicitudRRHHController(Farmacol1Context context,
@@ -67,10 +67,18 @@ public class SolicitudRRHHController : Controller
         return View();
     }
 
-    // ── CREATE POST ───────────────────────────────────────────────────────
+    // ── CREATE POST (con campos dinámicos) ────────────────────────────────
     [HttpPost]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> Create(string documentoSolicitado, string? motivo)
+    public async Task<IActionResult> Create(
+        string documentoSolicitado,
+        string? motivo,
+        bool IncluirSueldo = false,
+        bool IncluirFunciones = false,
+        string? DirigidoA = null,
+        string? MotivoCesantias = null,
+        decimal? MontoCesantias = null,
+        DateTime? FechaRetiro = null)
     {
         var personal = await BuscarPersonalActual();
         if (personal == null)
@@ -89,7 +97,7 @@ public class SolicitudRRHHController : Controller
             Cargo = personal.Cargo ?? "",
             TipoSolicitud = "Documental",
             DocumentoSolicitado = documentoSolicitado,
-            TipoFlujo = "Documental",
+            TipoFlujo = "DocumentoRRHH",
             Motivo = motivo ?? $"Solicitud de {documentoSolicitado}",
             FechaSolicitud = DateOnly.FromDateTime(DateTime.Today),
             Estado = "Pendiente",
@@ -98,7 +106,15 @@ public class SolicitudRRHHController : Controller
             Paso1Estado = "Pendiente",
             TotalPasos = 1,
             PasoActual = 1,
-            NivelSolicitante = personal.Cargo ?? ""
+            NivelSolicitante = personal.Cargo ?? "",
+
+            IncluirSueldo = (documentoSolicitado == "Certificado Laboral") ? IncluirSueldo : null,
+            IncluirFunciones = (documentoSolicitado == "Certificado Laboral") ? IncluirFunciones : null,
+            DirigidoA = (documentoSolicitado == "Certificado Laboral") ? DirigidoA : null,
+            MotivoCesantias = (documentoSolicitado == "Retiro de Cesantias") ? MotivoCesantias : null,
+            MontoCesantias = (documentoSolicitado == "Retiro de Cesantias") ? MontoCesantias : null,
+            FechaRetiro = (documentoSolicitado == "Paz y salvo" && FechaRetiro.HasValue)
+                            ? DateOnly.FromDateTime(FechaRetiro.Value) : null
         };
 
         _context.Tbsolicitudes.Add(solicitud);
@@ -120,22 +136,22 @@ public class SolicitudRRHHController : Controller
                     $@"<div style='font-family:system-ui;max-width:600px;margin:32px auto;background:#fff;border-radius:12px;padding:28px;box-shadow:0 4px 20px rgba(0,0,0,.08)'>
                        <h2 style='color:#198754'>📄 Nueva solicitud de documento RRHH</h2>
                        <table style='font-size:.9rem;line-height:1.9;width:100%'>
-                         <tr><td width='150'><b>Documento:</b></td><td>{documentoSolicitado}</td></tr>
-                         <tr><td><b>Solicitante:</b></td><td>{personal.NombreColaborador}</td></tr>
-                         <tr><td><b>Cargo:</b></td><td>{personal.Cargo}</td></tr>
-                         <tr><td><b>Área:</b></td><td>{personal.Area}</td></tr>
-                         <tr><td><b>CC:</b></td><td>{personal.CC}</td></tr>
-                         <tr><td><b>Motivo:</b></td><td>{motivo ?? "—"}</td></tr>
+                           <tr><td width='150'><b>Documento:</b></td><td>{documentoSolicitado}</td></tr>
+                           <tr><td><b>Solicitante:</b></td><td>{personal.NombreColaborador}</td></tr>
+                           <tr><td><b>Cargo:</b></td><td>{personal.Cargo}</td></tr>
+                           <tr><td><b>Área:</b></td><td>{personal.Area}</td></tr>
+                           <tr><td><b>CC:</b></td><td>{personal.CC}</td></tr>
+                           <tr><td><b>Motivo:</b></td><td>{motivo ?? "—"}</td></tr>
                        </table>
                        <p style='margin-top:16px'>Ingresa al sistema → <b>Gestión doc. RRHH</b> para generar el documento.</p></div>");
         }
         catch { }
 
         TempData["Exito"] = $"✅ Solicitud de '{documentoSolicitado}' enviada a Capital Humano.";
-        return RedirectToAction(nameof(MisSolicitudes));
+        return RedirectToAction(nameof(MisSolicitudes), new { controller = "Tbsolicitudes" });
     }
 
-    // ── MIS SOLICITUDES ───────────────────────────────────────────────────
+    // ── MIS SOLICITUDES (solo para que compile, realmente se usa Tbsolicitudes) ──
     public async Task<IActionResult> MisSolicitudes()
     {
         var personal = await BuscarPersonalActual();
@@ -167,7 +183,28 @@ public class SolicitudRRHHController : Controller
         return View(lista);
     }
 
-    // ── GENERAR DOCUMENTO ─────────────────────────────────────────────────
+    // ── REVISAR DOCUMENTO (detalle antes de generar) ──────────────────────
+    [HttpGet]
+    public async Task<IActionResult> RevisarDocumento(int id)
+    {
+        if (!EsGerenteCH()) return Forbid();
+
+        var solicitud = await _context.Tbsolicitudes
+            .FirstOrDefaultAsync(s => s.IdSolicitud == id && s.TipoFlujo == "DocumentoRRHH");
+        if (solicitud == null) return NotFound();
+
+        var personal = await _context.Tbpersonals.FindAsync(solicitud.CC);
+        ViewBag.Personal = personal;
+        
+        var plantillas = await _context.TbPlantillas
+            .Where(p => p.Modulo == "RRHH" && p.Activa && p.TipoDocumento == solicitud.DocumentoSolicitado)
+            .ToListAsync();
+        ViewBag.Plantillas = plantillas;
+
+        return View(solicitud);
+    }
+
+    // ── GENERAR DOCUMENTO (con guardado en expediente y correo solo personal) ──
     [HttpPost]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> GenerarDocumento(int idSolicitud, string tipoDocumento)
@@ -179,50 +216,102 @@ public class SolicitudRRHHController : Controller
 
         var personal = await _context.Tbpersonals.FindAsync(solicitud.CC);
         if (personal == null)
-        { TempData["Error"] = "No se encontró el perfil del solicitante."; return RedirectToAction(nameof(Gestion)); }
+        {
+            TempData["Error"] = "No se encontró el perfil del solicitante.";
+            return RedirectToAction(nameof(Gestion));
+        }
 
         var plantilla = await _context.TbPlantillas
             .FirstOrDefaultAsync(p => p.TipoDocumento == tipoDocumento && p.Modulo == "RRHH" && p.Activa);
         if (plantilla == null)
-        { TempData["Error"] = $"No hay plantilla activa para '{tipoDocumento}'."; return RedirectToAction(nameof(Gestion)); }
+        {
+            TempData["Error"] = $"No hay plantilla activa para '{tipoDocumento}'.";
+            return RedirectToAction(nameof(Gestion));
+        }
 
         var rutaFisica = Path.Combine(_env.WebRootPath,
             plantilla.RutaArchivo.TrimStart('/').Replace('/', Path.DirectorySeparatorChar));
 
+        // 1️⃣ Generar el documento
         var docxBytes = await _docSvc.GenerarDocxAsync(
             rutaFisica, personal,
-            creadorUserName: User.Identity?.Name);
+            creadorUserName: User.Identity?.Name,
+            solicitud: solicitud);
 
+        // 2️⃣ Guardar en expediente digital
+        string carpetaExpediente = Path.Combine(_env.WebRootPath, "expedientes", personal.CC.ToString());
+        Directory.CreateDirectory(carpetaExpediente);
+        string nombreArchivo = $"{tipoDocumento.Replace(" ", "_")}_{DateTime.Now:yyyyMMdd_HHmmss}.docx";
+        string rutaRelativa = $"/expedientes/{personal.CC}/{nombreArchivo}";
+        string rutaFisicaExpediente = Path.Combine(carpetaExpediente, nombreArchivo);
+        await System.IO.File.WriteAllBytesAsync(rutaFisicaExpediente, docxBytes);
+
+        var expediente = new TbExpediente
+        {
+            CC = personal.CC,
+            NombreArchivo = $"{tipoDocumento} - Solicitud #{solicitud.IdSolicitud}",
+            TipoDocumento = tipoDocumento,
+            RutaArchivo = rutaRelativa,
+            FechaSubida = DateTime.Now,
+            SubidoPor = User.Identity?.Name ?? "Capital Humano",
+            Modulo = "RRHH",
+            Visible = true
+        };
+        _context.TbExpedientes.Add(expediente);
+        await _context.SaveChangesAsync();
+
+        // 3️⃣ Enviar correo SOLO al correo personal (sin fallback a corporativo)
+        try
+        {
+            string correoPersonal = personal.CorreoPersonal?.Trim();
+            if (!string.IsNullOrEmpty(correoPersonal))
+            {
+                using var msAdjunto = new MemoryStream(docxBytes);
+                await _email.EnviarConAdjuntoAsync(
+                    destinatario: correoPersonal,
+                    asunto: $"[Farmacol] {tipoDocumento} generado",
+                    mensajeHtml: $@"
+                        <div style='font-family:system-ui;max-width:600px;margin:32px auto;background:#fff;border-radius:12px;padding:28px;box-shadow:0 4px 20px rgba(0,0,0,.08)'>
+                            <h2 style='color:#198754'>📄 Documento generado</h2>
+                            <p>Hola <b>{personal.NombreColaborador}</b>,</p>
+                            <p>Tu <b>{tipoDocumento}</b> ha sido generado por Capital Humano.</p>
+                            <p>Adjunto encontrarás el documento en formato Word.</p>
+                            <p>También puedes consultarlo en tu <b>Expediente Digital</b> dentro del sistema.</p>
+                            <hr />
+                            <small class='text-muted'>Solicitud #{solicitud.IdSolicitud} - {DateTime.Now:dd/MM/yyyy HH:mm}</small>
+                        </div>",
+                    archivoAdjunto: msAdjunto,
+                    nombreAdjunto: $"{tipoDocumento.Replace(" ", "_")}_{personal.CC}.docx"
+                );
+            }
+            else
+            {
+                Console.WriteLine($"El colaborador CC {personal.CC} no tiene registrado un correo personal. No se envió notificación.");
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error enviando correo a personal {personal.CorreoPersonal}: {ex.Message}");
+        }
+
+        // 4️⃣ Actualizar estado de la solicitud
         solicitud.Estado = "Aprobada";
-        solicitud.EtapaAprobacion = $"Documento generado: {tipoDocumento}";
+        solicitud.EtapaAprobacion = $"Documento generado: {tipoDocumento} - Guardado en expediente";
         solicitud.Paso1Estado = "Aprobado";
         _context.Update(solicitud);
         await _context.SaveChangesAsync();
 
+        // 5️⃣ Auditoría
         try
         {
             await _audit.RegistrarAsync(AuditService.MOD_SOLICITUD_RRHH, AuditService.ACC_GENERAR,
-            $"{User.Identity?.Name} generó '{tipoDocumento}' para {personal.NombreColaborador} (CC:{personal.CC})",
-            idSolicitud.ToString());
+                $"{User.Identity?.Name} generó '{tipoDocumento}' para {personal.NombreColaborador} (CC:{personal.CC}) - Guardado en expediente",
+                idSolicitud.ToString());
         }
         catch { }
 
-        try
-        {
-            if (!string.IsNullOrEmpty(personal.CorreoCorporativo))
-                await _email.EnviarAsync(personal.CorreoCorporativo,
-                    $"[Farmacol] Tu {tipoDocumento} está listo",
-                    $@"<div style='font-family:system-ui;max-width:600px;margin:32px auto;background:#fff;border-radius:12px;padding:28px;box-shadow:0 4px 20px rgba(0,0,0,.08)'>
-                       <h2 style='color:#198754'>📄 Documento listo</h2>
-                       <p>Tu <b>{tipoDocumento}</b> ha sido generado por Capital Humano.</p>
-                       <p style='color:#6c757d;font-size:.85rem'>Solicita el documento físico en Capital Humano.</p></div>");
-        }
-        catch { }
-
-        var nombreBase = $"{tipoDocumento.Replace(" ", "_")}_{personal.CC}_{DateTime.Now:yyyyMMdd_HHmm}";
-        return File(docxBytes,
-            "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-            $"{nombreBase}.docx");
+        TempData["Exito"] = $"✅ {tipoDocumento} generado correctamente. Se ha enviado a su correo personal y guardado en expediente.";
+        return RedirectToAction(nameof(RevisarDocumento), new { id = idSolicitud });
     }
 
     // ── RECHAZAR ──────────────────────────────────────────────────────────
@@ -263,10 +352,10 @@ public class SolicitudRRHHController : Controller
         catch { }
 
         TempData["Error"] = "❌ Solicitud rechazada.";
-        return RedirectToAction(nameof(Gestion));
+        return RedirectToAction(nameof(RevisarDocumento), new { id });
     }
 
-    // ── EXPORTAR EXCEL ────────────────────────────────────────────────────
+    // ── EXPORTAR EXCEL (igual que antes) ──────────────────────────────────
     [HttpGet]
     public async Task<IActionResult> ExportarExcel(string? estado, bool todo = false)
     {
@@ -297,7 +386,7 @@ public class SolicitudRRHHController : Controller
             ws.Cell(fila, 2).Value = s.Nombre ?? "";
             ws.Cell(fila, 3).Value = s.CC;
             ws.Cell(fila, 4).Value = s.Cargo ?? "";
-            ws.Cell(fila, 5).Value = "";  
+            ws.Cell(fila, 5).Value = "";
             ws.Cell(fila, 6).Value = s.DocumentoSolicitado ?? "";
             ws.Cell(fila, 7).Value = s.Motivo ?? "";
             ws.Cell(fila, 8).Value = s.FechaSolicitud?.ToString("dd/MM/yyyy") ?? "";

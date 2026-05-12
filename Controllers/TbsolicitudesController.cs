@@ -139,7 +139,6 @@ namespace Farmacol.Controllers
             return File(bytes, "application/vnd.openxmlformats-officedocument.wordprocessingml.document", fileName);
         }
 
-        // ── Helpers ───────────────────────────────────────────────────────
         private async Task<Tbpersonal?> BuscarPersonalActual()
         {
             var userName = User.Identity?.Name ?? "";
@@ -157,7 +156,6 @@ namespace Farmacol.Controllers
             var userName = User.Identity?.Name ?? "";
             if (string.IsNullOrEmpty(userName)) return ("", "");
 
-            // Buscar en Tbpersonals primero
             var personal = await _context.Tbpersonals
                 .FirstOrDefaultAsync(p => p.UsuarioCorporativo == userName ||
                                            p.CorreoCorporativo == userName);
@@ -166,7 +164,6 @@ namespace Farmacol.Controllers
                 return (personal.UsuarioCorporativo ?? userName,
                         personal.CorreoCorporativo ?? "");
 
-            //Buscar usuarios seedeados
             var identityUser = await _userManager.FindByNameAsync(userName);
             var email = identityUser?.Email ?? "";
 
@@ -253,7 +250,7 @@ namespace Farmacol.Controllers
             ViewBag.Estado = estado;
 
             return View(await query
-                .OrderByDescending(s => s.FechaSolicitud ?? DateOnly.MinValue)
+                .OrderByDescending(s => s.IdSolicitud)
                 .ToListAsync());
         }
 

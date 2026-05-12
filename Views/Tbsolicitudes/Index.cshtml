@@ -12,7 +12,9 @@
     bool esCapHumano = userArea == "Capital Humano";
     int? userCC = ViewBag.UserCC as int?;
 
-    
+    // ✅ Nuevo flag para identificar al Gerente de Capital Humano
+    bool esGerenteCH = (esGerente && esCapHumano) || esAdmin || esRRHH;
+
     bool puedeRevisar = esRRHH || esDirectivo || esJefe
                      || (esGerente && !esCapHumano)  
                      || (esGerente && esCapHumano)     
@@ -31,14 +33,12 @@
 <h1>Solicitudes</h1>
 
 <div class="d-flex gap-2 mb-3">
-
     <a asp-action="ExportarExcel"
        asp-route-busqueda="@ViewBag.Busqueda"
        asp-route-estado="@ViewBag.Estado"
        class="btn btn-success btn-sm">
         📥 Exportar filtrado
     </a>
-
     <a asp-action="ExportarExcel" asp-route-todo="true"
        class="btn btn-outline-success btn-sm">
         📥 Exportar todo
@@ -80,12 +80,14 @@
                     <option value="">Todos los tipos</option>
                     <option value="Permiso" selected="@(ViewBag.TipoSolicitud == "Permiso")">Permiso</option>
                     <option value="Vacaciones" selected="@(ViewBag.TipoSolicitud == "Vacaciones")">Vacaciones</option>
+                    <option value="Documental" selected="@(ViewBag.TipoSolicitud == "Documental")">📄 Documental</option>
                 </select>
             </div>
             <div class="col-md-2">
                 <select name="estado" class="form-select">
                     <option value="">Todos los estados</option>
                     <option value="En proceso">En proceso</option>
+                    <option value="Pendiente">Pendiente</option>
                     <option value="Aprobada">Aprobada</option>
                     <option value="Rechazada">Rechazada</option>
                     <option value="Devuelta">Devuelta</option>
@@ -136,12 +138,25 @@ else
                             {
                                 <span class="badge bg-success">🏖️ Vacaciones</span>
                             }
+                            else if (item.TipoSolicitud == "Documental")
+                            {
+                                <span class="badge bg-info text-dark">📄 Documental</span>
+                            }
                             else
                             {
                                 <span class="badge bg-primary">🕐 Permiso</span>
                             }
                         </td>
-                        <td><small>@item.SubtipoPermiso</small></td>
+                        <td>
+                            @if (item.TipoSolicitud == "Documental")
+                            {
+                                <small>@item.DocumentoSolicitado</small>
+                            }
+                            else
+                            {
+                                <small>@item.SubtipoPermiso</small>
+                            }
+                        </td>
                         <td>@item.FechaSolicitud</td>
                         <td>
                             @if (item.TotalHoras != null)
@@ -158,46 +173,52 @@ else
                             @{
                                 var badgeEstado = item.Estado switch
                                 {
-                                                    "Aprobada" => "bg-success",
-                                                    "Rechazada" => "bg-danger",
-                                                    "Devuelta" => "bg-warning text-dark",
-                                                    "Finalizada" => "bg-secondary",
-                                    _ => "bg-warning text-dark"
+                                    "Aprobada" => "bg-success",
+                                    "Rechazada" => "bg-danger",
+                                    "Devuelta" => "bg-warning text-dark",
+                                    "Finalizada" => "bg-secondary",
+                                    "Pendiente" => "bg-warning text-dark",
+                                    _ => "bg-secondary"
                                 };
                             }
                             <span class="badge @badgeEstado">@item.Estado</span>
-                        </td>
+                         </td>
                         <td>
                             <div class="d-flex gap-1 flex-wrap">
-
-                                @* Ver: todos los roles siempre *@
+                                <!-- Ver (siempre) -->
                                 <a asp-action="Detalle" asp-route-id="@item.IdSolicitud"
                                    class="btn btn-sm btn-outline-secondary">👁️ Ver</a>
 
-                                @* Revisar: solo aprobadores, solo En proceso *@
-                                @if (puedeRevisar && item.Estado == "En proceso")
+                                <!-- Revisar: solo para permisos/vacaciones en estado 'En proceso' -->
+                                @if (puedeRevisar && item.Estado == "En proceso" && item.TipoSolicitud != "Documental")
                                 {
                                     <a asp-action="Revisar" asp-route-id="@item.IdSolicitud"
                                        class="btn btn-sm btn-warning">⚡ Revisar</a>
                                 }
 
-                                @* Editar: solo el propio solicitante cuando está Devuelta *@
+                                <!-- Gestionar: para solicitudes documentales pendientes (solo Gerente CH) -->
+                                @if (item.TipoSolicitud == "Documental" && item.Estado == "Pendiente" && esGerenteCH)
+                                {
+                                    <a asp-controller="SolicitudRRHH" asp-action="RevisarDocumento" asp-route-id="@item.IdSolicitud"
+                                       class="btn btn-sm btn-primary">📄 Gestionar</a>
+                                }
+
+                                <!-- Editar: solo cuando está Devuelta y es el solicitante -->
                                 @if (item.Estado == "Devuelta" && userCC.HasValue && item.CC == userCC.Value)
                                 {
                                     <a asp-action="Editar" asp-route-id="@item.IdSolicitud"
                                        class="btn btn-sm btn-info">✏️ Editar</a>
                                 }
 
-                                @* Eliminar: solo Administrador *@
+                                <!-- Eliminar: solo Administrador -->
                                 @if (esAdmin)
                                 {
                                     <a asp-action="Delete" asp-route-id="@item.IdSolicitud"
                                        class="btn btn-sm btn-outline-danger">🗑️ Eliminar</a>
                                 }
-
                             </div>
-                        </td>
-                    </tr>
+                         </td>
+                     </tr>
                 }
             </tbody>
         </table>

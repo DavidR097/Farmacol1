@@ -17,11 +17,9 @@ public class MiExpedienteController : Controller
         _env = env;
     }
 
-    // ── INDEX: expediente propio del usuario ──────────────────────────────
     public async Task<IActionResult> Index()
     {
         var userName = User.Identity?.Name ?? "";
-
         var personal = await _context.Tbpersonals
             .FirstOrDefaultAsync(p =>
                 p.UsuarioCorporativo == userName ||
@@ -33,7 +31,6 @@ public class MiExpedienteController : Controller
             return View(new List<TbExpediente>());
         }
 
-        // Solo documentos marcados como visibles para el usuario
         var docs = await _context.TbExpedientes
             .Where(d => d.CC == personal.CC && d.Visible)
             .OrderByDescending(d => d.FechaSubida)
@@ -43,7 +40,6 @@ public class MiExpedienteController : Controller
         return View(docs);
     }
 
-    // ── VER: descarga/abre el PDF ─────────────────────────────────────────
     public async Task<IActionResult> Ver(int id)
     {
         var userName = User.Identity?.Name ?? "";
@@ -59,11 +55,18 @@ public class MiExpedienteController : Controller
 
         if (doc == null) return NotFound();
 
-        var full = Path.Combine(_env.WebRootPath,
+        string fullPath = Path.Combine(_env.WebRootPath,
             doc.RutaArchivo.TrimStart('/').Replace('/', Path.DirectorySeparatorChar));
-        if (!System.IO.File.Exists(full)) return NotFound();
+        if (!System.IO.File.Exists(fullPath)) return NotFound();
 
-        return PhysicalFile(full, "application/pdf", doc.NombreArchivo + ".pdf",
-            enableRangeProcessing: true);
+        string contentType = doc.RutaArchivo.EndsWith(".pdf", StringComparison.OrdinalIgnoreCase)
+            ? "application/pdf"
+            : "application/vnd.openxmlformats-officedocument.wordprocessingml.document";
+
+        string fileName = doc.NombreArchivo;
+        if (!fileName.EndsWith(".pdf") && !fileName.EndsWith(".docx"))
+            fileName += doc.RutaArchivo.EndsWith(".pdf") ? ".pdf" : ".docx";
+
+        return PhysicalFile(fullPath, contentType, fileName, enableRangeProcessing: true);
     }
 }

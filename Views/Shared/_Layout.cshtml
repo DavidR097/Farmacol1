@@ -474,7 +474,7 @@
 
         bool verRechazadas = esAdmin || esRRHH || esGerenteCH;
 
-        bool verGestionRRHH = esAdmin || esRRHH || esGerenteCH;   // ← Importante para Gerente CH
+        bool verGestionRRHH = esAdmin || esRRHH || esGerenteCH;  
 
         bool verTI = esAdmin || esTI;
         bool verBuscador = !(User.IsInRole("Usuario") && !esCapHumano);
@@ -631,18 +631,10 @@
                         </a>
                     }
 
-                    <!-- La creación de SalidaEquipos se moverá a la sección Equipos -->
                     <a class="sb-sub-item @(ctrl == "SolicitudRRHH" && action == "Create" ? "active" : "")"
                            asp-controller="SolicitudRRHH" asp-action="Create">
                         <span class="sb-icon">📄</span><span class="sb-text">Solicitud Documentos</span>
                     </a>
-                    @if (verGestionRRHH)
-                    {
-                        <a class="sb-sub-item @(ctrl == "SolicitudRRHH" && action == "Gestion" ? "active" : "")"
-                               asp-controller="SolicitudRRHH" asp-action="Gestion">
-                            <span class="sb-icon">📋</span><span class="sb-text">Gestión doc. RRHH</span>
-                        </a>
-                    }
                     @if (verRechazadas)
                     {
                         <a class="sb-sub-item @(ctrl == "TbsoliRechazadums" ? "active" : "")"

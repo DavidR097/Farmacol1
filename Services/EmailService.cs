@@ -326,5 +326,53 @@ public class EmailService
         {
             _logger?.LogWarning(ex, "Fallo enviando email de aprobación requerida a {correo}", correo);
         }
+        
+    }
+    // Agrega este método dentro de la clase EmailService
+    public async Task EnviarConAdjuntoAsync(string destinatario, string asunto, string mensajeHtml, MemoryStream archivoAdjunto, string nombreAdjunto)
+    {
+        if (string.IsNullOrWhiteSpace(destinatario)) return;
+
+        var cfg = _config.GetSection("Email");
+        var mensaje = new MimeMessage();
+        mensaje.From.Add(new MailboxAddress(
+            cfg["Nombre"] ?? "Farmacol RRHH",
+            cfg["Remitente"] ?? ""));
+        mensaje.To.Add(MailboxAddress.Parse(destinatario));
+        mensaje.Subject = asunto;
+
+        // Cuerpo HTML
+        var body = new TextPart("html") { Text = mensajeHtml };
+
+        // Si hay adjunto, crear multipart
+        if (archivoAdjunto != null && archivoAdjunto.Length > 0)
+        {
+            var multipart = new Multipart("mixed");
+            multipart.Add(body);
+
+            archivoAdjunto.Position = 0;
+            var attachment = new MimePart("application", "vnd.openxmlformats-officedocument.wordprocessingml.document")
+            {
+                Content = new MimeContent(archivoAdjunto),
+                ContentDisposition = new ContentDisposition(ContentDisposition.Attachment),
+                ContentTransferEncoding = ContentEncoding.Base64,
+                FileName = nombreAdjunto
+            };
+            multipart.Add(attachment);
+            mensaje.Body = multipart;
+        }
+        else
+        {
+            mensaje.Body = body;
+        }
+
+        using var smtp = new SmtpClient();
+        await smtp.ConnectAsync(
+            cfg["Host"] ?? "smtp.gmail.com",
+            int.TryParse(cfg["Port"], out int p) ? p : 587,
+            SecureSocketOptions.StartTls);
+        await smtp.AuthenticateAsync(cfg["Usuario"], cfg["Password"]);
+        await smtp.SendAsync(mensaje);
+        await smtp.DisconnectAsync(true);
     }
 }

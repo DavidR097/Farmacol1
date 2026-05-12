@@ -21,7 +21,6 @@ namespace Farmacol.BackgroundServices
             _scopeFactory = scopeFactory;
         }
 
-        // Agrega este método público después del constructor
         public async Task EjecutarCorteManualAsync()
         {
             await EjecutarCorte(CancellationToken.None);
@@ -29,7 +28,6 @@ namespace Farmacol.BackgroundServices
 
         protected override Task ExecuteAsync(CancellationToken stoppingToken)
         {
-            // Programar la ejecución para el primer día de cada mes a las 00:00
             var nextRun = GetNextRunTime();
             var delay = nextRun - DateTime.Now;
             if (delay < TimeSpan.Zero) delay = TimeSpan.Zero;
@@ -42,7 +40,7 @@ namespace Farmacol.BackgroundServices
         {
             var now = DateTime.Now;
             var firstDayNextMonth = new DateTime(now.Year, now.Month, 1).AddMonths(1);
-            return firstDayNextMonth; // 1° del siguiente mes a las 00:00
+            return firstDayNextMonth; 
         }
 
         private async Task EjecutarCorte(CancellationToken stoppingToken)
@@ -56,7 +54,6 @@ namespace Farmacol.BackgroundServices
 
             try
             {
-                // Obtener empleados activos: están en Tbpersonals y NO en la tabla de retirados
                 var empleadosActivos = await context.Tbpersonals
                     .Where(p => !context.TbpersonalRetirados.Any(r => r.CC == p.CC) &&
                                 !string.IsNullOrEmpty(p.CorreoPersonal))
@@ -108,7 +105,6 @@ Sistema Farmacol Chinoin
             }
             finally
             {
-                // Recalcular próxima ejecución
                 var next = GetNextRunTime();
                 var delay = next - DateTime.Now;
                 if (delay < TimeSpan.Zero) delay = TimeSpan.Zero;
