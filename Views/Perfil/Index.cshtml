@@ -3,7 +3,6 @@
 @{
     ViewData["Title"] = "Mi Perfil";
     
-    // Iniciales para el avatar en caso de que no haya foto
     var initials = string.Join("", (Model.Personal.NombreColaborador ?? "?").Split(' ')
                         .Take(2).Select(w => w.Length > 0 ? w[0].ToString() : ""));
 }

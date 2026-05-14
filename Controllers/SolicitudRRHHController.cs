@@ -55,7 +55,6 @@ public class SolicitudRRHHController : Controller
                User.IsInRole("RRHH");
     }
 
-    // ── CREATE GET ────────────────────────────────────────────────────────
     [HttpGet]
     public async Task<IActionResult> Create()
     {
@@ -67,7 +66,6 @@ public class SolicitudRRHHController : Controller
         return View();
     }
 
-    // ── CREATE POST (con campos dinámicos) ────────────────────────────────
     [HttpPost]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> Create(
@@ -151,7 +149,6 @@ public class SolicitudRRHHController : Controller
         return RedirectToAction(nameof(MisSolicitudes), new { controller = "Tbsolicitudes" });
     }
 
-    // ── MIS SOLICITUDES (solo para que compile, realmente se usa Tbsolicitudes) ──
     public async Task<IActionResult> MisSolicitudes()
     {
         var personal = await BuscarPersonalActual();
@@ -162,7 +159,6 @@ public class SolicitudRRHHController : Controller
         return View(lista);
     }
 
-    // ── GESTION ───────────────────────────────────────────────────────────
     [HttpGet]
     public async Task<IActionResult> Gestion(string? estado)
     {
@@ -183,7 +179,6 @@ public class SolicitudRRHHController : Controller
         return View(lista);
     }
 
-    // ── REVISAR DOCUMENTO (detalle antes de generar) ──────────────────────
     [HttpGet]
     public async Task<IActionResult> RevisarDocumento(int id)
     {
@@ -204,7 +199,6 @@ public class SolicitudRRHHController : Controller
         return View(solicitud);
     }
 
-    // ── GENERAR DOCUMENTO (con guardado en expediente y correo solo personal) ──
     [HttpPost]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> GenerarDocumento(int idSolicitud, string tipoDocumento)
@@ -232,13 +226,11 @@ public class SolicitudRRHHController : Controller
         var rutaFisica = Path.Combine(_env.WebRootPath,
             plantilla.RutaArchivo.TrimStart('/').Replace('/', Path.DirectorySeparatorChar));
 
-        // 1️⃣ Generar el documento
         var docxBytes = await _docSvc.GenerarDocxAsync(
             rutaFisica, personal,
             creadorUserName: User.Identity?.Name,
             solicitud: solicitud);
 
-        // 2️⃣ Guardar en expediente digital
         string carpetaExpediente = Path.Combine(_env.WebRootPath, "expedientes", personal.CC.ToString());
         Directory.CreateDirectory(carpetaExpediente);
         string nombreArchivo = $"{tipoDocumento.Replace(" ", "_")}_{DateTime.Now:yyyyMMdd_HHmmss}.docx";
@@ -260,7 +252,6 @@ public class SolicitudRRHHController : Controller
         _context.TbExpedientes.Add(expediente);
         await _context.SaveChangesAsync();
 
-        // 3️⃣ Enviar correo SOLO al correo personal (sin fallback a corporativo)
         try
         {
             string correoPersonal = personal.CorreoPersonal?.Trim();
@@ -294,14 +285,12 @@ public class SolicitudRRHHController : Controller
             Console.WriteLine($"Error enviando correo a personal {personal.CorreoPersonal}: {ex.Message}");
         }
 
-        // 4️⃣ Actualizar estado de la solicitud
         solicitud.Estado = "Aprobada";
         solicitud.EtapaAprobacion = $"Documento generado: {tipoDocumento} - Guardado en expediente";
         solicitud.Paso1Estado = "Aprobado";
         _context.Update(solicitud);
         await _context.SaveChangesAsync();
 
-        // 5️⃣ Auditoría
         try
         {
             await _audit.RegistrarAsync(AuditService.MOD_SOLICITUD_RRHH, AuditService.ACC_GENERAR,
@@ -314,7 +303,6 @@ public class SolicitudRRHHController : Controller
         return RedirectToAction(nameof(RevisarDocumento), new { id = idSolicitud });
     }
 
-    // ── RECHAZAR ──────────────────────────────────────────────────────────
     [HttpPost]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> Rechazar(int id, string? observacion)
@@ -355,7 +343,6 @@ public class SolicitudRRHHController : Controller
         return RedirectToAction(nameof(RevisarDocumento), new { id });
     }
 
-    // ── EXPORTAR EXCEL (igual que antes) ──────────────────────────────────
     [HttpGet]
     public async Task<IActionResult> ExportarExcel(string? estado, bool todo = false)
     {

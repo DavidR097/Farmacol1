@@ -1,6 +1,5 @@
 @model IEnumerable<Farmacol.Models.TbSalidaEquipos>
 @{
-    // Determinar el título basado en la acción actual
     var esMisSalidas = ViewContext.RouteData.Values["action"]?.ToString() == "MisSalidasEquipos";
     ViewData["Title"] = esMisSalidas ? "Mis Salidas de Equipos" : "Revisar Salidas";
 }

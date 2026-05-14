@@ -12,7 +12,6 @@
     bool esCapHumano = userArea == "Capital Humano";
     int? userCC = ViewBag.UserCC as int?;
 
-    // ✅ Nuevo flag para identificar al Gerente de Capital Humano
     bool esGerenteCH = (esGerente && esCapHumano) || esAdmin || esRRHH;
 
     bool puedeRevisar = esRRHH || esDirectivo || esJefe
@@ -185,32 +184,27 @@ else
                          </td>
                         <td>
                             <div class="d-flex gap-1 flex-wrap">
-                                <!-- Ver (siempre) -->
                                 <a asp-action="Detalle" asp-route-id="@item.IdSolicitud"
                                    class="btn btn-sm btn-outline-secondary">👁️ Ver</a>
 
-                                <!-- Revisar: solo para permisos/vacaciones en estado 'En proceso' -->
                                 @if (puedeRevisar && item.Estado == "En proceso" && item.TipoSolicitud != "Documental")
                                 {
                                     <a asp-action="Revisar" asp-route-id="@item.IdSolicitud"
                                        class="btn btn-sm btn-warning">⚡ Revisar</a>
                                 }
 
-                                <!-- Gestionar: para solicitudes documentales pendientes (solo Gerente CH) -->
                                 @if (item.TipoSolicitud == "Documental" && item.Estado == "Pendiente" && esGerenteCH)
                                 {
                                     <a asp-controller="SolicitudRRHH" asp-action="RevisarDocumento" asp-route-id="@item.IdSolicitud"
                                        class="btn btn-sm btn-primary">📄 Gestionar</a>
                                 }
 
-                                <!-- Editar: solo cuando está Devuelta y es el solicitante -->
                                 @if (item.Estado == "Devuelta" && userCC.HasValue && item.CC == userCC.Value)
                                 {
                                     <a asp-action="Editar" asp-route-id="@item.IdSolicitud"
                                        class="btn btn-sm btn-info">✏️ Editar</a>
                                 }
 
-                                <!-- Eliminar: solo Administrador -->
                                 @if (esAdmin)
                                 {
                                     <a asp-action="Delete" asp-route-id="@item.IdSolicitud"

@@ -39,7 +39,6 @@ builder.Services.AddIdentity<IdentityUser, IdentityRole>(options =>
     options.Password.RequireNonAlphanumeric = false;
     options.Password.RequiredLength = 4;
 
-    // Bloqueo tras 3 intentos fallidos — sin tiempo límite (solo admin puede desbloquear)
     options.Lockout.DefaultLockoutTimeSpan = TimeSpan.FromDays(365);
     options.Lockout.MaxFailedAccessAttempts = 3;
     options.Lockout.AllowedForNewUsers = true;
@@ -80,19 +79,16 @@ app.MapControllerRoute(
     name: "default",
     pattern: "{controller=Login}/{action=Index}/{id?}");
 
-// Seed de roles y admin
 using (var scope = app.Services.CreateScope())
 {
     var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<IdentityRole>>();
     var userManager = scope.ServiceProvider.GetRequiredService<UserManager<IdentityUser>>();
 
-    // ── Crear roles ────────────────────────────────────────────────────
     string[] roles = {
         "Administrador", "Directivo", "Gerente", "RRHH", "Jefe",
         "Coordinador", "Asistente", "Usuario", "TI", "Aprendiz", "Recepcionista", "Vigilancia"
     };
 
-    // Asegurar role SST esté seededeado
     var rolesList = roles.ToList();
     if (!rolesList.Contains("SST")) rolesList.Add("SST");
 
@@ -102,7 +98,6 @@ using (var scope = app.Services.CreateScope())
             await roleManager.CreateAsync(new IdentityRole(rol));
     }
 
-    // ── Crear usuario admin por defecto si no existe ───────────────────
     var adminUser = "admin";
     var adminPass = "Admin1234!";
 
@@ -114,7 +109,6 @@ using (var scope = app.Services.CreateScope())
             await userManager.AddToRoleAsync(user, "Administrador");
     }
 
-    // Crear usuario vigilacia por defecto si no existe
     var vigilanciaUser = "vigilancia";
     var vigilanciaPass = "Vigilancia123!";
     if (await userManager.FindByNameAsync(vigilanciaUser) == null)
@@ -125,7 +119,6 @@ using (var scope = app.Services.CreateScope())
             await userManager.AddToRoleAsync(user, "Vigilancia");
     }
 
-    // Seed salas básicas si no existen
     var dbContext = scope.ServiceProvider.GetRequiredService<Farmacol1Context>();
     if (!await dbContext.TbSalas.AnyAsync())
     {

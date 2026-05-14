@@ -4,11 +4,10 @@
 @{
     ViewData["Title"] = "Eliminar Personal";
 
-    // Lógica de Antigüedad Real (Abril 2026)
     string antiguedadReal = "0 a. 0 m.";
     if (Model.FechaIngreso.HasValue)
     {
-        var hoy = DateTime.Today; // 28/04/2026
+        var hoy = DateTime.Today;
         var inicio = Model.FechaIngreso.Value;
         int anios = hoy.Year - inicio.Year;
         int meses = hoy.Month - inicio.Month;

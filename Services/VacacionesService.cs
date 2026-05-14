@@ -30,28 +30,32 @@ namespace Farmacol.Services
             var fechaIngreso = personal.FechaIngreso.Value;
             var hoy = DateOnly.FromDateTime(DateTime.Now);
 
-            int mesesTrabajados = ((hoy.Year - fechaIngreso.Year) * 12) + (hoy.Month - fechaIngreso.Month);
-            if (hoy.Day < fechaIngreso.Day)
-                mesesTrabajados--;
+            int totalDias = hoy.DayNumber - fechaIngreso.DayNumber;
+            if (totalDias < 0) totalDias = 0;
 
-            decimal diasAcumulados = mesesTrabajados * 1.25m;
-            
+            const decimal tasaDiaria = 1.25m / 30m;  
+            decimal diasAcumulados = totalDias * tasaDiaria;
+
             decimal diasDisfrutados = await _context.Tbsolicitudes
                 .Where(s => s.CC == cc
-                         && s.TipoSolicitud == "Vacaciones"
-                         && s.Estado == "Aprobada")
+                        && s.TipoSolicitud == "Vacaciones"
+                        && s.Estado == "Aprobada")
                 .SumAsync(s => s.TotalDias ?? 0m);
 
             decimal diasDisponibles = diasAcumulados - diasDisfrutados;
 
             bool esPlanta = personal.Area?.Trim().Equals("Planta", StringComparison.OrdinalIgnoreCase) ?? false;
 
+            Console.WriteLine($"[DEBUG] CC={cc}, FechaIngreso={fechaIngreso}, Hoy={hoy}, TotalDias={totalDias}, " +
+                            $"TasaDiaria={tasaDiaria}, DiasAcumulados={diasAcumulados}, DiasDisfrutados={diasDisfrutados}, " +
+                            $"DiasDisponibles={diasDisponibles}");
+
             return new VacacionesViewModel
             {
                 CC = cc,
                 Nombre = personal.NombreColaborador ?? "",
                 FechaIngreso = fechaIngreso,
-                MesesTrabajados = mesesTrabajados,
+                MesesTrabajados = (int)Math.Floor(totalDias / 30.0), 
                 DiasAcumulados = Math.Round(diasAcumulados, 2),
                 DiasDisfrutados = Math.Round(diasDisfrutados, 2),
                 DiasDisponibles = Math.Max(0, Math.Round(diasDisponibles, 2)),
@@ -60,6 +64,6 @@ namespace Farmacol.Services
                     ? "Se incluyen sábados como días vacacionales (jornada Planta)"
                     : "Solo se cuentan días hábiles (lunes-viernes)"
             };
-        }
-    }
+        }   
+}
 }

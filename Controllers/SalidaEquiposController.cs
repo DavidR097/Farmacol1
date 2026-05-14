@@ -31,7 +31,6 @@ namespace Farmacol.Controllers
             _userManager = userManager;
         }
 
-        // === Helpers ===
         private int ObtenerNumeroId(string idCompleto)
         {
             if (string.IsNullOrEmpty(idCompleto)) return 0;
@@ -53,7 +52,6 @@ namespace Farmacol.Controllers
             catch { return false; }
         }
 
-        // === CREATE ===
         [Authorize(Policy = "SolicitudesAccess")]
         public async Task<IActionResult> Create()
         {
@@ -186,7 +184,6 @@ namespace Farmacol.Controllers
             return "RS-0001";
         }
 
-        // === INDEX Y MIS SALIDAS ===
         [Authorize(Policy = "SolicitudesAccess")]
         public async Task<IActionResult> Index()
         {
@@ -244,7 +241,6 @@ namespace Farmacol.Controllers
             return View("Index", misSalidas);
         }
 
-        // === PROCESAR APROBACIÓN ===
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> ProcesarAprobacion(string id, string decision, string observacionesEstado)
@@ -256,11 +252,9 @@ namespace Farmacol.Controllers
             var usuario = await BuscarPersonalActual();
             if (!await PuedeActuar(salida)) return Forbid();
 
-            // Normalizar a minúsculas para comparaciones seguras
             var etapa = (salida.EtapaAprobacion ?? "").ToLower().Trim();
             bool esAprobacion = decision.Equals("Aprobar", StringComparison.OrdinalIgnoreCase);
 
-            // Primer paso: cualquier "Pendiente: <nombre>" que NO sea Capital Humano
             if (etapa.Contains("pendiente") && !etapa.Contains("capital humano"))
             {
                 salida.AprobacionGerencia = esAprobacion
@@ -285,7 +279,7 @@ namespace Farmacol.Controllers
                     salida.EtapaAprobacion = "Rechazada";
                 }
             }
-            // Segundo paso: Gerente Capital Humano
+
             else if (etapa.Contains("capital humano"))
             {
                 salida.AprobacionCH = esAprobacion
@@ -306,13 +300,11 @@ namespace Farmacol.Controllers
                 }
             }
 
-            // resto igual...
 
             salida.ObservacionEstado = observacionesEstado;
             _context.Update(salida);
             await _context.SaveChangesAsync();
 
-            // Auditoría
             try
             {
                 await _audit.RegistrarAsync(AuditService.MOD_SOLICITUDES,
@@ -321,7 +313,6 @@ namespace Farmacol.Controllers
             }
             catch { }
 
-            // Notificar al solicitante
             var destSolicitante = salida.SolicitanteUsuario ?? salida.SolicitanteCorreo;
             if (!string.IsNullOrEmpty(destSolicitante))
             {
@@ -351,11 +342,9 @@ namespace Farmacol.Controllers
                              $"Fecha salida: {salida.FechaSalida?.ToString("dd/MM/yyyy") ?? "N/A"}, " +
                              $"Motivo: {salida.MotivoSalida}";
 
-            // Pasar null en idSolicitud — el JS extrae el RS-XXXX del mensaje
             await _notif.CrearNotificacion(destino, mensaje, null);
         }
 
-        // === VISTAS ===
         [Authorize(Roles = "Vigilancia")]
         public async Task<IActionResult> Vigilancia()
         {
@@ -390,19 +379,15 @@ namespace Farmacol.Controllers
             var areaUsuario = (personal.Area ?? "").ToLower().Trim();
             var areaSolicitud = (salida.Area ?? "").ToLower().Trim();
 
-            // ── Segundo paso: Capital Humano — SIEMPRE evaluar primero ──────────────
             if (etapa.Contains("capital humano"))
             {
                 return cargoUsuario.Contains("gerente capital humano");
             }
 
-            // ── Primer paso ──────────────────────────────────────────────────────────
             if (etapa.Contains("pendiente"))
             {
-                // Extraer el nombre del aprobador esperado desde "Pendiente: Nombre Apellido"
                 var nombreEsperado = etapa.Replace("pendiente:", "").Trim();
 
-                // Verificar si la etapa apunta a un Gerente/Gerencia General por nombre
                 var esParaGerenteGeneral = await _context.Tbpersonals
                     .AnyAsync(p => p.NombreColaborador != null &&
                                    p.NombreColaborador.ToLower().Trim() == nombreEsperado &&
@@ -416,7 +401,6 @@ namespace Farmacol.Controllers
                            cargoUsuario.Contains("gerencia general");
                 }
 
-                // Caso normal: Gerente o Jefe del mismo área
                 bool cargoValido = cargoUsuario.StartsWith("gerente") ||
                                    cargoUsuario.StartsWith("jefe");
 
@@ -442,7 +426,6 @@ namespace Farmacol.Controllers
 
             bool puede = await PuedeActuar(salida);
 
-            // Debug temporal — lo quitamos después
             TempData["DebugCanProcess"] = $"CanProcess={puede} | Etapa='{salida.EtapaAprobacion}' | Estado='{salida.Estado}' | Cargo='{(await BuscarPersonalActual())?.Cargo}'";
 
             ViewBag.CanProcess = puede;

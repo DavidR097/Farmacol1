@@ -22,7 +22,6 @@ public class EmailService
         _logger = logger;
     }
 
-    // ── Envío base ────────────────────────────────────────────────────────
     public async Task EnviarAsync(string destinatario, string asunto, string cuerpoHtml)
     {
         if (string.IsNullOrWhiteSpace(destinatario)) return;
@@ -47,7 +46,6 @@ public class EmailService
         await smtp.DisconnectAsync(true);
     }
 
-    // ── Buscar correo del solicitante por CC ──────────────────────────────
     private async Task<string?> ObtenerCorreoPorCC(int? cc)
     {
         if (cc == null) return null;
@@ -55,12 +53,10 @@ public class EmailService
         return p?.CorreoCorporativo;
     }
 
-    // ── Buscar correo del aprobador por cargo ─────────────────────────────
     private async Task<string?> ObtenerCorreoAprobador(string? cargo)
     {
         if (string.IsNullOrEmpty(cargo)) return null;
 
-        // "Capital Humano" genérico → buscar Gerente CH primero, luego Coordinador, luego Asistente
         if (string.Equals(cargo, "Capital Humano", StringComparison.OrdinalIgnoreCase))
         {
             var p = await _context.Tbpersonals.FirstOrDefaultAsync(x =>
@@ -72,7 +68,6 @@ public class EmailService
             return p?.CorreoCorporativo;
         }
 
-        // Cargos exactos de Capital Humano
         if (cargo.ToLower().Contains("capital humano"))
         {
             var p = await _context.Tbpersonals.FirstOrDefaultAsync(x =>
@@ -81,8 +76,7 @@ public class EmailService
                 x.CorreoCorporativo != null);
             return p?.CorreoCorporativo;
         }
-
-        // Gerente General
+      
         if (string.Equals(cargo, "Gerente General", StringComparison.OrdinalIgnoreCase))
         {
             var p = await _context.Tbpersonals.FirstOrDefaultAsync(x =>
@@ -92,7 +86,6 @@ public class EmailService
             return p?.CorreoCorporativo;
         }
 
-        // Directivo
         if (string.Equals(cargo, "Directivo", StringComparison.OrdinalIgnoreCase))
         {
             var p = await _context.Tbpersonals.FirstOrDefaultAsync(x =>
@@ -102,7 +95,6 @@ public class EmailService
             return p?.CorreoCorporativo;
         }
 
-        // Cargos con nivel + área: "Jefe Ventas", "Gerente Logística"
         var partes = cargo.Trim().Split(' ', 2);
         if (partes.Length == 2)
         {
@@ -118,7 +110,6 @@ public class EmailService
         return null;
     }
 
-    // ── Template HTML ─────────────────────────────────────────────────────
     private static string Template(string titulo, string color,
                                    string icono, string cuerpo) => $@"
 <!DOCTYPE html>
@@ -153,7 +144,6 @@ public class EmailService
 </div>
 </body></html>";
 
-    // ── EVENTO 1: Solicitud creada → primer aprobador ─────────────────────
     public async Task NotificarSolicitudCreadaAsync(Tbsolicitude sol)
     {
         var correo = await ObtenerCorreoAprobador(sol.Paso1Aprobador);
@@ -177,7 +167,6 @@ public class EmailService
             await EnviarAsync(correo,
                 $"[Farmacol] Nueva solicitud de {sol.Nombre}",
                 Template("Nueva Solicitud", "#0d6efd", "📋", cuerpo));
-            // Crear notificación interna también (usar correo como destino si no hay usuario corporativo)
             try { await _notificacion.CrearNotificacion(correo, $"Nueva solicitud de {sol.Nombre}", sol.IdSolicitud); } catch { }
         }
         catch (Exception ex)
@@ -186,7 +175,6 @@ public class EmailService
         }
     }
 
-    // ── EVENTO 2: Aprobada definitivamente → solicitante ──────────────────
     public async Task NotificarSolicitudAprobadaAsync(Tbsolicitude sol)
     {
         var correo = await ObtenerCorreoPorCC(sol.CC);
@@ -216,7 +204,6 @@ public class EmailService
         }
     }
 
-    // ── EVENTO 3: Rechazada → solicitante ────────────────────────────────
     public async Task NotificarSolicitudRechazadaAsync(Tbsolicitude sol, string? obs)
     {
         var correo = await ObtenerCorreoPorCC(sol.CC);
@@ -244,7 +231,6 @@ public class EmailService
         }
     }
 
-    // ── EVENTO 4: Devuelta → solicitante ─────────────────────────────────
     public async Task NotificarSolicitudDevueltaAsync(Tbsolicitude sol, string? obs)
     {
         var correo = await ObtenerCorreoPorCC(sol.CC);
@@ -272,7 +258,6 @@ public class EmailService
         }
     }
 
-    // ── EVENTO 5: Documento subido → empleado ────────────────────────────
     public async Task NotificarDocumentoSubidoAsync(int cc, string nombreDoc, string modulo)
     {
         var correo = await ObtenerCorreoPorCC(cc);
@@ -292,7 +277,6 @@ public class EmailService
             Template("Nuevo Documento", "#6f42c1", "📄", cuerpo));
     }
 
-    // ── EVENTO 6: Avance de paso → siguiente aprobador ───────────────────
     public async Task NotificarSiguienteAprobadorAsync(Tbsolicitude sol)
     {
         var paso = sol.PasoActual ?? 1;
@@ -328,28 +312,21 @@ public class EmailService
         }
         
     }
-    // Agrega este método dentro de la clase EmailService
     public async Task EnviarConAdjuntoAsync(string destinatario, string asunto, string mensajeHtml, MemoryStream archivoAdjunto, string nombreAdjunto)
     {
         if (string.IsNullOrWhiteSpace(destinatario)) return;
 
         var cfg = _config.GetSection("Email");
         var mensaje = new MimeMessage();
-        mensaje.From.Add(new MailboxAddress(
-            cfg["Nombre"] ?? "Farmacol RRHH",
-            cfg["Remitente"] ?? ""));
+        mensaje.From.Add(new MailboxAddress(cfg["Nombre"] ?? "Farmacol RRHH", cfg["Remitente"] ?? ""));
         mensaje.To.Add(MailboxAddress.Parse(destinatario));
         mensaje.Subject = asunto;
 
-        // Cuerpo HTML
         var body = new TextPart("html") { Text = mensajeHtml };
-
-        // Si hay adjunto, crear multipart
         if (archivoAdjunto != null && archivoAdjunto.Length > 0)
         {
             var multipart = new Multipart("mixed");
             multipart.Add(body);
-
             archivoAdjunto.Position = 0;
             var attachment = new MimePart("application", "vnd.openxmlformats-officedocument.wordprocessingml.document")
             {
@@ -366,11 +343,11 @@ public class EmailService
             mensaje.Body = body;
         }
 
+        mensaje.Priority = MessagePriority.Urgent;      
+        mensaje.Headers.Add("X-Priority", "1");         
+
         using var smtp = new SmtpClient();
-        await smtp.ConnectAsync(
-            cfg["Host"] ?? "smtp.gmail.com",
-            int.TryParse(cfg["Port"], out int p) ? p : 587,
-            SecureSocketOptions.StartTls);
+        await smtp.ConnectAsync(cfg["Host"] ?? "smtp.gmail.com", int.TryParse(cfg["Port"], out int p) ? p : 587, SecureSocketOptions.StartTls);
         await smtp.AuthenticateAsync(cfg["Usuario"], cfg["Password"]);
         await smtp.SendAsync(mensaje);
         await smtp.DisconnectAsync(true);
